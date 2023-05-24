@@ -19,7 +19,9 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 {
 	char *string;
 	pContext->LocalToString(params[1], &string);
-	bool is_file = params[2] != 0;
+
+	bool is_file = params[2];
+	bool with_comments = params[3];
 	
 	JSON_Value *handle;
 
@@ -27,44 +29,46 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 	{
 		char realpath[PLATFORM_MAX_PATH];
 		smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", string);
-		handle = json_parse_file(realpath);
+		handle = with_comments ? json_parse_file(realpath) : json_parse_file_with_comments(realpath);
 	}
 	else
 	{
-		handle = json_parse_string(string);
+		handle = with_comments ? json_parse_string(string) : json_parse_string_with_comments(string);
 	}
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlKeys = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlKeys == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON parse handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlKeys;
+	return hndl;
 }
 
 static cell_t pawn_json_object_from_string(IPluginContext *pContext, const cell_t *params)
 {
 	char *string;
 	pContext->LocalToString(params[1], &string);
+
+	bool with_comments = params[2];
 	
-	JSON_Value *handle = json_parse_string(string);
+	JSON_Value *handle = with_comments ? json_parse_string_with_comments(string) : json_parse_string(string);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlKeys = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlKeys == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON object_from_string handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlKeys;
+	return hndl;
 }
 
 static cell_t pawn_json_object_from_file(IPluginContext *pContext, const cell_t *params)
@@ -72,41 +76,45 @@ static cell_t pawn_json_object_from_file(IPluginContext *pContext, const cell_t 
 	char *path;
 	pContext->LocalToString(params[1], &path);
 
+	bool with_comments = params[2];
+
 	char realpath[PLATFORM_MAX_PATH];
 	smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", path);
-	JSON_Value *handle = json_parse_file(realpath);
+	JSON_Value *handle = with_comments ? json_parse_file_with_comments(realpath) : json_parse_file(realpath);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlKeys = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlKeys == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON object_from_file handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlKeys;
+	return hndl;
 }
 
 static cell_t pawn_json_array_from_string(IPluginContext *pContext, const cell_t *params)
 {
 	char *string;
 	pContext->LocalToString(params[1], &string);
+
+	bool with_comments = params[2];
 	
-	JSON_Value *handle = json_parse_string(string);
+	JSON_Value *handle = with_comments ? json_parse_string_with_comments(string) : json_parse_string(string);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlKeys = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlKeys == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON array_from_string handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlKeys;
+	return hndl;
 }
 
 static cell_t pawn_json_array_from_file(IPluginContext *pContext, const cell_t *params)
@@ -114,21 +122,23 @@ static cell_t pawn_json_array_from_file(IPluginContext *pContext, const cell_t *
 	char *path;
 	pContext->LocalToString(params[1], &path);
 
+	bool with_comments = params[2];
+
 	char realpath[PLATFORM_MAX_PATH];
 	smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", path);
-	JSON_Value *handle = json_parse_file(realpath);
+	JSON_Value *handle = with_comments ? json_parse_file_with_comments(realpath) : json_parse_file(realpath);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlKeys = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlKeys == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON array_from_file handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlKeys;
+	return hndl;
 }
 
 static cell_t pawn_json_equals(IPluginContext *pContext, const cell_t *params)
@@ -161,15 +171,15 @@ static cell_t pawn_json_get_parent(IPluginContext *pContext, const cell_t *param
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlparent = handlesys->CreateHandleEx(htJSON, parent, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, parent, &sec, nullptr, &err);
 	
-	if (hndlparent == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON get_parent handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlparent;
+	return hndl;
 }
 
 static cell_t pawn_json_get_type(IPluginContext *pContext, const cell_t *params)
@@ -187,15 +197,15 @@ static cell_t pawn_json_init_object(IPluginContext *pContext, const cell_t *para
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlobj = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlobj == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_object handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlobj;
+	return hndl;
 }
 
 static cell_t pawn_json_init_array(IPluginContext *pContext, const cell_t *params)
@@ -204,15 +214,15 @@ static cell_t pawn_json_init_array(IPluginContext *pContext, const cell_t *param
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlarr = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlarr == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_array handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlarr;
+	return hndl;
 }
 
 static cell_t pawn_json_init_string(IPluginContext *pContext, const cell_t *params)
@@ -223,15 +233,15 @@ static cell_t pawn_json_init_string(IPluginContext *pContext, const cell_t *para
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlstr = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlstr == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_string handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlstr;
+	return hndl;
 }
 
 static cell_t pawn_json_init_number(IPluginContext *pContext, const cell_t *params)
@@ -240,15 +250,15 @@ static cell_t pawn_json_init_number(IPluginContext *pContext, const cell_t *para
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlnumber = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlnumber == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_number handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlnumber;
+	return hndl;
 }
 
 static cell_t pawn_json_init_real(IPluginContext *pContext, const cell_t *params)
@@ -257,15 +267,15 @@ static cell_t pawn_json_init_real(IPluginContext *pContext, const cell_t *params
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlreal = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlreal == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_real handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlreal;
+	return hndl;
 }
 
 static cell_t pawn_json_init_bool(IPluginContext *pContext, const cell_t *params)
@@ -274,15 +284,15 @@ static cell_t pawn_json_init_bool(IPluginContext *pContext, const cell_t *params
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlbool = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlbool == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_boolean handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlbool;
+	return hndl;
 }
 
 static cell_t pawn_json_init_null(IPluginContext *pContext, const cell_t *params)
@@ -291,15 +301,15 @@ static cell_t pawn_json_init_null(IPluginContext *pContext, const cell_t *params
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlnull = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
 	
-	if (hndlnull == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_null handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlnull;
+	return hndl;
 }
 
 static cell_t pawn_json_deep_copy(IPluginContext *pContext, const cell_t *params)
@@ -312,15 +322,15 @@ static cell_t pawn_json_deep_copy(IPluginContext *pContext, const cell_t *params
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndldeep = handlesys->CreateHandleEx(htJSON, jsonDeep, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, jsonDeep, &sec, nullptr, &err);
 	
-	if (hndldeep == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON deep_copy handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndldeep;
+	return hndl;
 }
 
 static cell_t pawn_json_get_string(IPluginContext *pContext, const cell_t *params)
@@ -330,6 +340,8 @@ static cell_t pawn_json_get_string(IPluginContext *pContext, const cell_t *param
 	if (handle == nullptr) return BAD_HANDLE;
 
 	const char *string = json_value_get_string(handle);
+
+	if (string == nullptr) return 0;
 	
 	pContext->StringToLocalUTF8(params[2], params[3], string, nullptr);
 
@@ -376,15 +388,15 @@ static cell_t pawn_json_array_get_value(IPluginContext *pContext, const cell_t *
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlresult = handlesys->CreateHandleEx(htJSON, result, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, result, &sec, nullptr, &err);
 	
-	if (hndlresult == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON array_get_value handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlresult;
+	return hndl;
 }
 
 static cell_t pawn_json_array_get_string(IPluginContext *pContext, const cell_t *params)
@@ -396,6 +408,8 @@ static cell_t pawn_json_array_get_string(IPluginContext *pContext, const cell_t 
 	JSON_Array *array = json_value_get_array(handle);
 
 	const char *string = json_array_get_string(array, params[2]);
+
+	if (string == nullptr) return 0;
 	
 	pContext->StringToLocalUTF8(params[3], params[4], string, nullptr);
 
@@ -649,19 +663,21 @@ static cell_t pawn_json_object_get_value(IPluginContext *pContext, const cell_t 
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Value *result = (params[3] == 0) ? json_object_get_value(object, key) : json_object_dotget_value(object, key);
+	bool is_dot = params[3];
+
+	JSON_Value *result = is_dot ? json_object_dotget_value(object, key) : json_object_get_value(object, key);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlresult = handlesys->CreateHandleEx(htJSON, result, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, result, &sec, nullptr, &err);
 	
-	if (hndlresult == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON object_get_value handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlresult;
+	return hndl;
 }
 
 static cell_t pawn_json_object_get_string(IPluginContext *pContext, const cell_t *params)
@@ -675,7 +691,11 @@ static cell_t pawn_json_object_get_string(IPluginContext *pContext, const cell_t
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	const char *string = (params[5] == 0) ? json_object_get_string(object, key) : json_object_dotget_string(object, key);
+	bool is_dot = params[5];
+
+	const char *string = is_dot ? json_object_dotget_string(object, key) : json_object_get_string(object, key);
+
+	if (string == nullptr) return 0;
 	
 	pContext->StringToLocalUTF8(params[3], params[4], string, nullptr);
 
@@ -693,7 +713,9 @@ static cell_t pawn_json_object_get_number(IPluginContext *pContext, const cell_t
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	double result = (params[3] == 0) ? json_object_get_number(object, key) : json_object_dotget_number(object, key);
+	bool is_dot = params[3];
+
+	double result = is_dot ? json_object_dotget_number(object, key) : json_object_get_number(object, key);
 
 	return result;
 }
@@ -708,7 +730,10 @@ static cell_t pawn_json_object_get_real(IPluginContext *pContext, const cell_t *
 
 	char *key;
 	pContext->LocalToString(params[2], &key);
-	double data = (params[3] == 0) ? json_object_get_number(object, key) : json_object_dotget_number(object, key);
+
+	bool is_dot = params[3];
+
+	double data = is_dot ? json_object_dotget_number(object, key) : json_object_get_number(object, key);
 	float result = static_cast<float>(data);
 
 	return sp_ftoc(result);
@@ -725,7 +750,9 @@ static cell_t pawn_json_object_get_bool(IPluginContext *pContext, const cell_t *
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	int result = (params[3] == 0) ? json_object_get_boolean(object, key) : json_object_dotget_boolean(object, key);
+	bool is_dot = params[3];
+
+	int result = is_dot ? json_object_dotget_boolean(object, key) : json_object_get_boolean(object, key);
 
 	return result;
 }
@@ -750,6 +777,8 @@ static cell_t pawn_json_object_get_name(IPluginContext *pContext, const cell_t *
 	JSON_Object *object = json_value_get_object(handle);
 
 	const char *name = json_object_get_name(object, params[2]);
+
+	if (name == nullptr) return 0;
 	
 	pContext->StringToLocalUTF8(params[3], params[4], name, nullptr);
 
@@ -768,15 +797,15 @@ static cell_t pawn_json_object_get_value_at(IPluginContext *pContext, const cell
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	Handle_t hndlresult = handlesys->CreateHandleEx(htJSON, result, &sec, nullptr, &err);
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, result, &sec, nullptr, &err);
 	
-	if (hndlresult == BAD_HANDLE)
+	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Invalid JSON handle (error %d)", err);
+		pContext->ReportError("Could not create JSON object_get_value_at handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
-	return hndlresult;
+	return hndl;
 }
 
 static cell_t pawn_json_object_has_value(IPluginContext *pContext, const cell_t *params)
@@ -792,13 +821,15 @@ static cell_t pawn_json_object_has_value(IPluginContext *pContext, const cell_t 
 
 	int result;
 
+	bool is_dot = params[4];
+
 	if (params[3] == JSONError)
 	{
-		result = (params[4] == 0) ? json_object_has_value(object, key) : json_object_dothas_value(object, key);
+		result = is_dot ? json_object_dothas_value(object, key) : json_object_has_value(object, key);
 	}
 	else
 	{
-		result = (params[4] == 0) ? json_object_has_value_of_type(object, key, params[3]) : json_object_dothas_value_of_type(object, key, params[3]);
+		result = is_dot ? json_object_dothas_value_of_type(object, key, params[3]) : json_object_has_value_of_type(object, key, params[3]);
 	}
 
 	return result;
@@ -837,7 +868,9 @@ static cell_t pawn_json_object_set_value(IPluginContext *pContext, const cell_t 
 		handle2 = json_value_deep_copy(handle2);
 	}
 
-	JSON_Status result = (params[4] == 0) ? json_object_set_value(object, key, handle2) : json_object_dotset_value(object, key, handle2);
+	bool is_dot = params[4];
+
+	JSON_Status result = is_dot ? json_object_dotset_value(object, key, handle2) : json_object_set_value(object, key, handle2);
 
 	return result == JSONSuccess;
 }
@@ -854,7 +887,9 @@ static cell_t pawn_json_object_set_string(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &key);
 	pContext->LocalToString(params[3], &value);
 
-	JSON_Status result = (params[4] == 0) ? json_object_set_string(object, key, value) : json_object_dotset_string(object, key, value);
+	bool is_dot = params[4];
+
+	JSON_Status result = is_dot ? json_object_dotset_string(object, key, value) : json_object_set_string(object, key, value);
 
 	return result == JSONSuccess;
 }
@@ -870,7 +905,9 @@ static cell_t pawn_json_object_set_number(IPluginContext *pContext, const cell_t
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Status result = (params[4] == 0) ? json_object_set_number(object, key, params[3]) : json_object_dotset_number(object, key, params[3]);
+	bool is_dot = params[4];
+
+	JSON_Status result = is_dot ? json_object_dotset_number(object, key, params[3]) : json_object_set_number(object, key, params[3]);
 
 	return result == JSONSuccess;
 }
@@ -886,7 +923,9 @@ static cell_t pawn_json_object_set_real(IPluginContext *pContext, const cell_t *
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Status result = (params[4] == 0) ? json_object_set_number(object, key, sp_ctof(params[3])) : json_object_dotset_number(object, key, sp_ctof(params[3]));
+	bool is_dot = params[4];
+
+	JSON_Status result = is_dot ? json_object_dotset_number(object, key, sp_ctof(params[3])) : json_object_set_number(object, key, sp_ctof(params[3]));
 
 	return result == JSONSuccess;
 }
@@ -902,7 +941,9 @@ static cell_t pawn_json_object_set_bool(IPluginContext *pContext, const cell_t *
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Status result = (params[4] == 0) ? json_object_set_boolean(object, key, params[3]) : json_object_dotset_boolean(object, key, params[3]);
+	bool is_dot = params[4];
+
+	JSON_Status result = is_dot ? json_object_dotset_boolean(object, key, params[3]) : json_object_set_boolean(object, key, params[3]);
 
 	return result == JSONSuccess;
 }
@@ -918,7 +959,9 @@ static cell_t pawn_json_object_set_null(IPluginContext *pContext, const cell_t *
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Status result = (params[3] == 0) ? json_object_set_null(object, key) : json_object_dotset_null(object, key);
+	bool is_dot = params[3];
+
+	JSON_Status result = is_dot ? json_object_dotset_null(object, key) : json_object_set_null(object, key);
 
 	return result == JSONSuccess;
 }
@@ -934,7 +977,9 @@ static cell_t pawn_json_object_remove(IPluginContext *pContext, const cell_t *pa
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Status result = (params[3] == 0) ? json_object_remove(object, key) : json_object_dotremove(object, key);
+	bool is_dot = params[3];
+
+	JSON_Status result = is_dot ? json_object_dotremove(object, key) : json_object_remove(object, key);
 
 	return result == JSONSuccess;
 }
@@ -961,7 +1006,9 @@ static cell_t pawn_json_object_is_null(IPluginContext *pContext, const cell_t *p
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	JSON_Value *value = (params[3] == 0) ? json_object_get_value(object, key) : json_object_dotget_value(object, key);
+	bool is_dot = params[3];
+
+	JSON_Value *value = is_dot ? json_object_dotget_value(object, key) : json_object_get_value(object, key);
 
 	return json_value_get_type(value) == JSONNull;
 }
@@ -972,7 +1019,9 @@ static cell_t pawn_json_serial_size(IPluginContext *pContext, const cell_t *para
 
 	if (handle == nullptr) return BAD_HANDLE;
 
-	size_t result = (params[2] == 0) ? json_serialization_size(handle) : json_serialization_size_pretty(handle);
+	bool pretty = params[2];
+
+	size_t result = pretty ? json_serialization_size_pretty(handle) : json_serialization_size(handle);
 
 	return (params[3]) ? result : result - 1;
 }
@@ -983,12 +1032,17 @@ static cell_t pawn_json_serial_to_string(IPluginContext *pContext, const cell_t 
 
 	if (handle == nullptr) return BAD_HANDLE;
 
-	char *result = (params[4] == 0) ? json_serialize_to_string(handle) : json_serialize_to_string_pretty(handle);
-	int written = (result) ? pContext->StringToLocalUTF8(params[2], params[3], result, nullptr) : 0;
+	bool pretty = params[4];
+
+	char *result = pretty ?  json_serialize_to_string_pretty(handle) : json_serialize_to_string(handle);
+
+	if (result == nullptr) return 0;
+
+	pContext->StringToLocalUTF8(params[2], params[3], result, nullptr);
 
 	json_free_serialized_string(result);
 
-	return written;
+	return 1;
 }
 
 static cell_t pawn_json_serial_to_file(IPluginContext *pContext, const cell_t *params)
@@ -1003,7 +1057,9 @@ static cell_t pawn_json_serial_to_file(IPluginContext *pContext, const cell_t *p
 	char realpath[PLATFORM_MAX_PATH];
 	smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", path);
 
-	JSON_Status JSResult = (params[3] == 0) ? json_serialize_to_file(handle, realpath) : json_serialize_to_file_pretty(handle, realpath);
+	bool pretty = params[3];
+
+	JSON_Status JSResult = pretty ? json_serialize_to_file_pretty(handle, realpath) : json_serialize_to_file(handle, realpath);
 
 	return JSResult == JSONSuccess;
 }
@@ -1071,6 +1127,7 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_serial_to_string", pawn_json_serial_to_string},
 	{"json_serial_to_file", pawn_json_serial_to_file},
 
+	// JSONObject
 	{"JSONObject.JSONObject", pawn_json_init_object},
 	{"JSONObject.Size.get", pawn_json_object_get_count},
 	{"JSONObject.Get", pawn_json_object_get_value},
@@ -1092,7 +1149,10 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONObject.SetString", pawn_json_object_set_string},
 	{"JSONObject.Remove", pawn_json_object_remove},
 	{"JSONObject.Clear", pawn_json_object_clear},
+	{"JSONObject.FromString", pawn_json_object_from_string},
+	{"JSONObject.FromFile", pawn_json_object_from_file},
 
+	// JSONArray
 	{"JSONArray.JSONArray", pawn_json_init_array},
 	{"JSONArray.Length.get", pawn_json_array_get_count},
 	{"JSONArray.Get", pawn_json_array_get_value},
@@ -1115,14 +1175,12 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONArray.PushString", pawn_json_array_append_string},
 	{"JSONArray.Remove", pawn_json_array_remove},
 	{"JSONArray.Clear", pawn_json_array_clear},
-
-	{"JSONObject.FromString", pawn_json_object_from_string},
-	{"JSONObject.FromFile", pawn_json_object_from_file},
 	{"JSONArray.FromString", pawn_json_array_from_string},
 	{"JSONArray.FromFile", pawn_json_array_from_file},
 
+	// JSON
 	{"JSON.ToString", pawn_json_serial_to_string},
 	{"JSON.ToFile", pawn_json_serial_to_file},
 	{"JSON.Type.get", pawn_json_get_type},
-	{ nullptr,	nullptr }
+	{nullptr,	nullptr}
 };

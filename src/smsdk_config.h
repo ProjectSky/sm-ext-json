@@ -3,7 +3,7 @@
 
 #define SMEXT_CONF_NAME			"SourceMod JSON Extension"
 #define SMEXT_CONF_DESCRIPTION	"Provide JSON methods"
-#define SMEXT_CONF_VERSION		"1.0.0"
+#define SMEXT_CONF_VERSION		"1.0.1"
 #define SMEXT_CONF_AUTHOR		"ProjectSky"
 #define SMEXT_CONF_URL			"https://github.com/ProjectSky"
 #define SMEXT_CONF_LOGTAG		"json"

@@ -8,6 +8,7 @@ builder.SetBuildFolder('package')
 # Add any folders you need to this list
 folder_list = [
   'addons/sourcemod/extensions',
+  'addons/sourcemod/scripting/include',
 ]
 
 # Create the distribution folder hierarchy.
@@ -28,3 +29,8 @@ def CopyFiles(src, dest, files):
 # Copy binaries.
 for cxx_task in Extension.extensions:
   builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions'])
+
+# Copy include files
+CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
+  [ 'json.inc' ]
+)
