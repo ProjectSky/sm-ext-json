@@ -10,17 +10,18 @@ This is a [SourceMod](http://www.sourcemod.net/) extension that provides some me
 * Allows us to iterate through arrays and objects
 
 ## How to build this?
-```
+``` bash
 clone project
 mkdir build && cd build
 python ../configure.py --enable-optimize --symbol-files --sm-path=YOU_SOURCEMOD_PATH
 ambuild
 ```
 
+## Available native
+* see [json.inc](https://github.com/ProjectSky/sm-ext-json/blob/main/scripting/include/json.inc)
+
 ## todo
-* more test
 * example script
-* int64 support
 * windows support
 
 ## known issues

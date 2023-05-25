@@ -1034,7 +1034,7 @@ static cell_t pawn_json_serial_to_string(IPluginContext *pContext, const cell_t 
 
 	bool pretty = params[4];
 
-	char *result = pretty ?  json_serialize_to_string_pretty(handle) : json_serialize_to_string(handle);
+	char *result = pretty ? json_serialize_to_string_pretty(handle) : json_serialize_to_string(handle);
 
 	if (result == nullptr) return 0;
 
@@ -1181,6 +1181,21 @@ const sp_nativeinfo_t JsonNatives[] =
 	// JSON
 	{"JSON.ToString", pawn_json_serial_to_string},
 	{"JSON.ToFile", pawn_json_serial_to_file},
+	{"JSON.Parse", pawn_json_parse},
+	{"JSON.Equals", pawn_json_equals},
+	{"JSON.Validate", pawn_json_validate},
+	{"JSON.GetParent", pawn_json_get_parent},
+	{"JSON.String", pawn_json_init_string},
+	{"JSON.Int", pawn_json_init_number},
+	{"JSON.Float", pawn_json_init_real},
+	{"JSON.Bool", pawn_json_init_bool},
+	{"JSON.Null", pawn_json_init_null},
+	{"JSON.DeepCopy", pawn_json_deep_copy},
+	{"JSON.GetString", pawn_json_get_string},
+	{"JSON.GetInt", pawn_json_get_number},
+	{"JSON.GetFloat", pawn_json_get_real},
+	{"JSON.GetBool", pawn_json_get_bool},
+	{"JSON.SerialSize", pawn_json_serial_size},
 	{"JSON.Type.get", pawn_json_get_type},
 	{nullptr,	nullptr}
 };

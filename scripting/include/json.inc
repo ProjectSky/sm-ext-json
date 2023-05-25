@@ -46,6 +46,153 @@ methodmap JSON < Handle
 	// @return           True on success, false on failure
 	public native bool ToString(char[] buffer, int maxlength, bool pretty = false);
 
+	// Parses JSON string or a file that contains JSON
+	//
+	// @note                    Must be freed via delete or CloseHandle()
+	//
+	// @param string            String to parse
+	// @param is_file           True to treat string param as filename, false otherwise
+	// @param with_comments     True if parsing JSON includes comments (it will ignore them), false otherwise
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	public static native JSON Parse(const char[] string, bool is_file = false, bool with_comments = false);
+
+	// Checks if the first value is the same as the second one
+	//
+	// @param value1            JSON handle
+	// @param value2            JSON handle
+	//
+	// @return                  True if they are the same, false otherwise
+	// @error                   If passed value is not a valid handle
+	public static native bool Equals(const JSON value1, const JSON value2);
+
+	// Validates json by checking if object have identically named
+	// fields with matching types
+	//
+	// @note                    Schema {"name":"", "age":0} will validate
+	//                          {"name":"Joe", "age":25} and {"name":"Joe", "age":25, "gender":"m"},
+	//                          but not {"name":"Joe"} or {"name":"Joe", "age":"Cucumber"}
+	//
+	// @note                    In case of arrays, only first value in schema
+	//                          is checked against all values in tested array
+	//
+	// @note                    Empty objects ({}) validate all objects,
+	//                          empty arrays ([]) validate all arrays,
+	//                          null validates values of every type
+	//
+	// @param schema            JSON handle
+	// @param value             JSON handle
+	//
+	// @return                  True if passed value is valid, false otherwise
+	// @error                   If a schema handle or value handle is invalid
+	public static native bool Validate(const JSON schema, const JSON value);
+
+	// Gets value's parent handle
+	//
+	// @note                  Parent's handle must be freed via delete or CloseHandle()
+	//
+	// @param value           JSON handle
+	//
+	// @return                Parent's handle
+	public static native JSON GetParent(const JSON value);
+
+	// Inits string data
+	//
+	// @note                    Needs to be freed using delete or CloseHandle()
+	//
+	// @param value             String that the handle will be initialized with
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	public static native JSON String(const char[] value);
+
+	// Inits a number
+	//
+	// @note                    Needs to be freed using delete or CloseHandle()
+	//
+	// @param value             Integer number that the handle will be initialized with
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	public static native JSON Int(int value);
+
+	// Inits a real number
+	//
+	// @note                    Needs to be freed using delete or CloseHandle()
+	//
+	// @param value             Real number that the handle will be initialized with
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	public static native JSON Float(float value);
+
+	// Inits a boolean value
+	//
+	// @note                    Needs to be freed using delete or CloseHandle()
+	//
+	// @param value             Boolean value that the handle will be initialized with
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	public static native JSON Bool(bool value);
+
+	// Inits a null
+	//
+	// @note                    Needs to be freed using delete or CloseHandle()
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	public static native JSON Null();
+
+	// Creates deep copy of passed value
+	//
+	// @note                    Needs to be freed using delete or CloseHandle()
+	//
+	// @param value             JSON handle to be copied
+	//
+	// @return                  JSON handle, Invalid_JSON if error occurred
+	// @error                   If passed value is not a valid handle
+	public static native JSON DeepCopy(const JSON value);
+
+	// Gets string data
+	//
+	// @param value             JSON handle
+	// @param buffer            Buffer to copy string to
+	// @param maxlength         Maximum size of the buffer
+	//
+	// @return                  True on success, false on failure
+	// @error                   If passed value is not a valid handle
+	public static native bool GetString(const JSON value, char[] buffer, int maxlength);
+
+	// Gets a number
+	//
+	// @param value             JSON handle
+	//
+	// @return                  Number
+	// @error                   If passed value is not a valid handle
+	public static native int GetInt(const JSON value);
+
+	// Gets a real number
+	//
+	// @param value             JSON handle
+	//
+	// @return                  Real number
+	// @error                   If passed value is not a valid handle
+	public static native float GetFloat(const JSON value);
+
+	// Gets a boolean value
+	//
+	// @param value             JSON handle
+	//
+	// @return                  Boolean value
+	// @error                   If passed value is not a valid handle
+	public static native bool GetBool(const JSON value);
+
+	// Gets size of serialization
+	//
+	// @param value             JSON handle
+	// @param pretty            True to count size for pretty format, false to not
+	// @param null_byte         True to include null byte, false to not
+	//
+	// @return                  Size of serialized string
+	// @error                   If passed handle is not a valid value
+	public static native int SerialSize(const JSON value, bool pretty = false, bool null_byte = false);
+
 	// Retrieves the type  of the json
 	property int Type {
 		public native get();
@@ -116,7 +263,7 @@ methodmap JSONObject < JSON
 	// @param buffer       Buffer to copy string to
 	// @param maxlength    Maximum size of the buffer
 	//
-	// @return             The number of cells written to the buffer
+	// @return             True on success, false on failure
 	// @error              If passed handle is not a valid object
 	public native int GetName(int index, char[] buffer, int maxlength);
 
@@ -527,8 +674,8 @@ native JSON json_deep_copy(const JSON value);
  // @param buffer            Buffer to copy string to
  // @param maxlength         Maximum size of the buffer
  //
- // @return                  The number of cells written to the buffer
- // @error                   True on success, false on failure
+ // @return                  True on success, false on failure
+ // @error                   If passed value is not a valid handle
 native bool json_get_string(const JSON value, char[] buffer, int maxlength);
 
  // Gets a number
