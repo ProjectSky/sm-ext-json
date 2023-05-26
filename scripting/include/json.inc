@@ -265,7 +265,7 @@ methodmap JSONObject < JSON
 	//
 	// @return             True on success, false on failure
 	// @error              If passed handle is not a valid object
-	public native int GetName(int index, char[] buffer, int maxlength);
+	public native bool GetName(int index, char[] buffer, int maxlength);
 
 	// Gets a value at the specified position from the object
 	//

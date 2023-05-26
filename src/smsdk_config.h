@@ -1,11 +1,11 @@
-#ifndef _INCLUDE_JSON_CONFIG_H_
-#define _INCLUDE_JSON_CONFIG_H_
+#ifndef _INCLUDE_SOURCEMOD_EXTENSION_CONFIG_H_
+#define _INCLUDE_SOURCEMOD_EXTENSION_CONFIG_H_
 
 #define SMEXT_CONF_NAME			"SourceMod JSON Extension"
-#define SMEXT_CONF_DESCRIPTION	"Provide JSON methods"
-#define SMEXT_CONF_VERSION		"1.0.2"
+#define SMEXT_CONF_DESCRIPTION	"Provide JSON Native"
+#define SMEXT_CONF_VERSION		"1.0.3"
 #define SMEXT_CONF_AUTHOR		"ProjectSky"
-#define SMEXT_CONF_URL			"https://github.com/ProjectSky"
+#define SMEXT_CONF_URL			"https://github.com/ProjectSky/sm-ext-json"
 #define SMEXT_CONF_LOGTAG		"json"
 #define SMEXT_CONF_LICENSE		"GPL"
 #define SMEXT_CONF_DATESTRING	__DATE__
@@ -14,4 +14,4 @@
 
 #define SMEXT_ENABLE_HANDLESYS
 
-#endif // _INCLUDE_JSON_CONFIG_H_
+#endif // _INCLUDE_SOURCEMOD_EXTENSION_CONFIG_H_

@@ -12,16 +12,16 @@ for cxx in builder.targets:
   ]
 
   binary.compiler.includes += [
-    os.path.join(builder.sourcePath, 'parson', 'include'),
+    os.path.join(builder.sourcePath, 'third_party', 'parson', 'include'),
   ]
 	
-  binary.compiler.postlink += [
-    os.path.join(builder.sourcePath, 'parson', 'lib', 'libparson.a'),
-  ]
-	
-  if binary.compiler.family == 'gcc' or binary.compiler.family == 'clang':
-    binary.compiler.cxxflags += ['-fno-rtti']
-  elif binary.compiler.family == 'msvc':
-    binary.compiler.cxxflags += ['/GR-', '/bigobj']
+  if binary.compiler.target.platform == 'linux':
+    binary.compiler.postlink += [
+      os.path.join(builder.sourcePath, 'third_party', 'parson', 'lib', 'libparson.a'),
+    ]
+  elif binary.compiler.target.platform == 'windows':
+    binary.compiler.postlink += [
+      os.path.join(builder.sourcePath, 'third_party', 'parson', 'lib', 'libparson.lib'),
+    ]
 
   Extension.extensions += [builder.Add(binary)]

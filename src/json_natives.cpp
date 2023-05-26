@@ -29,11 +29,11 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 	{
 		char realpath[PLATFORM_MAX_PATH];
 		smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", string);
-		handle = with_comments ? json_parse_file(realpath) : json_parse_file_with_comments(realpath);
+		handle = with_comments ? json_parse_file_with_comments(realpath) : json_parse_file(realpath);
 	}
 	else
 	{
-		handle = with_comments ? json_parse_string(string) : json_parse_string_with_comments(string);
+		handle = with_comments ? json_parse_string_with_comments(string) : json_parse_string(string);
 	}
 	
 	HandleError err;

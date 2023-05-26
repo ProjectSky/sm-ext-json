@@ -17,14 +17,17 @@ python ../configure.py --enable-optimize --symbol-files --sm-path=YOU_SOURCEMOD_
 ambuild
 ```
 
-## Available native
+## Native
 * see [json.inc](https://github.com/ProjectSky/sm-ext-json/blob/main/scripting/include/json.inc)
 
-## todo
-* example script
-* windows support
+# Binary files
+* https://github.com/ProjectSky/sm-ext-json/actions
 
-## known issues
+## TODO
+- [x] windows support
+- [ ] example script
+
+## Known issues
 * This is my first porting an extension, so it might have a lot of issues
 * Some functions will crash the server if passed incorrect data
 * incompatible with rip-ext due to naming conflict
