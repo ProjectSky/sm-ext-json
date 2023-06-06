@@ -25,6 +25,7 @@ ambuild
 
 ## TODO
 - [x] windows support
+- [x] Int64 support
 - [ ] example script
 
 ## Known issues

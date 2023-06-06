@@ -244,9 +244,9 @@ static cell_t pawn_json_init_string(IPluginContext *pContext, const cell_t *para
 	return hndl;
 }
 
-static cell_t pawn_json_init_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_init_integer(IPluginContext *pContext, const cell_t *params)
 {
-	JSON_Value *handle = json_value_init_number(params[1]);
+	JSON_Value *handle = json_value_init_integer(params[1]);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -254,7 +254,27 @@ static cell_t pawn_json_init_number(IPluginContext *pContext, const cell_t *para
 	
 	if (hndl == BAD_HANDLE)
 	{
-		pContext->ReportError("Could not create JSON init_number handle (error %d)", err);
+		pContext->ReportError("Could not create JSON init_integer handle (error %d)", err);
+		return BAD_HANDLE;
+	}
+	
+	return hndl;
+}
+
+static cell_t pawn_json_init_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	char *val;
+	pContext->LocalToString(params[1], &val);
+
+	JSON_Value *handle = json_value_init_integer(strtoll(val, nullptr, 10));
+
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
+	Handle_t hndl = handlesys->CreateHandleEx(htJSON, handle, &sec, nullptr, &err);
+	
+	if (hndl == BAD_HANDLE)
+	{
+		pContext->ReportError("Could not create JSON init_integer64 handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -348,13 +368,26 @@ static cell_t pawn_json_get_string(IPluginContext *pContext, const cell_t *param
 	return 1;
 }
 
-static cell_t pawn_json_get_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_get_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
 
 	if (handle == nullptr) return BAD_HANDLE;
 
-	return json_value_get_number(handle);
+	return json_value_get_integer(handle);
+}
+
+static cell_t pawn_json_get_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	char result[20];
+	snprintf(result, sizeof(result), "%lld", json_value_get_integer(handle));
+	pContext->StringToLocalUTF8(params[2], params[3], result, nullptr);
+
+	return 1;
 }
 
 static cell_t pawn_json_get_real(IPluginContext *pContext, const cell_t *params)
@@ -429,7 +462,7 @@ static cell_t pawn_json_array_is_null(IPluginContext *pContext, const cell_t *pa
 	return json_value_get_type(value) == JSONNull;
 }
 
-static cell_t pawn_json_array_get_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_array_get_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
 
@@ -437,7 +470,24 @@ static cell_t pawn_json_array_get_number(IPluginContext *pContext, const cell_t 
 
 	JSON_Array *array = json_value_get_array(handle);
 
-	return json_array_get_number(array, params[2]);
+	return json_array_get_integer(array, params[2]);
+}
+
+static cell_t pawn_json_array_get_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Array *array = json_value_get_array(handle);
+
+	int index = params[2];
+
+	char result[20];
+	snprintf(result, sizeof(result), "%lld", json_array_get_integer(array, index));
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
+
+	return 1;
 }
 
 static cell_t pawn_json_array_get_real(IPluginContext *pContext, const cell_t *params)
@@ -509,7 +559,7 @@ static cell_t pawn_json_array_replace_string(IPluginContext *pContext, const cel
 	return json_array_replace_string(array, params[2], string) == JSONSuccess;
 }
 
-static cell_t pawn_json_array_replace_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_array_replace_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
 
@@ -517,7 +567,23 @@ static cell_t pawn_json_array_replace_number(IPluginContext *pContext, const cel
 
 	JSON_Array *array = json_value_get_array(handle);
 
-	return json_array_replace_number(array, params[2], params[3]) == JSONSuccess;
+	return json_array_replace_integer(array, params[2], params[3]) == JSONSuccess;
+}
+
+static cell_t pawn_json_array_replace_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Array *array = json_value_get_array(handle);
+
+	int index = params[2];
+
+	char *val;
+	pContext->LocalToString(params[3], &val);
+
+	return json_array_replace_integer(array, index, strtoll(val, nullptr, 10)) == JSONSuccess;
 }
 
 static cell_t pawn_json_array_replace_real(IPluginContext *pContext, const cell_t *params)
@@ -586,7 +652,7 @@ static cell_t pawn_json_array_append_string(IPluginContext *pContext, const cell
 	return json_array_append_string(array, string) == JSONSuccess;
 }
 
-static cell_t pawn_json_array_append_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_array_append_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
 
@@ -594,7 +660,21 @@ static cell_t pawn_json_array_append_number(IPluginContext *pContext, const cell
 
 	JSON_Array *array = json_value_get_array(handle);
 
-	return json_array_append_number(array, params[2]) == JSONSuccess;
+	return json_array_append_integer(array, params[2]) == JSONSuccess;
+}
+
+static cell_t pawn_json_array_append_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Array *array = json_value_get_array(handle);
+
+	char *val;
+	pContext->LocalToString(params[2], &val);
+
+	return json_array_append_integer(array, strtoll(val, nullptr, 10)) == JSONSuccess;
 }
 
 static cell_t pawn_json_array_append_real(IPluginContext *pContext, const cell_t *params)
@@ -702,7 +782,7 @@ static cell_t pawn_json_object_get_string(IPluginContext *pContext, const cell_t
 	return 1;
 }
 
-static cell_t pawn_json_object_get_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_object_get_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
 
@@ -715,9 +795,29 @@ static cell_t pawn_json_object_get_number(IPluginContext *pContext, const cell_t
 
 	bool is_dot = params[3];
 
-	double result = is_dot ? json_object_dotget_number(object, key) : json_object_get_number(object, key);
+	double result = is_dot ? json_object_dotget_integer(object, key) : json_object_get_integer(object, key);
 
 	return result;
+}
+
+static cell_t pawn_json_object_get_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Object *object = json_value_get_object(handle);
+
+	char *key;
+	pContext->LocalToString(params[2], &key);
+
+	bool is_dot = params[5];
+
+	char result[20];
+	snprintf(result, sizeof(result), "%lld", is_dot ? json_object_dotget_integer(object, key) : json_object_get_integer(object, key));
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
+
+	return 1;
 }
 
 static cell_t pawn_json_object_get_real(IPluginContext *pContext, const cell_t *params)
@@ -846,7 +946,11 @@ static cell_t pawn_json_object_has_key(IPluginContext *pContext, const cell_t *p
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	return json_object_get_value(object, key) != nullptr;
+	bool is_dot = params[3];
+
+	JSON_Value *result = is_dot ? json_object_dotget_value(object, key) : json_object_get_value(object, key);
+
+	return result != nullptr;
 }
 
 static cell_t pawn_json_object_set_value(IPluginContext *pContext, const cell_t *params)
@@ -894,7 +998,7 @@ static cell_t pawn_json_object_set_string(IPluginContext *pContext, const cell_t
 	return result == JSONSuccess;
 }
 
-static cell_t pawn_json_object_set_number(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_object_set_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
 
@@ -907,7 +1011,33 @@ static cell_t pawn_json_object_set_number(IPluginContext *pContext, const cell_t
 
 	bool is_dot = params[4];
 
-	JSON_Status result = is_dot ? json_object_dotset_number(object, key, params[3]) : json_object_set_number(object, key, params[3]);
+	JSON_Status result = is_dot ? json_object_dotset_integer(object, key, params[3]) : json_object_set_integer(object, key, params[3]);
+
+	return result == JSONSuccess;
+}
+
+static cell_t pawn_json_object_set_integer64(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Object *object = json_value_get_object(handle);
+
+	char *key;
+	pContext->LocalToString(params[2], &key);
+
+	char *val;
+	pContext->LocalToString(params[3], &val);
+
+	bool is_dot = params[4];
+
+	JSON_Value *test = json_value_init_integer(123456);
+	JSON_Status status = json_object_set_value(object, key, test);
+
+	printf("status: %d\n", status);
+
+	JSON_Status result = is_dot ? json_object_dotset_integer(object, key, strtoll(val, nullptr, 10)) : json_object_set_integer(object, key, strtoll(val, nullptr, 10));
 
 	return result == JSONSuccess;
 }
@@ -1064,6 +1194,25 @@ static cell_t pawn_json_serial_to_file(IPluginContext *pContext, const cell_t *p
 	return JSResult == JSONSuccess;
 }
 
+static cell_t pawn_json_set_escape_slashes(IPluginContext *pContext, const cell_t *params)
+{
+	bool escape_slashes = params[1];
+
+	json_set_escape_slashes(escape_slashes);
+
+	return 1;
+}
+
+static cell_t pawn_json_set_float_serialize(IPluginContext *pContext, const cell_t *params)
+{
+	char *format;
+	pContext->LocalToString(params[1], &format);
+
+	json_set_float_serialization_format(format);
+
+	return 1;
+}
+
 const sp_nativeinfo_t JsonNatives[] =
 {
 	{"json_parse", pawn_json_parse},
@@ -1074,31 +1223,36 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_init_object", pawn_json_init_object},
 	{"json_init_array", pawn_json_init_array},
 	{"json_init_string", pawn_json_init_string},
-	{"json_init_number", pawn_json_init_number},
+	{"json_init_integer", pawn_json_init_integer},
+	{"json_init_integer64", pawn_json_init_integer64},
 	{"json_init_real", pawn_json_init_real},
 	{"json_init_bool", pawn_json_init_bool},
 	{"json_init_null", pawn_json_init_null},
 	{"json_deep_copy", pawn_json_deep_copy},
 	{"json_get_string", pawn_json_get_string},
-	{"json_get_number", pawn_json_get_number},
+	{"json_get_integer", pawn_json_get_integer},
+	{"json_get_integer64", pawn_json_get_integer64},
 	{"json_get_real", pawn_json_get_real},
 	{"json_get_bool", pawn_json_get_bool},
 	{"json_array_get_value", pawn_json_array_get_value},
 	{"json_array_get_string", pawn_json_array_get_string},
 	{"json_array_get_count", pawn_json_array_get_count},
-	{"json_array_get_number", pawn_json_array_get_number},
+	{"json_array_get_integer", pawn_json_array_get_integer},
+	{"json_array_get_integer64", pawn_json_array_get_integer64},
 	{"json_array_get_real", pawn_json_array_get_real},
 	{"json_array_get_bool", pawn_json_array_get_bool},
 	{"json_array_is_null", pawn_json_array_is_null},
 	{"json_array_replace_value", pawn_json_array_replace_value},
 	{"json_array_replace_string", pawn_json_array_replace_string},
-	{"json_array_replace_number", pawn_json_array_replace_number},
+	{"json_array_replace_integer", pawn_json_array_replace_integer},
+	{"json_array_replace_integer64", pawn_json_array_replace_integer64},
 	{"json_array_replace_real", pawn_json_array_replace_real},
 	{"json_array_replace_bool", pawn_json_array_replace_bool},
 	{"json_array_replace_null", pawn_json_array_replace_null},
 	{"json_array_append_value", pawn_json_array_append_value},
 	{"json_array_append_string", pawn_json_array_append_string},
-	{"json_array_append_number", pawn_json_array_append_number},
+	{"json_array_append_integer", pawn_json_array_append_integer},
+	{"json_array_append_integer64", pawn_json_array_append_integer64},
 	{"json_array_append_real", pawn_json_array_append_real},
 	{"json_array_append_bool", pawn_json_array_append_bool},
 	{"json_array_append_null", pawn_json_array_append_null},
@@ -1106,7 +1260,8 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_array_clear", pawn_json_array_clear},
 	{"json_object_get_value", pawn_json_object_get_value},
 	{"json_object_get_string", pawn_json_object_get_string},
-	{"json_object_get_number", pawn_json_object_get_number},
+	{"json_object_get_integer", pawn_json_object_get_integer},
+	{"json_object_get_integer64", pawn_json_object_get_integer64},
 	{"json_object_get_real", pawn_json_object_get_real},
 	{"json_object_get_bool", pawn_json_object_get_bool},
 	{"json_object_get_count", pawn_json_object_get_count},
@@ -1117,7 +1272,8 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_object_is_null", pawn_json_object_is_null},
 	{"json_object_set_value", pawn_json_object_set_value},
 	{"json_object_set_string", pawn_json_object_set_string},
-	{"json_object_set_number", pawn_json_object_set_number},
+	{"json_object_set_integer", pawn_json_object_set_integer},
+	{"json_object_set_integer64", pawn_json_object_set_integer64},
 	{"json_object_set_real", pawn_json_object_set_real},
 	{"json_object_set_bool", pawn_json_object_set_bool},
 	{"json_object_set_null", pawn_json_object_set_null},
@@ -1126,6 +1282,8 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_serial_size", pawn_json_serial_size},
 	{"json_serial_to_string", pawn_json_serial_to_string},
 	{"json_serial_to_file", pawn_json_serial_to_file},
+	{"json_set_escape_slashes", pawn_json_set_escape_slashes},
+	{"json_set_float_serialize", pawn_json_set_float_serialize},
 
 	// JSONObject
 	{"JSONObject.JSONObject", pawn_json_init_object},
@@ -1133,7 +1291,8 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONObject.Get", pawn_json_object_get_value},
 	{"JSONObject.GetBool", pawn_json_object_get_bool},
 	{"JSONObject.GetFloat", pawn_json_object_get_real},
-	{"JSONObject.GetInt", pawn_json_object_get_number},
+	{"JSONObject.GetInt", pawn_json_object_get_integer},
+	{"JSONObject.GetInt64", pawn_json_object_get_integer64},
 	{"JSONObject.GetString", pawn_json_object_get_string},
 	{"JSONObject.Clear", pawn_json_object_clear},
 	{"JSONObject.IsNull", pawn_json_object_is_null},
@@ -1144,7 +1303,8 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONObject.Set", pawn_json_object_set_value},
 	{"JSONObject.SetBool", pawn_json_object_set_bool},
 	{"JSONObject.SetFloat", pawn_json_object_set_real},
-	{"JSONObject.SetInt", pawn_json_object_set_number},
+	{"JSONObject.SetInt", pawn_json_object_set_integer},
+	{"JSONObject.SetInt64", pawn_json_object_set_integer64},
 	{"JSONObject.SetNull", pawn_json_object_set_null},
 	{"JSONObject.SetString", pawn_json_object_set_string},
 	{"JSONObject.Remove", pawn_json_object_remove},
@@ -1158,19 +1318,22 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONArray.Get", pawn_json_array_get_value},
 	{"JSONArray.GetBool", pawn_json_array_get_bool},
 	{"JSONArray.GetFloat", pawn_json_array_get_real},
-	{"JSONArray.GetInt", pawn_json_array_get_number},
+	{"JSONArray.GetInt", pawn_json_array_get_integer},
+	{"JSONArray.GetInt64", pawn_json_array_get_integer64},
 	{"JSONArray.GetString", pawn_json_array_get_string},
 	{"JSONArray.IsNull", pawn_json_array_is_null},
 	{"JSONArray.Set", pawn_json_array_replace_value},
 	{"JSONArray.SetBool", pawn_json_array_replace_bool},
 	{"JSONArray.SetFloat", pawn_json_array_replace_real},
-	{"JSONArray.SetInt", pawn_json_array_replace_number},
+	{"JSONArray.SetInt", pawn_json_array_replace_integer},
+	{"JSONArray.SetInt64", pawn_json_array_replace_integer64},
 	{"JSONArray.SetNull", pawn_json_array_replace_null},
 	{"JSONArray.SetString", pawn_json_array_replace_string},
 	{"JSONArray.Push", pawn_json_array_append_value},
 	{"JSONArray.PushBool", pawn_json_array_append_bool},
 	{"JSONArray.PushFloat", pawn_json_array_append_real},
-	{"JSONArray.PushInt", pawn_json_array_append_number},
+	{"JSONArray.PushInt", pawn_json_array_append_integer},
+	{"JSONArray.PushInt64", pawn_json_array_append_integer64},
 	{"JSONArray.PushNull", pawn_json_array_append_null},
 	{"JSONArray.PushString", pawn_json_array_append_string},
 	{"JSONArray.Remove", pawn_json_array_remove},
@@ -1186,16 +1349,19 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSON.Validate", pawn_json_validate},
 	{"JSON.GetParent", pawn_json_get_parent},
 	{"JSON.String", pawn_json_init_string},
-	{"JSON.Int", pawn_json_init_number},
+	{"JSON.Int", pawn_json_init_integer},
+	{"JSON.Int64", pawn_json_init_integer64},
 	{"JSON.Float", pawn_json_init_real},
 	{"JSON.Bool", pawn_json_init_bool},
 	{"JSON.Null", pawn_json_init_null},
 	{"JSON.DeepCopy", pawn_json_deep_copy},
 	{"JSON.GetString", pawn_json_get_string},
-	{"JSON.GetInt", pawn_json_get_number},
+	{"JSON.GetInt", pawn_json_get_integer},
 	{"JSON.GetFloat", pawn_json_get_real},
 	{"JSON.GetBool", pawn_json_get_bool},
 	{"JSON.SerialSize", pawn_json_serial_size},
+	{"JSON.EscapeSlashes", pawn_json_set_escape_slashes},
+	{"JSON.FloatSerialize", pawn_json_set_float_serialize},
 	{"JSON.Type.get", pawn_json_get_type},
 	{nullptr,	nullptr}
 };
