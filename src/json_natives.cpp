@@ -368,6 +368,24 @@ static cell_t pawn_json_get_string(IPluginContext *pContext, const cell_t *param
 	return 1;
 }
 
+static cell_t pawn_json_get_string_length(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	return json_value_get_string_len(handle);
+}
+
+static cell_t pawn_json_serialization_size(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	return json_serialization_size(handle);
+}
+
 static cell_t pawn_json_get_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
@@ -447,6 +465,17 @@ static cell_t pawn_json_array_get_string(IPluginContext *pContext, const cell_t 
 	pContext->StringToLocalUTF8(params[3], params[4], string, nullptr);
 
 	return 1;
+}
+
+static cell_t pawn_json_array_get_string_length(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Array *array = json_value_get_array(handle);
+
+	return json_array_get_string_len(array, params[2]);
 }
 
 static cell_t pawn_json_array_is_null(IPluginContext *pContext, const cell_t *params)
@@ -782,6 +811,22 @@ static cell_t pawn_json_object_get_string(IPluginContext *pContext, const cell_t
 	return 1;
 }
 
+static cell_t pawn_json_object_get_string_length(IPluginContext *pContext, const cell_t *params)
+{
+	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
+
+	if (handle == nullptr) return BAD_HANDLE;
+
+	JSON_Object *object = json_value_get_object(handle);
+	
+	char *key;
+	pContext->LocalToString(params[2], &key);
+
+	bool is_dot = params[3];
+
+	return is_dot ? json_object_dotget_string_len(object, key) : json_object_get_string_len(object, key);;
+}
+
 static cell_t pawn_json_object_get_integer(IPluginContext *pContext, const cell_t *params)
 {
 	JSON_Value *handle = GetJSONFromHandle(pContext, params[1]);
@@ -1035,8 +1080,6 @@ static cell_t pawn_json_object_set_integer64(IPluginContext *pContext, const cel
 	JSON_Value *test = json_value_init_integer(123456);
 	JSON_Status status = json_object_set_value(object, key, test);
 
-	printf("status: %d\n", status);
-
 	JSON_Status result = is_dot ? json_object_dotset_integer(object, key, strtoll(val, nullptr, 10)) : json_object_set_integer(object, key, strtoll(val, nullptr, 10));
 
 	return result == JSONSuccess;
@@ -1213,7 +1256,7 @@ static cell_t pawn_json_set_float_serialize(IPluginContext *pContext, const cell
 	return 1;
 }
 
-const sp_nativeinfo_t JsonNatives[] =
+const sp_nativeinfo_t json_natives[] =
 {
 	{"json_parse", pawn_json_parse},
 	{"json_equals", pawn_json_equals},
@@ -1236,6 +1279,7 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_get_bool", pawn_json_get_bool},
 	{"json_array_get_value", pawn_json_array_get_value},
 	{"json_array_get_string", pawn_json_array_get_string},
+	{"json_array_get_string_length", pawn_json_array_get_string_length},
 	{"json_array_get_count", pawn_json_array_get_count},
 	{"json_array_get_integer", pawn_json_array_get_integer},
 	{"json_array_get_integer64", pawn_json_array_get_integer64},
@@ -1260,6 +1304,7 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_array_clear", pawn_json_array_clear},
 	{"json_object_get_value", pawn_json_object_get_value},
 	{"json_object_get_string", pawn_json_object_get_string},
+	{"json_object_get_string_length", pawn_json_object_get_string_length},
 	{"json_object_get_integer", pawn_json_object_get_integer},
 	{"json_object_get_integer64", pawn_json_object_get_integer64},
 	{"json_object_get_real", pawn_json_object_get_real},
@@ -1267,8 +1312,8 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"json_object_get_count", pawn_json_object_get_count},
 	{"json_object_get_name", pawn_json_object_get_name},
 	{"json_object_get_value_at", pawn_json_object_get_value_at},
-	{"json_object_has_value", pawn_json_object_has_value},
 	{"json_object_has_key", pawn_json_object_has_key},
+	{"json_object_has_value", pawn_json_object_has_value},
 	{"json_object_is_null", pawn_json_object_is_null},
 	{"json_object_set_value", pawn_json_object_set_value},
 	{"json_object_set_string", pawn_json_object_set_string},
@@ -1294,12 +1339,13 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONObject.GetInt", pawn_json_object_get_integer},
 	{"JSONObject.GetInt64", pawn_json_object_get_integer64},
 	{"JSONObject.GetString", pawn_json_object_get_string},
+	{"JSONObject.GetStringLength", pawn_json_object_get_string_length},
 	{"JSONObject.Clear", pawn_json_object_clear},
 	{"JSONObject.IsNull", pawn_json_object_is_null},
 	{"JSONObject.GetName", pawn_json_object_get_name},
 	{"JSONObject.GetValueAt", pawn_json_object_get_value_at},
-	{"JSONObject.HasValue", pawn_json_object_has_value},
 	{"JSONObject.HasKey", pawn_json_object_has_key},
+	{"JSONObject.HasValue", pawn_json_object_has_value},
 	{"JSONObject.Set", pawn_json_object_set_value},
 	{"JSONObject.SetBool", pawn_json_object_set_bool},
 	{"JSONObject.SetFloat", pawn_json_object_set_real},
@@ -1321,6 +1367,7 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSONArray.GetInt", pawn_json_array_get_integer},
 	{"JSONArray.GetInt64", pawn_json_array_get_integer64},
 	{"JSONArray.GetString", pawn_json_array_get_string},
+	{"JSONArray.GetStringLength", pawn_json_array_get_string_length},
 	{"JSONArray.IsNull", pawn_json_array_is_null},
 	{"JSONArray.Set", pawn_json_array_replace_value},
 	{"JSONArray.SetBool", pawn_json_array_replace_bool},
@@ -1356,6 +1403,7 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSON.Null", pawn_json_init_null},
 	{"JSON.DeepCopy", pawn_json_deep_copy},
 	{"JSON.GetString", pawn_json_get_string},
+	{"JSON.GetStringLength", pawn_json_get_string_length},
 	{"JSON.GetInt", pawn_json_get_integer},
 	{"JSON.GetFloat", pawn_json_get_real},
 	{"JSON.GetBool", pawn_json_get_bool},
@@ -1363,5 +1411,6 @@ const sp_nativeinfo_t JsonNatives[] =
 	{"JSON.EscapeSlashes", pawn_json_set_escape_slashes},
 	{"JSON.FloatSerialize", pawn_json_set_float_serialize},
 	{"JSON.Type.get", pawn_json_get_type},
+	{"JSON.SerializationSize.get", pawn_json_serialization_size},
 	{nullptr,	nullptr}
 };

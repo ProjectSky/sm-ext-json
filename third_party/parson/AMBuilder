@@ -1,0 +1,20 @@
+# vim: sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os
+
+builder.SetBuildFolder('libparson')
+
+rvalue = {}
+for cxx in builder.targets:
+  binary = Extension.StaticLibrary(builder, cxx, 'parson')
+  binary.compiler.includes += [
+    os.path.join(builder.sourcePath, 'third_party', 'parson'),
+  ]
+
+  if binary.compiler.family == 'clang':
+    binary.compiler.cflags += ['-Wno-attributes']
+
+  binary.sources += [
+    'parson.c',
+  ]
+
+  rvalue[binary.compiler.target.arch] = builder.Add(binary)

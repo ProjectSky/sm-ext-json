@@ -8,7 +8,7 @@ JSONHandler g_JSONHandler;
 
 bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 {
-	sharesys->AddNatives(myself, JsonNatives);
+	sharesys->AddNatives(myself, json_natives);
 	sharesys->RegisterLibrary(myself, "json");
 	
 	HandleAccess haJSON;

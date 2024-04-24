@@ -36,7 +36,7 @@ extern "C"
 
 #define PARSON_VERSION_MAJOR 1
 #define PARSON_VERSION_MINOR 5
-#define PARSON_VERSION_PATCH 2
+#define PARSON_VERSION_PATCH 3
 
 #define PARSON_VERSION_STRING "1.5.3"
 
@@ -146,7 +146,7 @@ extern "C"
 	JSON_Array *json_object_get_array(const JSON_Object *object, const char *name);
 	double json_object_get_number(const JSON_Object *object, const char *name);			/* returns 0 on fail */
 	long long json_object_get_integer(const JSON_Object *object, const char *name); /* returns 0 on fail */
-	int json_object_get_boolean(const JSON_Object *object, const char *name);				/* returns -1 on fail */
+	int json_object_get_boolean(const JSON_Object *object, const char *name);				/* returns 0 on fail */
 
 	/* dotget functions enable addressing values with dot notation in nested objects,
 	 just like in structs or c++/java/c# objects (e.g. objectA.objectB.value).
@@ -159,7 +159,7 @@ extern "C"
 	JSON_Array *json_object_dotget_array(const JSON_Object *object, const char *name);
 	double json_object_dotget_number(const JSON_Object *object, const char *name);		 /* returns 0 on fail */
 	long long json_object_dotget_integer(const JSON_Object *object, const char *name); /* returns 0 on fail */
-	int json_object_dotget_boolean(const JSON_Object *object, const char *name);			 /* returns -1 on fail */
+	int json_object_dotget_boolean(const JSON_Object *object, const char *name);			 /* returns 0 on fail */
 
 	/* Functions to get available names */
 	size_t json_object_get_count(const JSON_Object *object);
@@ -214,7 +214,7 @@ extern "C"
 	JSON_Array *json_array_get_array(const JSON_Array *array, size_t index);
 	double json_array_get_number(const JSON_Array *array, size_t index);		 /* returns 0 on fail */
 	long long json_array_get_integer(const JSON_Array *array, size_t index); /* returns 0 on fail */
-	int json_array_get_boolean(const JSON_Array *array, size_t index);			 /* returns -1 on fail */
+	int json_array_get_boolean(const JSON_Array *array, size_t index);			 /* returns 0 on fail */
 	size_t json_array_get_count(const JSON_Array *array);
 	JSON_Value *json_array_get_wrapping_value(const JSON_Array *array);
 

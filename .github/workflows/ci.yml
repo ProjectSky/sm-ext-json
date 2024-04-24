@@ -19,15 +19,15 @@ jobs:
           - ubuntu-latest
           - windows-latest
         sm_version:
-          - "1.10"
+          - "1.11"
           - "latest"
           
         include:
           - sm_version: latest
             sm_branch: master
             
-          - sm_version: "1.10"
-            sm_branch: "1.10-dev"
+          - sm_version: "1.11"
+            sm_branch: "1.11-dev"
           
           - os: windows-latest
             os_short: win
@@ -51,7 +51,7 @@ jobs:
           echo "CXX=clang++" >> $GITHUB_ENV
           
       - name: Getting SourceMod ${{ matrix.sm_version }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: alliedmodders/sourcemod
           ref: ${{ matrix.sm_branch }}
@@ -59,13 +59,15 @@ jobs:
           submodules: recursive
           
       - name: Getting AMBuild
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: alliedmodders/ambuild
           path: ambuild
           
       - name: Setting up Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
         
       - name: Getting ambuild
         run: |
@@ -73,7 +75,7 @@ jobs:
           pip install git+https://github.com/alliedmodders/ambuild
           
       - name: Getting own repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           path: extension
 
@@ -92,11 +94,11 @@ jobs:
               Write-Host "components were not installed"
           }
 
-      - uses: ilammy/msvc-dev-cmd@v1.12.1
+      - uses: microsoft/setup-msbuild@v2
+        if: runner.os == 'Windows'
         with:
-            arch: 'x86'
-            vsversion: '2022'
-            toolset: '15'
+            msbuild-architecture: x64
+            vs-version: '15'
       - name: Compiling ${{ github.event.repository.name }} files
         working-directory: extension
         run: |
@@ -106,7 +108,7 @@ jobs:
           ambuild
           
       - name: Uploading package
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: sm-ext-json-sm${{ matrix.sm_version }}-${{ matrix.os_short }}-${{ env.GITHUB_SHA_SHORT }}
           path: extension/build/package

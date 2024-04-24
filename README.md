@@ -28,10 +28,10 @@ ambuild
 - [x] Int64 support
 - [ ] example script
 
-## Known issues
-* This is my first porting an extension, so it might have a lot of issues
-* Some functions will crash the server if passed incorrect data
-* incompatible with rip-ext due to naming conflict
+## NOTES
+* This is my first time dev the SM extension, so there may be many issues with it.
+* Some functions might cause the server to crash if incorrect parameters are passed.
+* Due to naming conflicts, it's incompatible with rip-ext.
 
 ## Link
 * https://github.com/alliedmodders/sourcemod/issues/1468

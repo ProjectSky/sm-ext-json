@@ -21,6 +21,6 @@ public:
 extern JsonExtension g_JsonExtension;
 extern HandleType_t htJSON;
 extern JSONHandler g_JSONHandler;
-extern const sp_nativeinfo_t JsonNatives[];
+extern const sp_nativeinfo_t json_natives[];
 
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_

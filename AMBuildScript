@@ -301,7 +301,7 @@ builder.targets = builder.CloneableList(Extension.all_targets)
 
 # Add additional buildscripts here
 BuildScripts = [
-  'src/AMBuilder',
+  'AMBuilder',
 ]
 
 if builder.backend == 'amb2':
