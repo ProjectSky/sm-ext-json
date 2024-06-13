@@ -10,6 +10,7 @@ for cxx in builder.targets:
   binary.sources += [
     'src/extension.cpp',
     'src/json_natives.cpp',
+    'src/parsonwrapper.cpp',
     os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp'),
   ]
 

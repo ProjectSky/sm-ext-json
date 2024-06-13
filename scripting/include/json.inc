@@ -144,11 +144,11 @@ methodmap JSON < Handle
   public static native JSON Int64(const char[] value);
 
   /**
-  * Inits a real number
+  * Inits a float number
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   *
-  * @param value             Real number that the handle will be initialized with
+  * @param value             float that the handle will be initialized with
   *
   * @return                  JSON handle, Invalid_JSON if error occurred
   */
@@ -219,11 +219,11 @@ methodmap JSON < Handle
   public static native int GetInt64(const JSON value, char[] buffer, int maxlength);
 
   /**
-  * Gets a real number
+  * Gets a float number
   *
   * @param value             JSON handle
   *
-  * @return                  Real number
+  * @return                  float value
   * @error                   If passed value is not a valid handle
   */
   public static native float GetFloat(const JSON value);
@@ -237,18 +237,6 @@ methodmap JSON < Handle
   * @error                   If passed value is not a valid handle
   */
   public static native bool GetBool(const JSON value);
-
-  /**
-  * Gets size of serialization
-  *
-  * @param value             JSON handle
-  * @param pretty            True to count size for pretty format, false to not
-  * @param null_byte         True to include null byte, false to not
-  *
-  * @return                  Size of serialized string
-  * @error                   If passed handle is not a valid value
-  */
-  public static native int SerialSize(const JSON value, bool pretty = false, bool null_byte = false);
 
   /**
   * Sets if slashes should be escaped or not when serializing JSON
@@ -271,9 +259,18 @@ methodmap JSON < Handle
   /**
   * Gets json data serialization size
   * Include null character
-  * If pass in pretty format it will return incorrect size, use JSON.SerialSize
+  * If pass in pretty format it will return incorrect size, use SerialSizePretty
   */
-  property int SerializationSize {
+  property int SerialSize {
+    public native get();
+  }
+
+  /**
+  * Gets json data serialization size
+  * Include null character
+  * If pass not pretty format it will return incorrect size, use SerialSize
+  */
+  property int SerialSizePretty {
     public native get();
   }
 
@@ -507,7 +504,7 @@ methodmap JSONObject < JSON
   * @note                    It also removes the old value if any
   *
   * @param key               Key name
-  * @param value             Real number to set
+  * @param value             float to set
   * @param dot_not           True to use dot notation, false to not
   *
   * @return                  True if succeed, false otherwise
@@ -741,10 +738,10 @@ methodmap JSONArray < JSON
   public native bool SetBool(int index, bool value);
 
   /**
-  * Replaces an element in the array with real number
+  * Replaces an element in the array with float value
   *
   * @param index             Position in the array to be replaced
-  * @param value             Real number to set
+  * @param value             float to set
   *
   * @return                  True if succeed, false otherwise
   * @error                   If passed handle is not a valid array
@@ -817,7 +814,7 @@ methodmap JSONArray < JSON
   /**
   * Appends a float value in the array
   *
-  * @param value             Real number to set
+  * @param value             float to set
   *
   * @return                  True if succeed, false otherwise
   * @error                   If passed handle is not a valid array
@@ -1013,15 +1010,15 @@ native JSON json_init_integer(int value);
 native JSON json_init_integer64(const char[] value);
 
 /**
- * Inits a real number
+ * Inits a float value
  *
  * @note                     Needs to be freed using delete or CloseHandle()
  *
- * @param value              Real number that the handle will be initialized with
+ * @param value              float that the handle will be initialized with
  *
  * @return                   JSON handle, Invalid_JSON if error occurred
  */
-native JSON json_init_real(float value);
+native JSON json_init_float(float value);
 
 /**
  * Inits a boolean value
@@ -1088,14 +1085,14 @@ native int json_get_integer(const JSON value);
 native int json_get_integer64(const JSON value);
 
 /**
- * Gets a real number
+ * Gets a float value
  *
  * @param value              JSON handle
  *
- * @return                   Real number
+ * @return                   float value
  * @error                    If passed value is not a valid handle
  */
-native float json_get_real(const JSON value);
+native float json_get_float(const JSON value);
 
 /**
  * Gets a boolean value
@@ -1179,7 +1176,7 @@ native int json_array_get_integer(const JSON array, int index);
 native int json_array_get_integer64(const JSON array, int index, char[] buffer, int maxlength);
 
 /**
- * Gets a real number from the array
+ * Gets a float from the array
  *
  * @param array              Array handle
  * @param index              Position in the array (starting from 0)
@@ -1187,7 +1184,7 @@ native int json_array_get_integer64(const JSON array, int index, char[] buffer, 
  * @return                   The number as float
  * @error                    If passed handle is not a valid array
  */
-native float json_array_get_real(const JSON array, int index);
+native float json_array_get_float(const JSON array, int index);
 
 /**
  * Gets a boolean value from the array
@@ -1259,16 +1256,16 @@ native bool json_array_replace_integer(JSON array, int index, int integer);
 native bool json_array_replace_integer64(JSON array, int index, const char[] value);
 
 /**
- * Replaces an element in the array with real number
+ * Replaces an element in the array with float value
  *
  * @param array              Array handle
  * @param index              Position in the array to be replaced
- * @param number             Real number to set
+ * @param number             float to set
  *
  * @return                   True if succeed, false otherwise
  * @error                    If passed handle is not a valid array
  */
-native bool json_array_replace_real(JSON array, int index, float number);
+native bool json_array_replace_float(JSON array, int index, float number);
 
 /**
  * Replaces an element in the array with boolean value
@@ -1338,15 +1335,15 @@ native bool json_array_append_integer(JSON array, int integer);
 native bool json_array_append_integer64(JSON array, const char[] value);
 
 /**
- * Appends a real number in the array
+ * Appends a float number in the array
  *
  * @param array              Array handle
- * @param number             Real number to set
+ * @param number             float to set
  *
  * @return                   True if succeed, false otherwise
  * @error                    If passed handle is not a valid array
  */
-native bool json_array_append_real(JSON array, float number);
+native bool json_array_append_float(JSON array, float number);
 
 /**
  * Appends a boolean value in the array
@@ -1471,7 +1468,7 @@ native int json_object_get_integer(const JSON obj, const char[] key, bool dot_no
 native int json_object_get_integer64(const JSON obj, const char[] key, char[] buffer, int maxlength, bool dot_not = false);
 
 /**
- * Gets a real number from the object
+ * Gets a float number from the object
  *
  * @note                     If dot notation is used some values may be inaccessible
  *                           because valid names in JSON can contain dots
@@ -1480,10 +1477,10 @@ native int json_object_get_integer64(const JSON obj, const char[] key, char[] bu
  * @param key                Key name
  * @param dot_not            True to use dot notation, false to not
  *
- * @return                   Real number
+ * @return                   float value
  * @error                    If passed handle is not a valid object
  */
-native float json_object_get_real(const JSON obj, const char[] key, bool dot_not = false);
+native float json_object_get_float(const JSON obj, const char[] key, bool dot_not = false);
 
 /**
  * Gets a boolean value from the object
@@ -1642,7 +1639,7 @@ native bool json_object_set_integer(JSON obj, const char[] key, int integer, boo
 native bool json_object_set_integer64(JSON obj, const char[] key, const char[] value, bool dot_not = false);
 
 /**
- * Sets a real number in the object
+ * Sets a float number in the object
  *
  * @note                     If dot notation is used some values may be inaccessible
  *                           because valid names in JSON can contain dots
@@ -1650,13 +1647,13 @@ native bool json_object_set_integer64(JSON obj, const char[] key, const char[] v
  *
  * @param object             Object handle
  * @param key                Key name
- * @param number             Real number to set
+ * @param number             float to set
  * @param dot_not            True to use dot notation, false to not
  *
  * @return                   True if succeed, false otherwise
  * @error                    If passed handle is not a valid object
  */
-native bool json_object_set_real(JSON obj, const char[] key, float number, bool dot_not = false);
+native bool json_object_set_float(JSON obj, const char[] key, float number, bool dot_not = false);
 
 /**
  * Sets a boolean value in the object
@@ -1796,14 +1793,14 @@ public void __ext_json_SetNTVOptional()
 	MarkNativeAsOptional("json_init_string");
 	MarkNativeAsOptional("json_init_integer");
 	MarkNativeAsOptional("json_init_integer64");
-	MarkNativeAsOptional("json_init_real");
+	MarkNativeAsOptional("json_init_float");
 	MarkNativeAsOptional("json_init_bool");
 	MarkNativeAsOptional("json_init_null");
 	MarkNativeAsOptional("json_deep_copy");
 	MarkNativeAsOptional("json_get_string");
 	MarkNativeAsOptional("json_get_integer");
 	MarkNativeAsOptional("json_get_integer64");
-	MarkNativeAsOptional("json_get_real");
+	MarkNativeAsOptional("json_get_float");
 	MarkNativeAsOptional("json_get_bool");
 	MarkNativeAsOptional("json_array_get_value");
 	MarkNativeAsOptional("json_array_get_string");
@@ -1811,21 +1808,21 @@ public void __ext_json_SetNTVOptional()
 	MarkNativeAsOptional("json_array_get_count");
 	MarkNativeAsOptional("json_array_get_integer");
 	MarkNativeAsOptional("json_array_get_integer64");
-	MarkNativeAsOptional("json_array_get_real");
+	MarkNativeAsOptional("json_array_get_float");
 	MarkNativeAsOptional("json_array_get_bool");
 	MarkNativeAsOptional("json_array_is_null");
 	MarkNativeAsOptional("json_array_replace_value");
 	MarkNativeAsOptional("json_array_replace_string");
 	MarkNativeAsOptional("json_array_replace_integer");
 	MarkNativeAsOptional("json_array_replace_integer64");
-	MarkNativeAsOptional("json_array_replace_real");
+	MarkNativeAsOptional("json_array_replace_float");
 	MarkNativeAsOptional("json_array_replace_bool");
 	MarkNativeAsOptional("json_array_replace_null");
 	MarkNativeAsOptional("json_array_append_value");
 	MarkNativeAsOptional("json_array_append_string");
 	MarkNativeAsOptional("json_array_append_integer");
 	MarkNativeAsOptional("json_array_append_integer64");
-	MarkNativeAsOptional("json_array_append_real");
+	MarkNativeAsOptional("json_array_append_float");
 	MarkNativeAsOptional("json_array_append_bool");
 	MarkNativeAsOptional("json_array_append_null");
 	MarkNativeAsOptional("json_array_remove");
@@ -1835,7 +1832,7 @@ public void __ext_json_SetNTVOptional()
 	MarkNativeAsOptional("json_object_get_string_length");
 	MarkNativeAsOptional("json_object_get_integer");
 	MarkNativeAsOptional("json_object_get_integer64");
-	MarkNativeAsOptional("json_object_get_real");
+	MarkNativeAsOptional("json_object_get_float");
 	MarkNativeAsOptional("json_object_get_bool");
 	MarkNativeAsOptional("json_object_get_count");
 	MarkNativeAsOptional("json_object_get_name");
@@ -1847,7 +1844,7 @@ public void __ext_json_SetNTVOptional()
 	MarkNativeAsOptional("json_object_set_string");
 	MarkNativeAsOptional("json_object_set_integer");
 	MarkNativeAsOptional("json_object_set_integer64");
-	MarkNativeAsOptional("json_object_set_real");
+	MarkNativeAsOptional("json_object_set_float");
 	MarkNativeAsOptional("json_object_set_bool");
 	MarkNativeAsOptional("json_object_set_null");
 	MarkNativeAsOptional("json_object_remove");

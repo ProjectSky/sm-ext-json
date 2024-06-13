@@ -18,10 +18,10 @@ ambuild
 ```
 
 ## Native
-* see [json.inc](https://github.com/ProjectSky/sm-ext-json/blob/main/scripting/include/json.inc)
+* [json.inc](https://github.com/ProjectSky/sm-ext-json/blob/main/scripting/include/json.inc)
 
 # Binary files
-* https://github.com/ProjectSky/sm-ext-json/actions
+* [GitHub Actions](https://github.com/ProjectSky/sm-ext-json/actions)
 
 ## TODO
 - [x] windows support
