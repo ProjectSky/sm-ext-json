@@ -1,0 +1,29 @@
+# vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
+import os
+
+yyjson = builder.Build('third_party/yyjson/AMBuilder')
+
+for cxx in builder.targets:
+  binary = Extension.Library(builder, cxx, 'yyjson.ext')
+  arch = binary.compiler.target.arch
+
+  binary.sources += [
+    'src/extension.cpp',
+    'src/json_natives.cpp',
+    'src/yyjsonwrapper.cpp',
+    os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp'),
+  ]
+
+  binary.compiler.includes += [
+    os.path.join(builder.sourcePath, 'src'),
+    os.path.join(builder.sourcePath, 'third_party', 'yyjson'),
+  ]
+
+  if binary.compiler.target.platform == 'linux':
+    binary.compiler.includes += []
+	
+  binary.compiler.postlink += [
+    yyjson[arch].binary,
+  ]
+
+  Extension.extensions += [builder.Add(binary)]
