@@ -1,3 +1,5 @@
+# This project has been deprecated. The new project has moved to [sm-ext-yyjson](https://github.com/ProjectSky/sm-ext-yyjson) which is faster and more user-friendly.
+
 # SourceMod JSON Extension
 
 ## What is this?
