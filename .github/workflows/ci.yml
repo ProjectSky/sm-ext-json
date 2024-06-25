@@ -110,5 +110,5 @@ jobs:
       - name: Uploading package
         uses: actions/upload-artifact@v4
         with:
-          name: sm-ext-json-sm${{ matrix.sm_version }}-${{ matrix.os_short }}-${{ env.GITHUB_SHA_SHORT }}
+          name: sm-ext-yyjson-sm${{ matrix.sm_version }}-${{ matrix.os_short }}-${{ env.GITHUB_SHA_SHORT }}
           path: extension/build/package

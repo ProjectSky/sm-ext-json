@@ -27,7 +27,7 @@ ambuild
 * Not fully tested, some function may not work
 
 # Example
-``` c
+``` cpp
 // Create JSONObject
 YYJSONObject hJSONObject = new YYJSONObject();
 hJSONObject.SetInt("int", 1);
@@ -36,6 +36,7 @@ hJSONObject.SetFloat("float", 2.0);
 hJSONObject.SetBool("bool", true);
 hJSONObject.SetString("str", "Hello World");
 hJSONObject.SetNull("null");
+delete hJSONObject;
 /*
 {
   "int": 1,
@@ -55,6 +56,7 @@ hJSONArray.PushFloat(2.0);
 hJSONArray.PushBool(true);
 hJSONArray.PushString("Hello World");
 hJSONArray.PushNull();
+delete hJSONArray;
 /*
 [
   1,
@@ -69,6 +71,7 @@ hJSONArray.PushNull();
 // JSON POINTER: Create JSONObject
 YYJSONObject hJSONObject = new YYJSONObject();
 hJSONObject.PtrSetInt("/a/b/c", 1);
+delete hJSONObject;
 /*
 {
   "a": {
@@ -101,4 +104,28 @@ hJSONObject.PtrSetInt("/a/b/c", 1);
 YYJSONObject hPtrTest = YYJSON.Parse("example.json", true);
 hPtrTest.PtrGetInt("/int"); // 1234
 hPtrTest.PtrGetFloat("/arr/1"); // 1.2344
+delete hPtrTest;
+
+// Iteration: Objects
+char key[64];
+YYJSON val;
+for (int i = 0; i < hPtrTest.Size; i++)
+{
+  hPtrTest.GetName(i, key, sizeof(key));
+  PrintToServer("key: %s", key);
+  val = hPtrTest.GetValueAt(i);
+  // do something
+  delete val;
+}
+
+// Iteration: Arrays
+YYJSONArray arr = hPtrTest.PtrGet("/arr");
+YYJSON val;
+for (int i = 0; i < arr.Length; i++)
+{
+  val = arr.Get(i);
+  // do something
+  delete val;
+}
+delete arr;
 ```

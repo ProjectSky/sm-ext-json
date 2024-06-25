@@ -211,6 +211,24 @@ static cell_t pawn_json_get_subtype(IPluginContext *pContext, const cell_t *para
 	return yyjson_mut_get_subtype(handle->m_pVal_mut);
 }
 
+static cell_t pawn_json_is_array(IPluginContext *pContext, const cell_t *params)
+{
+	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_arr(handle->m_pVal_mut);
+}
+
+static cell_t pawn_json_is_object(IPluginContext *pContext, const cell_t *params)
+{
+	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_obj(handle->m_pVal_mut);
+}
+
 static cell_t pawn_json_init_object(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
@@ -1297,8 +1315,6 @@ static cell_t pawn_json_pointer_set(IPluginContext *pContext, const cell_t *para
 
 	if (!handle1 || !handle2) return BAD_HANDLE;
 
-	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
@@ -1387,8 +1403,6 @@ static cell_t pawn_json_pointer_add(IPluginContext *pContext, const cell_t *para
 	YYJsonWrapper *handle2 = g_JsonExtension.GetJSONPointer(pContext, params[3]);
 
 	if (!handle1 || !handle2) return BAD_HANDLE;
-
-	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
 	char *path;
 	pContext->LocalToString(params[2], &path);
@@ -1555,6 +1569,8 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.DeepCopy", pawn_json_deep_copy},
 	{"YYJSON.Type.get", pawn_json_get_type},
 	{"YYJSON.SubType.get", pawn_json_get_subtype},
+	{"YYJSON.IsArray.get", pawn_json_is_array},
+	{"YYJSON.IsObject.get", pawn_json_is_object},
 
 	// JSON CREATE & GET
 	{"YYJSON.CreateBool", pawn_json_create_bool},

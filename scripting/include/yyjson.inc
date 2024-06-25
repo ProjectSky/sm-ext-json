@@ -1,3 +1,8 @@
+#if defined _yyjson_included
+  #endinput
+#endif
+#define _yyjson_included
+
 enum YYJSON_TYPE
 {
   YYJSON_TYPE_NONE = 0,
@@ -51,8 +56,8 @@ methodmap YYJSON < Handle
 {
   /**
   * Write a document to JSON file with options
-	* 
-	* @note On 32-bit operating system, files larger than 2GB may fail to write
+  * 
+  * @note                    On 32-bit operating system, files larger than 2GB may fail to write
   *
   * @param file              The JSON file's path. If this path is NULL or invalid, the function will fail and return false. If this file is not empty, the content will be discarded
   * @param flag              The JSON write options
@@ -67,7 +72,7 @@ methodmap YYJSON < Handle
   * @param buffer            String buffer to write to
   * @param maxlength         Maximum length of the string buffer
   * @param flag              The JSON write options
-	* 
+  * 
   * @return                  True on success, false on failure
   */
   public native bool ToString(char[] buffer, int maxlength, YYJSON_WRITE_FLAG flag = YYJSON_WRITE_NOFLAG);
@@ -75,7 +80,7 @@ methodmap YYJSON < Handle
   /**
   * Parses JSON string or a file that contains JSON
   *
-  * @note                    Must be freed via delete or CloseHandle()
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param string            String or file to parse
   * @param is_file           True to treat string param as file, false otherwise
@@ -88,7 +93,7 @@ methodmap YYJSON < Handle
   /**
   * Copies and returns a new mutable value from input, returns NULL on error. This makes a deep-copy on the mutable value. The memory was managed by mutable document
   *
-  * @note                    Must be freed via delete or CloseHandle()
+  * @note                    Needs to be freed using delete or CloseHandle()
   * @note                    This function is recursive and may cause a stack overflow if the object level is too deep
   *
   * @param value1            JSON handle1
@@ -101,8 +106,8 @@ methodmap YYJSON < Handle
   /**
   * Returns whether two JSON values are equal (deep compare)
   *
-  * @note This function is recursive and may cause a stack overflow if the object level is too deep
-  * @note the result may be inaccurate if object has duplicate keys
+  * @note                    This function is recursive and may cause a stack overflow if the object level is too deep
+  * @note                    the result may be inaccurate if object has duplicate keys
   *
   * @param value1            JSON handle
   * @param value2            JSON handle
@@ -114,6 +119,7 @@ methodmap YYJSON < Handle
   /**
   * Creates and returns a boolean value
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param value             The boolean value to be set
   *
@@ -124,6 +130,7 @@ methodmap YYJSON < Handle
   /**
   * Creates and returns a float value
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param value             The float value to be set
   *
@@ -134,6 +141,7 @@ methodmap YYJSON < Handle
   /**
   * Creates and returns a int value
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param value             The int value to be set
   *
@@ -144,6 +152,7 @@ methodmap YYJSON < Handle
   /**
   * Creates and returns a intger64 value
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param value             The intger64 value to be set
   *
@@ -154,6 +163,8 @@ methodmap YYJSON < Handle
   /**
   * Creates and returns a string value
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param value             The string value to be set
   *
   * @return                  JSON handle, NULL on error
@@ -163,6 +174,7 @@ methodmap YYJSON < Handle
   /**
   * Creates and returns a null value
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @return                  JSON handle, NULL on error
   */
@@ -220,6 +232,7 @@ methodmap YYJSON < Handle
   /**
   * Get value by a JSON Pointer
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   *
@@ -230,7 +243,6 @@ methodmap YYJSON < Handle
   /**
   * Get boolean value by a JSON Pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   *
   * @return                  boolean value referenced by the JSON pointer
@@ -239,7 +251,6 @@ methodmap YYJSON < Handle
 
   /**
   * Get float value by a JSON Pointer
-  *
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   *
@@ -250,7 +261,6 @@ methodmap YYJSON < Handle
   /**
   * Get integer value by a JSON Pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   *
   * @return                  integer value referenced by the JSON pointer
@@ -259,7 +269,6 @@ methodmap YYJSON < Handle
 
   /**
   * Get integer64 value by a JSON Pointer
-  *
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param buffer            Buffer to copy to
@@ -271,7 +280,6 @@ methodmap YYJSON < Handle
   /**
   * Get string value by a JSON Pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param buffer            Buffer to copy to
   * @param maxlength         Maximum size of the buffer
@@ -282,7 +290,7 @@ methodmap YYJSON < Handle
   /**
   * Set value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The value to be set, pass NULL to remove
@@ -294,7 +302,7 @@ methodmap YYJSON < Handle
   /**
   * Set boolean value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The boolean value to be set, pass NULL to remove
@@ -306,7 +314,7 @@ methodmap YYJSON < Handle
   /**
   * Set float value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The float value to be set, pass NULL to remove
@@ -318,7 +326,7 @@ methodmap YYJSON < Handle
   /**
   * Set integer value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The integer value to be set, pass NULL to remove
@@ -330,7 +338,7 @@ methodmap YYJSON < Handle
   /**
   * Set intger64 value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The intger64 value to be set, pass NULL to remove
@@ -342,7 +350,7 @@ methodmap YYJSON < Handle
   /**
   * Set string value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The string value to be set, pass NULL to remove
@@ -354,7 +362,7 @@ methodmap YYJSON < Handle
   /**
   * Set null value by a JSON Pointer
   *
-	* @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
+  * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The null value to be set, pass NULL to remove
@@ -366,7 +374,6 @@ methodmap YYJSON < Handle
   /**
   * Add (insert) value by a JSON pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The value to be added
   *
@@ -376,7 +383,6 @@ methodmap YYJSON < Handle
 
   /**
   * Add (insert) boolean value by a JSON pointer
-  *
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The boolean value to be added
@@ -388,7 +394,6 @@ methodmap YYJSON < Handle
   /**
   * Add (insert) float value by a JSON pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The float value to be added
   *
@@ -398,7 +403,6 @@ methodmap YYJSON < Handle
 
   /**
   * Add (insert) integer value by a JSON pointer
-  *
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The int value to be added
@@ -410,7 +414,6 @@ methodmap YYJSON < Handle
   /**
   * Add (insert) integer64 value by a JSON pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The intger64 value to be added
   *
@@ -420,7 +423,6 @@ methodmap YYJSON < Handle
 
   /**
   * Add (insert) string value by a JSON pointer
-  *
   *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   * @param value             The str value to be added
@@ -432,7 +434,6 @@ methodmap YYJSON < Handle
   /**
   * Add (insert) null value by a JSON pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
@@ -442,24 +443,37 @@ methodmap YYJSON < Handle
   /**
   * Remove value by a JSON pointer
   *
-  *
   * @param path              The JSON pointer string (UTF-8 with null-terminator)
   *
   * @return                  true if removed value, false otherwise
   */
-	public native bool PtrRemove(const char[] path)
+  public native bool PtrRemove(const char[] path)
 
   /**
-  * Retrieves the type of the json
+  * Retrieves json type
   */
   property YYJSON_TYPE Type {
     public native get();
   }
 
   /**
-  * Retrieves the sub type
+  * Retrieves json subtype
   */
   property YYJSON_SUBTYPE SubType {
+    public native get();
+  }
+
+  /**
+  * Retrieves json is array
+  */
+  property bool IsArray {
+    public native get();
+  }
+
+  /**
+  * Retrieves json is object
+  */
+  property bool IsObject {
     public native get();
   }
 };
@@ -470,7 +484,7 @@ methodmap YYJSONObject < YYJSON
   * Creates a JSON object A JSON object maps strings (called "keys") to values Keys in a
   * JSON object are unique That is, there is at most one entry in the map for a given key
   *
-  * @note The JSONObject must be freed via delete or CloseHandle()
+  * @note Needs to be freed using delete or CloseHandle()
   */
   public native YYJSONObject();
   
@@ -489,19 +503,19 @@ methodmap YYJSONObject < YYJSON
   *
   * @param buffer            String buffer to load into the JSON object
   * @param flag              The JSON read options
-	* 
+  * 
   * @return                  Object handle, or null on failure
   */
   public static native YYJSONObject FromString(const char[] buffer, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
 
   /**
   * Gets a value from the object
-  *
-  * @note                    Needs to be freed using delete or CloseHandle()
+  * 
+  * @note                    This function takes a linear search time
   *
   * @param key               Key name
   *
-  * @return                  JSON handle, or null on failure
+  * @return                  Returns the value to which the specified key is mapped, or null if this object contains no mapping for the key
   */
   public native any Get(const char[] key);
 
@@ -571,7 +585,7 @@ methodmap YYJSONObject < YYJSON
   *
   * @param index             Position from which get key name
   *
-  * @return                  JSON handle, Invalid_JSON if error occurred
+  * @return                  Returns the value to which index
   */
   public native any GetValueAt(int index);
 
@@ -589,6 +603,8 @@ methodmap YYJSONObject < YYJSON
   * Replaces all matching keys with the new key
   * The key and new_key should be a null-terminated UTF-8 string
   * The new_key is copied and held by doc
+  * 
+  * @note                    This function takes a linear search time
   *
   * @param key               Key string
   * @param new_key           New key set
@@ -679,6 +695,7 @@ methodmap YYJSONObject < YYJSON
   /**
   * Removes a key and its value in the object
   *
+  * @note                    This function takes a linear search time
   *
   * @param key               Key name
   *
@@ -706,7 +723,7 @@ methodmap YYJSONArray < YYJSON
   /**
   * Creates a JSON array
   *
-  * The JSONArray must be freed via delete or CloseHandle()
+  * @note Needs to be freed using delete or CloseHandle()
   */
   public native YYJSONArray();
 
@@ -730,12 +747,12 @@ methodmap YYJSONArray < YYJSON
 
   /**
   * Gets a value from the array
-  *
-  * @note                    Needs to be freed using delete or CloseHandle()
+  * 
+  * @note                    This function takes a linear search time
   *
   * @param index             Position in the array (starting from 0)
   *
-  * @return                  JSON handle, Invalid_JSON if error occurred
+  * @return                  NULL if array is NULL/empty or the index is out of bounds
   */
   public native any Get(int index);
   
@@ -799,6 +816,8 @@ methodmap YYJSONArray < YYJSON
 
   /**
   * Replaces a value at index
+  * 
+  * @note                    This function takes a linear search time
   *
   * @param index             The index to which to replace the value
   * @param value             The new value to replace
@@ -929,6 +948,8 @@ methodmap YYJSONArray < YYJSON
 
   /**
   * Removes an element from the array
+  * 
+  * @note                    This function takes a linear search time
   *
   * @param index             Position in the array (starting from 0)
   *
@@ -939,7 +960,6 @@ methodmap YYJSONArray < YYJSON
   /**
   * Removes the first value in this array
   *
-  *
   * @return                  True if succeed, false otherwise
   */
   public native bool RemoveFirst();
@@ -947,19 +967,18 @@ methodmap YYJSONArray < YYJSON
   /**
   * Removes and returns the last value in this array
   *
-  *
   * @return                  True if succeed, false otherwise
   */
   public native bool RemoveLast();
 
   /**
   * Removes all values within a specified range in the array
-	* 
-	* @note                    This function takes a linear search time
+  * 
+  * @note                    This function takes a linear search time
   *
   * @param start_index       The start index of the range (0 is the first)
   * @param end_index         The number of items in the range (can be 0, but do nothing)
-	* 
+  * 
   *
   * @return                  True if succeed, false otherwise
   */
@@ -980,6 +999,7 @@ methodmap YYJSONArray < YYJSON
   }
 
   /**
+  * @note This function takes a linear search time
   * Returns the first element of this array
   * Returns NULL if arr is NULL/empty or type is not array
   * Needs to be freed using delete or CloseHandle()
@@ -989,6 +1009,7 @@ methodmap YYJSONArray < YYJSON
   }
 
   /**
+  * @note This function takes a linear search time 
   * Returns the last element of this array
   * Returns NULL if arr is NULL/empty or type is not array
   * Needs to be freed using delete or CloseHandle()
