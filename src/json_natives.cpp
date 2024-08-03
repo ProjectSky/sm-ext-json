@@ -7,7 +7,7 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 
 	bool is_file = params[2];
 
-	yyjson_read_err pErr;
+	yyjson_read_err readError;
 	yyjson_doc *idoc;
 
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
@@ -16,22 +16,29 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 	{
 		char realpath[PLATFORM_MAX_PATH];
 		smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", string);
-		idoc = yyjson_read_file(realpath, params[3], NULL, &pErr);
+		idoc = yyjson_read_file(realpath, params[3], NULL, &readError);
+
+		if (readError.code) {
+			pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+			return BAD_HANDLE;
+		}
+
 		pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
 		pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut);
 	}
 	else
 	{
-		idoc = yyjson_read(string, strlen(string), params[3]);
+		idoc = yyjson_read_opts(string, strlen(string), params[3], NULL, &readError);
+
+		if (readError.code) {
+			pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+			return BAD_HANDLE;
+		}
+
 		pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
 	}
 
 	yyjson_doc_free(idoc);
-
-	if (pErr.code) {
-		pContext->ThrowNativeError("read error (%u): %s at position: %d", pErr.code, pErr.msg, pErr.pos);
-		return BAD_HANDLE;
-	}
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -39,7 +46,7 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create parse handle (error %d)", err);
+		pContext->ReportError("Could not create parse handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -72,11 +79,22 @@ static cell_t pawn_json_deep_copy(IPluginContext *pContext, const cell_t *params
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create deep_copy handle (error %d)", err);
+		pContext->ReportError("Could not create deep_copy handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
 	return pYYJsonWrapper->m_handle;
+}
+
+static cell_t pawn_json_get_type_desc(IPluginContext *pContext, const cell_t *params)
+{
+	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_type_desc(handle->m_pVal_mut), NULL);
+
+	return 1;
 }
 
 static cell_t pawn_json_object_from_string(IPluginContext *pContext, const cell_t *params)
@@ -86,7 +104,14 @@ static cell_t pawn_json_object_from_string(IPluginContext *pContext, const cell_
 
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
-	yyjson_doc *idoc = yyjson_read(string, strlen(string), params[2]);
+	yyjson_read_err readError;
+	yyjson_doc *idoc = yyjson_read_opts(string, strlen(string), params[2], NULL, &readError);
+
+	if (readError.code) {
+		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+		return BAD_HANDLE;
+	}
+
 	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
 	yyjson_doc_free(idoc);
 	
@@ -96,7 +121,7 @@ static cell_t pawn_json_object_from_string(IPluginContext *pContext, const cell_
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create object_from_string handle (error %d)", err);
+		pContext->ReportError("Could not create object_from_string handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -112,16 +137,17 @@ static cell_t pawn_json_object_from_file(IPluginContext *pContext, const cell_t 
 	smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", path);
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
-	yyjson_read_err pErr;
-	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], NULL, &pErr);
+	yyjson_read_err readError;
+	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], NULL, &readError);
+
+	if (readError.code) {
+		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+		return BAD_HANDLE;
+	}
+
 	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut);
 	yyjson_doc_free(idoc);
-
-	if (pErr.code) {
-		pContext->ThrowNativeError("read error (%u): %s at position: %d", pErr.code, pErr.msg, pErr.pos);
-		return BAD_HANDLE;
-	}
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -129,7 +155,7 @@ static cell_t pawn_json_object_from_file(IPluginContext *pContext, const cell_t 
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create object_from_file handle (error %d)", err);
+		pContext->ReportError("Could not create object_from_file handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -143,7 +169,14 @@ static cell_t pawn_json_array_from_string(IPluginContext *pContext, const cell_t
 	
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
-	yyjson_doc *idoc = yyjson_read(string, strlen(string), params[2]);
+	yyjson_read_err readError;
+	yyjson_doc *idoc = yyjson_read_opts(string, strlen(string), params[2], NULL, &readError);
+
+	if (readError.code) {
+		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+		return BAD_HANDLE;
+	}
+
 	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
 	yyjson_doc_free(idoc);
 	
@@ -153,7 +186,7 @@ static cell_t pawn_json_array_from_string(IPluginContext *pContext, const cell_t
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create array_from_string handle (error %d)", err);
+		pContext->ReportError("Could not create array_from_string handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -169,16 +202,17 @@ static cell_t pawn_json_array_from_file(IPluginContext *pContext, const cell_t *
 	smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", path);
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 	
-	yyjson_read_err pErr;
-	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], NULL, &pErr);
+	yyjson_read_err readError;
+	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], NULL, &readError);
+
+	if (readError.code) {
+		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
+		return BAD_HANDLE;
+	}
+
 	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut);
 	yyjson_doc_free(idoc);
-
-	if (pErr.code) {
-		pContext->ThrowNativeError("read error (%u): %s at position: %d", pErr.code, pErr.msg, pErr.pos);
-		return BAD_HANDLE;
-	}
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -186,7 +220,7 @@ static cell_t pawn_json_array_from_file(IPluginContext *pContext, const cell_t *
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create array_from_file handle (error %d)", err);
+		pContext->ReportError("Could not create array_from_file handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -243,7 +277,7 @@ static cell_t pawn_json_init_object(IPluginContext *pContext, const cell_t *para
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create init_object handle (error %d)", err);
+		pContext->ReportError("Could not create init_object handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -262,7 +296,7 @@ static cell_t pawn_json_create_bool(IPluginContext *pContext, const cell_t *para
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create create_bool handle (error %d)", err);
+		pContext->ReportError("Could not create create_bool handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -281,7 +315,7 @@ static cell_t pawn_json_create_float(IPluginContext *pContext, const cell_t *par
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create create_float handle (error %d)", err);
+		pContext->ReportError("Could not create create_float handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -300,7 +334,7 @@ static cell_t pawn_json_create_int(IPluginContext *pContext, const cell_t *param
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create create_int handle (error %d)", err);
+		pContext->ReportError("Could not create create_int handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -322,7 +356,7 @@ static cell_t pawn_json_create_intger64(IPluginContext *pContext, const cell_t *
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create create_intger64 handle (error %d)", err);
+		pContext->ReportError("Could not create create_intger64 handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -344,7 +378,7 @@ static cell_t pawn_json_create_string(IPluginContext *pContext, const cell_t *pa
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create create_string handle (error %d)", err);
+		pContext->ReportError("Could not create create_string handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -358,7 +392,7 @@ static cell_t pawn_json_get_bool(IPluginContext *pContext, const cell_t *params)
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_bool(handle->m_pVal_mut)) {
-		pContext->ThrowNativeError("JSON value is not a bool!");
+		pContext->ReportError("JSON value is not a bool!");
 		return 0;
 	}
 
@@ -372,7 +406,7 @@ static cell_t pawn_json_get_float(IPluginContext *pContext, const cell_t *params
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_real(handle->m_pVal_mut)) {
-		pContext->ThrowNativeError("JSON value is not a float!");
+		pContext->ReportError("JSON value is not a float!");
 		return 0;
 	}
 
@@ -386,7 +420,7 @@ static cell_t pawn_json_get_int(IPluginContext *pContext, const cell_t *params)
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
-		pContext->ThrowNativeError("JSON value is not a integer!");
+		pContext->ReportError("JSON value is not a integer!");
 		return 0;
 	}
 
@@ -400,7 +434,7 @@ static cell_t pawn_json_get_intger64(IPluginContext *pContext, const cell_t *par
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_uint(handle->m_pVal_mut)) {
-		pContext->ThrowNativeError("JSON value is not a integer64!");
+		pContext->ReportError("JSON value is not a integer64!");
 		return 0;
 	}
 
@@ -418,7 +452,7 @@ static cell_t pawn_json_get_string(IPluginContext *pContext, const cell_t *param
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_str(handle->m_pVal_mut)) {
-		pContext->ThrowNativeError("JSON value is not a str!");
+		pContext->ReportError("JSON value is not a str!");
 		return 0;
 	}
 
@@ -439,7 +473,7 @@ static cell_t pawn_json_create_null(IPluginContext *pContext, const cell_t *para
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create create_null handle (error %d)", err);
+		pContext->ReportError("Could not create create_null handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -459,7 +493,7 @@ static cell_t pawn_json_init_array(IPluginContext *pContext, const cell_t *param
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create init_array handle (error %d)", err);
+		pContext->ReportError("Could not create init_array handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -490,7 +524,7 @@ static cell_t pawn_json_array_get_value(IPluginContext *pContext, const cell_t *
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create array_get_value handle (error %d)", err);
+		pContext->ReportError("Could not create array_get_value handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -512,7 +546,7 @@ static cell_t pawn_json_array_get_first(IPluginContext *pContext, const cell_t *
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create array_get_first handle (error %d)", err);
+		pContext->ReportError("Could not create array_get_first handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -534,7 +568,7 @@ static cell_t pawn_json_array_get_last(IPluginContext *pContext, const cell_t *p
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create array_get_last handle (error %d)", err);
+		pContext->ReportError("Could not create array_get_last handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -839,12 +873,12 @@ static cell_t pawn_json_to_file(IPluginContext *pContext, const cell_t *params)
 	char realpath[PLATFORM_MAX_PATH];
 	smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", path);
 
-	yyjson_write_err err;
+	yyjson_write_err writeError;
 
-	bool is_success = yyjson_mut_write_file(realpath, handle->m_pDocument_mut, params[3], NULL, &err);
+	bool is_success = yyjson_mut_write_file(realpath, handle->m_pDocument_mut, params[3], NULL, &writeError);
 
-	if (err.code) {
-		pContext->ThrowNativeError("write error (%u): %s", err.code, err.msg);
+	if (writeError.code) {
+		pContext->ReportError("write error (%u): %s", writeError.code, writeError.msg);
 		return BAD_HANDLE;
 	}
 
@@ -860,30 +894,27 @@ static cell_t pawn_json_object_get_count(IPluginContext *pContext, const cell_t 
 	return yyjson_mut_obj_size(handle->m_pVal_mut);
 }
 
-static cell_t pawn_json_object_get_name(IPluginContext *pContext, const cell_t *params)
+static cell_t pawn_json_object_get_key_name_by_index(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
 	if (!handle) return 0;
 
-	if (!yyjson_mut_is_obj(handle->m_pVal_mut)) {
-		return 0;
-	}
-
-	size_t count = 0;
 	yyjson_mut_obj_iter iter;
 	yyjson_mut_obj_iter_init(handle->m_pVal_mut, &iter);
 
-	yyjson_mut_val *key;
-	while ((key = yyjson_mut_obj_iter_next(&iter))) {
-		if (count == params[2]) {
-			pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(key), NULL);
-			break;
-		}
-		count++;
+	for (size_t i = 0; i < params[2]; i++) {
+		yyjson_mut_obj_iter_next(&iter);
 	}
 
-	return 0;
+	yyjson_mut_val *key = yyjson_mut_obj_iter_next(&iter);
+	if (!key) {
+		return 0;
+	}
+
+	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(key), NULL);
+
+	return 1;
 }
 
 static cell_t pawn_json_object_get_value_at(IPluginContext *pContext, const cell_t *params)
@@ -892,31 +923,28 @@ static cell_t pawn_json_object_get_value_at(IPluginContext *pContext, const cell
 
 	if (!handle) return BAD_HANDLE;
 
-	if (!yyjson_mut_is_obj(handle->m_pVal_mut)) {
-		return 0;
-	}
-
-	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	HandleError err;
-	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-
-	size_t count = 0;
 	yyjson_mut_obj_iter iter;
 	yyjson_mut_obj_iter_init(handle->m_pVal_mut, &iter);
 
-	yyjson_mut_val *key;
-	while ((key = yyjson_mut_obj_iter_next(&iter))) {
-		if (count == params[2]) {
-			pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj_iter_get_val(key);
-			pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
-			break;
-		}
-		count++;
+	for (size_t i = 0; i < params[2]; i++) {
+		yyjson_mut_obj_iter_next(&iter);
 	}
+
+	yyjson_mut_val *key = yyjson_mut_obj_iter_next(&iter);
+	if (!key) {
+		return 0;
+	}
+
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
+	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
+
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj_iter_get_val(key);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
 
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create object_get_value_at handle (error %d)", err);
+		pContext->ReportError("Could not create object_get_value_at handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -941,7 +969,7 @@ static cell_t pawn_json_object_get_value(IPluginContext *pContext, const cell_t 
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create array_get_value handle (error %d)", err);
+		pContext->ReportError("Could not create array_get_value handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -1075,9 +1103,11 @@ static cell_t pawn_json_object_has_key(IPluginContext *pContext, const cell_t *p
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
+	yyjson_mut_obj_iter iter = yyjson_mut_obj_iter_with(handle->m_pVal_mut);
+
 	bool ptr_use = params[3];
 	
-	yyjson_mut_val *val = ptr_use ? yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, key) : yyjson_mut_obj_get(handle->m_pVal_mut, key);
+	yyjson_mut_val *val = ptr_use ? yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, key) : yyjson_mut_obj_iter_get(&iter, key);
 
 	return val != NULL;
 }
@@ -1107,7 +1137,7 @@ static cell_t pawn_json_object_set_value(IPluginContext *pContext, const cell_t 
 
 	yyjson_mut_val *val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut, handle2->m_pVal_mut);
 
-	return yyjson_mut_obj_put(handle1->m_pVal_mut, yyjson_mut_str(handle1->m_pDocument_mut, key), val_copy);;
+	return yyjson_mut_obj_put(handle1->m_pVal_mut, yyjson_mut_str(handle1->m_pDocument_mut, key), val_copy);
 }
 
 static cell_t pawn_json_object_set_bool(IPluginContext *pContext, const cell_t *params)
@@ -1207,7 +1237,13 @@ static cell_t pawn_json_pointer_get(IPluginContext *pContext, const cell_t *para
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, path);
+	yyjson_ptr_err ptrGetError;
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -1215,7 +1251,7 @@ static cell_t pawn_json_pointer_get(IPluginContext *pContext, const cell_t *para
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
-		pContext->ThrowNativeError("Could not create json_pointer_get handle (error %d)", err);
+		pContext->ReportError("Could not create json_pointer_get handle (error %d)", err);
 		return BAD_HANDLE;
 	}
 	
@@ -1231,9 +1267,13 @@ static cell_t pawn_json_pointer_get_bool(IPluginContext *pContext, const cell_t 
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, path);
+	yyjson_ptr_err ptrGetError;
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
 
-	if (!ptr) return BAD_HANDLE;
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
 
 	return yyjson_mut_get_bool(ptr);
 }
@@ -1247,9 +1287,13 @@ static cell_t pawn_json_pointer_get_float(IPluginContext *pContext, const cell_t
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, path);
+	yyjson_ptr_err ptrGetError;
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
 
-	if (!ptr) return BAD_HANDLE;
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
 
 	return sp_ftoc(yyjson_mut_get_real(ptr));
 }
@@ -1263,9 +1307,13 @@ static cell_t pawn_json_pointer_get_int(IPluginContext *pContext, const cell_t *
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, path);
+	yyjson_ptr_err ptrGetError;
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
 
-	if (!ptr) return BAD_HANDLE;
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
 
 	return yyjson_mut_get_int(ptr);
 }
@@ -1279,9 +1327,13 @@ static cell_t pawn_json_pointer_get_integer64(IPluginContext *pContext, const ce
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, path);
+	yyjson_ptr_err ptrGetError;
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
 
-	if (!ptr) return BAD_HANDLE;
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
 
 	char result[20];
 	snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(ptr));
@@ -1299,9 +1351,13 @@ static cell_t pawn_json_pointer_get_string(IPluginContext *pContext, const cell_
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, path);
+	yyjson_ptr_err ptrGetError;
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
 
-	if (!ptr) return BAD_HANDLE;
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
 	
 	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(ptr), NULL);
 
@@ -1320,7 +1376,15 @@ static cell_t pawn_json_pointer_set(IPluginContext *pContext, const cell_t *para
 
 	yyjson_mut_val *val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut, handle2->m_pVal_mut);
 
-	return yyjson_mut_doc_ptr_set(handle1->m_pDocument_mut, path, val_copy);
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle1->m_pDocument_mut, path, strlen(path), val_copy, true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_set_bool(IPluginContext *pContext, const cell_t *params)
@@ -1332,7 +1396,15 @@ static cell_t pawn_json_pointer_set_bool(IPluginContext *pContext, const cell_t 
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_set(handle->m_pDocument_mut, path, yyjson_mut_bool(handle->m_pDocument_mut, params[3]));
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut, params[3]), true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_set_float(IPluginContext *pContext, const cell_t *params)
@@ -1344,7 +1416,15 @@ static cell_t pawn_json_pointer_set_float(IPluginContext *pContext, const cell_t
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_set(handle->m_pDocument_mut, path, yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])));
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_set_int(IPluginContext *pContext, const cell_t *params)
@@ -1356,7 +1436,15 @@ static cell_t pawn_json_pointer_set_int(IPluginContext *pContext, const cell_t *
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_set(handle->m_pDocument_mut, path, yyjson_mut_int(handle->m_pDocument_mut, params[3]));
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, params[3]), true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_set_integer64(IPluginContext *pContext, const cell_t *params)
@@ -1369,7 +1457,15 @@ static cell_t pawn_json_pointer_set_integer64(IPluginContext *pContext, const ce
 	pContext->LocalToString(params[2], &path);
 	pContext->LocalToString(params[3], &val);
 
-	return yyjson_mut_doc_ptr_set(handle->m_pDocument_mut, path, yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, NULL, 10)));
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, NULL, 10)), true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_set_string(IPluginContext *pContext, const cell_t *params)
@@ -1382,7 +1478,15 @@ static cell_t pawn_json_pointer_set_string(IPluginContext *pContext, const cell_
 	pContext->LocalToString(params[2], &path);
 	pContext->LocalToString(params[3], &str);
 
-	return yyjson_mut_doc_ptr_set(handle->m_pDocument_mut, path, yyjson_mut_str(handle->m_pDocument_mut, str));
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_str(handle->m_pDocument_mut, str), true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_set_null(IPluginContext *pContext, const cell_t *params)
@@ -1394,7 +1498,15 @@ static cell_t pawn_json_pointer_set_null(IPluginContext *pContext, const cell_t 
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_set(handle->m_pDocument_mut, path, yyjson_mut_null(handle->m_pDocument_mut));
+	yyjson_ptr_err ptrSetError;
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut), true, NULL, &ptrSetError);
+
+	if (ptrSetError.code) {
+		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add(IPluginContext *pContext, const cell_t *params)
@@ -1409,7 +1521,15 @@ static cell_t pawn_json_pointer_add(IPluginContext *pContext, const cell_t *para
 
 	yyjson_mut_val *val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut, handle2->m_pVal_mut);
 
-	return yyjson_mut_doc_ptr_add(handle1->m_pDocument_mut, path, val_copy);
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle1->m_pDocument_mut, path, strlen(path), val_copy, true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add_bool(IPluginContext *pContext, const cell_t *params)
@@ -1421,7 +1541,15 @@ static cell_t pawn_json_pointer_add_bool(IPluginContext *pContext, const cell_t 
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_add(handle->m_pDocument_mut, path, yyjson_mut_bool(handle->m_pDocument_mut, params[3]));
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut, params[3]), true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add_float(IPluginContext *pContext, const cell_t *params)
@@ -1433,7 +1561,15 @@ static cell_t pawn_json_pointer_add_float(IPluginContext *pContext, const cell_t
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_add(handle->m_pDocument_mut, path, yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])));
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add_int(IPluginContext *pContext, const cell_t *params)
@@ -1445,7 +1581,15 @@ static cell_t pawn_json_pointer_add_int(IPluginContext *pContext, const cell_t *
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_add(handle->m_pDocument_mut, path, yyjson_mut_int(handle->m_pDocument_mut, params[3]));
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, params[3]), true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add_integer64(IPluginContext *pContext, const cell_t *params)
@@ -1458,7 +1602,15 @@ static cell_t pawn_json_pointer_add_integer64(IPluginContext *pContext, const ce
 	pContext->LocalToString(params[2], &path);
 	pContext->LocalToString(params[3], &val);
 
-	return yyjson_mut_doc_ptr_add(handle->m_pDocument_mut, path, yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, NULL, 10)));
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, NULL, 10)), true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add_string(IPluginContext *pContext, const cell_t *params)
@@ -1471,7 +1623,15 @@ static cell_t pawn_json_pointer_add_string(IPluginContext *pContext, const cell_
 	pContext->LocalToString(params[2], &path);
 	pContext->LocalToString(params[3], &str);
 
-	return yyjson_mut_doc_ptr_add(handle->m_pDocument_mut, path, yyjson_mut_str(handle->m_pDocument_mut, str));
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_str(handle->m_pDocument_mut, str), true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_add_null(IPluginContext *pContext, const cell_t *params)
@@ -1483,7 +1643,15 @@ static cell_t pawn_json_pointer_add_null(IPluginContext *pContext, const cell_t 
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_doc_ptr_add(handle->m_pDocument_mut, path, yyjson_mut_null(handle->m_pDocument_mut));
+	yyjson_ptr_err ptrAddError;
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut), true, NULL, &ptrAddError);
+
+	if (ptrAddError.code) {
+		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 static cell_t pawn_json_pointer_remove(IPluginContext *pContext, const cell_t *params)
@@ -1495,7 +1663,15 @@ static cell_t pawn_json_pointer_remove(IPluginContext *pContext, const cell_t *p
 	char *path;
 	pContext->LocalToString(params[2], &path);
 
-	return yyjson_mut_ptr_remove(handle->m_pVal_mut, path) != NULL;
+	yyjson_ptr_err ptrRemoveError;
+	bool success = yyjson_mut_ptr_removex(handle->m_pVal_mut, path, strlen(path), NULL, &ptrRemoveError) != NULL;
+
+	if (ptrRemoveError.code) {
+		pContext->ReportError("JSON pointer remove error (%u): %s at position: %d", ptrRemoveError.code, ptrRemoveError.msg, ptrRemoveError.pos);
+		return BAD_HANDLE;
+	}
+
+	return success;
 }
 
 const sp_nativeinfo_t json_natives[] =
@@ -1511,7 +1687,7 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSONObject.GetString", pawn_json_object_get_string},
 	{"YYJSONObject.Clear", pawn_json_object_clear},
 	{"YYJSONObject.IsNull", pawn_json_object_is_null},
-	{"YYJSONObject.GetName", pawn_json_object_get_name},
+	{"YYJSONObject.GetKeyName", pawn_json_object_get_key_name_by_index},
 	{"YYJSONObject.GetValueAt", pawn_json_object_get_value_at},
 	{"YYJSONObject.HasKey", pawn_json_object_has_key},
 	{"YYJSONObject.RenameKey", pawn_json_object_rename_key},
@@ -1567,6 +1743,7 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.Parse", pawn_json_parse},
 	{"YYJSON.Equals", pawn_json_equals},
 	{"YYJSON.DeepCopy", pawn_json_deep_copy},
+	{"YYJSON.GetTypeDesc", pawn_json_get_type_desc},
 	{"YYJSON.Type.get", pawn_json_get_type},
 	{"YYJSON.SubType.get", pawn_json_get_subtype},
 	{"YYJSON.IsArray.get", pawn_json_is_array},

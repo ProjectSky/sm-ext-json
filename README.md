@@ -111,7 +111,7 @@ char key[64];
 YYJSON val;
 for (int i = 0; i < hPtrTest.Size; i++)
 {
-  hPtrTest.GetName(i, key, sizeof(key));
+  hPtrTest.GetKeyName(i, key, sizeof(key));
   PrintToServer("key: %s", key);
   val = hPtrTest.GetValueAt(i);
   // do something

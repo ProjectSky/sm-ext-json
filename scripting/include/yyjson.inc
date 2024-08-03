@@ -104,6 +104,18 @@ methodmap YYJSON < Handle
   public static native any DeepCopy(const YYJSON value1, const YYJSON value2);
 
   /**
+  * Returns the JSON value's type description
+  *
+	* @param value             JSON handle
+  * @param buffer            String buffer to write to
+  * @param maxlength         Maximum length of the string buffer
+  * 
+  * @return                  The return value should be one of these strings: "raw", "null", "string", 
+	*                          "array", "object", "true", "false", "uint", "sint", "real", "unknown".
+  */
+	public static native void GetTypeDesc(const YYJSON value, char[] buffer, int maxlength);
+
+  /**
   * Returns whether two JSON values are equal (deep compare)
   *
   * @note                    This function is recursive and may cause a stack overflow if the object level is too deep
@@ -576,7 +588,7 @@ methodmap YYJSONObject < YYJSON
   *
   * @return                  True on success, false on failure
   */
-  public native bool GetName(int index, char[] buffer, int maxlength);
+  public native bool GetKeyName(int index, char[] buffer, int maxlength);
 
   /**
   * Gets a value at the specified position from the object

@@ -10,7 +10,7 @@ class JsonExtension : public SDKExtension
 public:
 	virtual bool SDK_OnLoad(char *error, size_t maxlength, bool late);
 	virtual void SDK_OnUnload();
-	YYJsonWrapper *GetJSONPointer(IPluginContext *pContext, Handle_t handle);
+	virtual YYJsonWrapper *GetJSONPointer(IPluginContext *pContext, Handle_t handle);
 };
 
 class JSONHandler : public IHandleTypeDispatch
