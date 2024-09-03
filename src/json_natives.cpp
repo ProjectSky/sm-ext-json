@@ -90,7 +90,7 @@ static cell_t pawn_json_get_type_desc(IPluginContext *pContext, const cell_t *pa
 {
 	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return 0;
+	if (!handle) return BAD_HANDLE;
 
 	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_type_desc(handle->m_pVal_mut), NULL);
 
@@ -307,7 +307,7 @@ static cell_t pawn_json_create_float(IPluginContext *pContext, const cell_t *par
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
-	pYYJsonWrapper->m_pVal_mut = yyjson_mut_real(pYYJsonWrapper->m_pDocument_mut, sp_ctof(params[1]));
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_float(pYYJsonWrapper->m_pDocument_mut, sp_ctof(params[1]));
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -683,7 +683,7 @@ static cell_t pawn_json_array_replace_float(IPluginContext *pContext, const cell
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_real(handle->m_pDocument_mut, sp_ftoc(params[3]))) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_float(handle->m_pDocument_mut, sp_ftoc(params[3]))) != NULL;
 }
 
 static cell_t pawn_json_array_replace_integer(IPluginContext *pContext, const cell_t *params)
@@ -753,7 +753,7 @@ static cell_t pawn_json_array_append_float(IPluginContext *pContext, const cell_
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_append(handle->m_pVal_mut, yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[2])));
+	return yyjson_mut_arr_append(handle->m_pVal_mut, yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[2])));
 }
 
 static cell_t pawn_json_array_append_integer(IPluginContext *pContext, const cell_t *params)
@@ -898,7 +898,7 @@ static cell_t pawn_json_object_get_key_name_by_index(IPluginContext *pContext, c
 {
 	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return 0;
+	if (!handle) return BAD_HANDLE;
 
 	yyjson_mut_obj_iter iter;
 	yyjson_mut_obj_iter_init(handle->m_pVal_mut, &iter);
@@ -1161,7 +1161,7 @@ static cell_t pawn_json_object_set_float(IPluginContext *pContext, const cell_t 
 	char *key;
 	pContext->LocalToString(params[2], &key);
 	
-	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])));
+	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])));
 }
 
 static cell_t pawn_json_object_set_integer(IPluginContext *pContext, const cell_t *params)
@@ -1417,7 +1417,7 @@ static cell_t pawn_json_pointer_set_float(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1562,7 +1562,7 @@ static cell_t pawn_json_pointer_add_float(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_real(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);

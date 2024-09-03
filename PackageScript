@@ -37,3 +37,8 @@ for cxx_task in Extension.extensions:
     builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions/x64'])
   else:
     builder.AddCopy(cxx_task.binary, folder_map['addons/sourcemod/extensions'])
+
+# Copy include files
+CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
+  [ 'yyjson.inc']
+)
