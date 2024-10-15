@@ -59,19 +59,19 @@ enum YYJSON_WRITE_FLAG
 */
 stock YYJSON_WRITE_FLAG YYJSON_REAL_PRECISION(int n)
 {
-	return view_as<YYJSON_WRITE_FLAG>(n << 28);
+  return view_as<YYJSON_WRITE_FLAG>((n) << 28);
 }
 
 methodmap YYJSON < Handle
 {
   /**
   * Write a document to JSON file with options
-  *
+  * 
   * @note                    On 32-bit operating system, files larger than 2GB may fail to write
   *
   * @param file              The JSON file's path. If this path is NULL or invalid, the function will fail and return false. If this file is not empty, the content will be discarded
   * @param flag              The JSON write options
-  *
+  * 
   * @return                  True on success, false on failure
   */
   public native bool ToFile(const char[] file, YYJSON_WRITE_FLAG flag = YYJSON_WRITE_NOFLAG);
@@ -82,7 +82,7 @@ methodmap YYJSON < Handle
   * @param buffer            String buffer to write to
   * @param maxlength         Maximum length of the string buffer
   * @param flag              The JSON write options
-  *
+  * 
   * @return                  True on success, false on failure
   */
   public native bool ToString(char[] buffer, int maxlength, YYJSON_WRITE_FLAG flag = YYJSON_WRITE_NOFLAG);
@@ -119,7 +119,7 @@ methodmap YYJSON < Handle
   * @param value             JSON handle
   * @param buffer            String buffer to write to
   * @param maxlength         Maximum length of the string buffer
-  *
+  * 
   * @return                  The return value should be one of these strings: "raw", "null", "string", 
   *                          "array", "object", "true", "false", "uint", "sint", "real", "unknown".
   */
@@ -235,7 +235,7 @@ methodmap YYJSON < Handle
   * @param value             JSON handle
   * @param buffer            Buffer to copy to
   * @param maxlength         Maximum size of the buffer
-  *
+  * 
   * @return                  True on success, false on failure
   */
   public static native bool GetInt64(const YYJSON value, char[] buffer, int maxlength);
@@ -250,6 +250,15 @@ methodmap YYJSON < Handle
   * @return                  True on success, false on failure
   */
   public static native bool GetString(const YYJSON value, char[] buffer, int maxlength);
+
+  /**
+  * Get JSON Handle serialized length in bytes (including null-terminator)
+  *
+  * @param value             JSON handle
+  *
+  * @return                  serialized length
+  */
+  public static native int GetSerializedLength(const YYJSON value);
 
   /**
   * Get value by a JSON Pointer
@@ -308,6 +317,24 @@ methodmap YYJSON < Handle
   *
   */
   public native bool PtrGetString(const char[] path, char[] buffer, int maxlength)
+
+  /**
+  * Get value is null by a JSON Pointer
+  *
+  * @param path              The JSON pointer string (UTF-8 with null-terminator)
+  *
+  */
+  public native bool PtrGetIsNull(const char[] path)
+
+  /**
+  * Get JSON content length (string length, array size, object size) 
+  * Returns 0 if val is NULL or type is not string/array/object
+  *
+  * @param path              The JSON pointer string (UTF-8 with null-terminator)
+  *
+  * @return                  JSON content length
+  */
+  public native int PtrGetContentLength(const char[] path)
 
   /**
   * Set value by a JSON Pointer
@@ -498,6 +525,13 @@ methodmap YYJSON < Handle
   property bool IsObject {
     public native get();
   }
+
+  /**
+  * Retrieves json serialized length
+  */
+  property int SerializedLength {
+    public native get();
+  }
 };
 
 methodmap YYJSONObject < YYJSON
@@ -515,7 +549,7 @@ methodmap YYJSONObject < YYJSON
   *
   * @param file              File to read from
   * @param flag              The JSON read options
-  *
+  * 
   * @return                  Object handle, or null on failure
   */
   public static native YYJSONObject FromFile(const char[] file, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
@@ -532,7 +566,7 @@ methodmap YYJSONObject < YYJSON
 
   /**
   * Gets a value from the object
-  *
+  * 
   * @note                    This function takes a linear search time
   *
   * @param key               Key name
@@ -769,7 +803,7 @@ methodmap YYJSONArray < YYJSON
 
   /**
   * Gets a value from the array
-  *
+  * 
   * @note                    This function takes a linear search time
   *
   * @param index             Position in the array (starting from 0)
@@ -970,7 +1004,7 @@ methodmap YYJSONArray < YYJSON
 
   /**
   * Removes an element from the array
-  *
+  * 
   * @note                    This function takes a linear search time
   *
   * @param index             Position in the array (starting from 0)
@@ -995,7 +1029,7 @@ methodmap YYJSONArray < YYJSON
 
   /**
   * Removes all values within a specified range in the array
-  *
+  * 
   * @note                    This function takes a linear search time
   *
   * @param start_index       The start index of the range (0 is the first)

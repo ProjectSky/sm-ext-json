@@ -16,33 +16,33 @@ static cell_t pawn_json_parse(IPluginContext *pContext, const cell_t *params)
 	{
 		char realpath[PLATFORM_MAX_PATH];
 		smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", string);
-		idoc = yyjson_read_file(realpath, params[3], NULL, &readError);
+		idoc = yyjson_read_file(realpath, params[3], nullptr, &readError);
 
 		if (readError.code) {
 			pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
 			return BAD_HANDLE;
 		}
 
-		pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
+		pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, nullptr);
 		pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut);
 	}
 	else
 	{
-		idoc = yyjson_read_opts(string, strlen(string), params[3], NULL, &readError);
+		idoc = yyjson_read_opts(string, strlen(string), params[3], nullptr, &readError);
 
 		if (readError.code) {
 			pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
 			return BAD_HANDLE;
 		}
 
-		pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
+		pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, nullptr);
 	}
 
 	yyjson_doc_free(idoc);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -75,7 +75,7 @@ static cell_t pawn_json_deep_copy(IPluginContext *pContext, const cell_t *params
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -92,7 +92,7 @@ static cell_t pawn_json_get_type_desc(IPluginContext *pContext, const cell_t *pa
 
 	if (!handle) return BAD_HANDLE;
 
-	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_type_desc(handle->m_pVal_mut), NULL);
+	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_type_desc(handle->m_pVal_mut), nullptr);
 
 	return 1;
 }
@@ -105,19 +105,19 @@ static cell_t pawn_json_object_from_string(IPluginContext *pContext, const cell_
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
 	yyjson_read_err readError;
-	yyjson_doc *idoc = yyjson_read_opts(string, strlen(string), params[2], NULL, &readError);
+	yyjson_doc *idoc = yyjson_read_opts(string, strlen(string), params[2], nullptr, &readError);
 
 	if (readError.code) {
 		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
 		return BAD_HANDLE;
 	}
 
-	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, nullptr);
 	yyjson_doc_free(idoc);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -138,20 +138,20 @@ static cell_t pawn_json_object_from_file(IPluginContext *pContext, const cell_t 
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
 	yyjson_read_err readError;
-	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], NULL, &readError);
+	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], nullptr, &readError);
 
 	if (readError.code) {
 		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
 		return BAD_HANDLE;
 	}
 
-	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut);
 	yyjson_doc_free(idoc);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -170,19 +170,19 @@ static cell_t pawn_json_array_from_string(IPluginContext *pContext, const cell_t
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
 	yyjson_read_err readError;
-	yyjson_doc *idoc = yyjson_read_opts(string, strlen(string), params[2], NULL, &readError);
+	yyjson_doc *idoc = yyjson_read_opts(string, strlen(string), params[2], nullptr, &readError);
 
 	if (readError.code) {
 		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
 		return BAD_HANDLE;
 	}
 
-	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, nullptr);
 	yyjson_doc_free(idoc);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -203,20 +203,20 @@ static cell_t pawn_json_array_from_file(IPluginContext *pContext, const cell_t *
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 	
 	yyjson_read_err readError;
-	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], NULL, &readError);
+	yyjson_doc *idoc = yyjson_read_file(realpath, params[2], nullptr, &readError);
 
 	if (readError.code) {
 		pContext->ReportError("read error (%u): %s at position: %d", readError.code, readError.msg, readError.pos);
 		return BAD_HANDLE;
 	}
 
-	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_doc_mut_copy(idoc, nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut);
 	yyjson_doc_free(idoc);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -266,14 +266,14 @@ static cell_t pawn_json_is_object(IPluginContext *pContext, const cell_t *params
 static cell_t pawn_json_init_object(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj(pYYJsonWrapper->m_pDocument_mut);
 
 	yyjson_mut_doc_set_root(pYYJsonWrapper->m_pDocument_mut, pYYJsonWrapper->m_pVal_mut);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -287,12 +287,12 @@ static cell_t pawn_json_init_object(IPluginContext *pContext, const cell_t *para
 static cell_t pawn_json_create_bool(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_bool(pYYJsonWrapper->m_pDocument_mut, params[1]);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -306,12 +306,12 @@ static cell_t pawn_json_create_bool(IPluginContext *pContext, const cell_t *para
 static cell_t pawn_json_create_float(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_float(pYYJsonWrapper->m_pDocument_mut, sp_ctof(params[1]));
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -325,12 +325,12 @@ static cell_t pawn_json_create_float(IPluginContext *pContext, const cell_t *par
 static cell_t pawn_json_create_int(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_int(pYYJsonWrapper->m_pDocument_mut, params[1]);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -347,12 +347,12 @@ static cell_t pawn_json_create_intger64(IPluginContext *pContext, const cell_t *
 	pContext->LocalToString(params[1], &val);
 
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
-	pYYJsonWrapper->m_pVal_mut = yyjson_mut_uint(pYYJsonWrapper->m_pDocument_mut, strtoll(val, NULL, 10));
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_uint(pYYJsonWrapper->m_pDocument_mut, strtoll(val, nullptr, 10));
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -369,12 +369,12 @@ static cell_t pawn_json_create_string(IPluginContext *pContext, const cell_t *pa
 	pContext->LocalToString(params[1], &string);
 
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
-	pYYJsonWrapper->m_pVal_mut = yyjson_mut_str(pYYJsonWrapper->m_pDocument_mut, string);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_strcpy(pYYJsonWrapper->m_pDocument_mut, string);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -392,7 +392,7 @@ static cell_t pawn_json_get_bool(IPluginContext *pContext, const cell_t *params)
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_bool(handle->m_pVal_mut)) {
-		pContext->ReportError("JSON value is not a bool!");
+		pContext->ReportError("JSON value is not a boolean");
 		return 0;
 	}
 
@@ -406,7 +406,7 @@ static cell_t pawn_json_get_float(IPluginContext *pContext, const cell_t *params
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_real(handle->m_pVal_mut)) {
-		pContext->ReportError("JSON value is not a float!");
+		pContext->ReportError("JSON value is not a float");
 		return 0;
 	}
 
@@ -420,7 +420,7 @@ static cell_t pawn_json_get_int(IPluginContext *pContext, const cell_t *params)
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
-		pContext->ReportError("JSON value is not a integer!");
+		pContext->ReportError("JSON value is not a integer");
 		return 0;
 	}
 
@@ -433,14 +433,14 @@ static cell_t pawn_json_get_intger64(IPluginContext *pContext, const cell_t *par
 
 	if (!handle) return BAD_HANDLE;
 
-	if (!yyjson_mut_is_uint(handle->m_pVal_mut)) {
-		pContext->ReportError("JSON value is not a integer64!");
+	if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
+		pContext->ReportError("JSON value is not a integer64");
 		return 0;
 	}
 
 	char result[20];
 	snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(handle->m_pVal_mut));
-	pContext->StringToLocalUTF8(params[2], params[3], result, NULL);
+	pContext->StringToLocalUTF8(params[2], params[3], result, nullptr);
 
 	return 1;
 }
@@ -452,24 +452,42 @@ static cell_t pawn_json_get_string(IPluginContext *pContext, const cell_t *param
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_str(handle->m_pVal_mut)) {
-		pContext->ReportError("JSON value is not a str!");
+		pContext->ReportError("JSON value is not a string");
 		return 0;
 	}
 
-	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_str(handle->m_pVal_mut), NULL);
+	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_str(handle->m_pVal_mut), nullptr);
 
 	return 1;
+}
+
+static cell_t pawn_json_get_serialized_length(IPluginContext *pContext, const cell_t *params)
+{
+	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	size_t json_size;
+
+	char *json_str = yyjson_mut_val_write(handle->m_pVal_mut, 0, &json_size);
+
+	if (json_str) {
+		free(json_str);
+		return json_size+1;
+	}
+
+	return 0;
 }
 
 static cell_t pawn_json_create_null(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_null(pYYJsonWrapper->m_pDocument_mut);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -483,13 +501,13 @@ static cell_t pawn_json_create_null(IPluginContext *pContext, const cell_t *para
 static cell_t pawn_json_init_array(IPluginContext *pContext, const cell_t *params)
 {
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
-	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(NULL);
+	pYYJsonWrapper->m_pDocument_mut = yyjson_mut_doc_new(nullptr);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_arr(pYYJsonWrapper->m_pDocument_mut);
 	yyjson_mut_doc_set_root(pYYJsonWrapper->m_pDocument_mut, pYYJsonWrapper->m_pVal_mut);
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -520,7 +538,7 @@ static cell_t pawn_json_array_get_value(IPluginContext *pContext, const cell_t *
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -542,7 +560,7 @@ static cell_t pawn_json_array_get_first(IPluginContext *pContext, const cell_t *
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -564,7 +582,7 @@ static cell_t pawn_json_array_get_last(IPluginContext *pContext, const cell_t *p
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -626,7 +644,7 @@ static cell_t pawn_json_array_get_integer64(IPluginContext *pContext, const cell
 
 	char result[20];
 	snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(arr));
-	pContext->StringToLocalUTF8(params[3], params[4], result, NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
 
 	return 1;
 }
@@ -641,7 +659,7 @@ static cell_t pawn_json_array_get_string(IPluginContext *pContext, const cell_t 
 
 	if (!arr) return BAD_HANDLE;
 	
-	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(arr), NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(arr), nullptr);
 
 	return 1;
 }
@@ -665,7 +683,7 @@ static cell_t pawn_json_array_replace_value(IPluginContext *pContext, const cell
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], handle->m_pVal_mut) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], handle->m_pVal_mut) != nullptr;
 }
 
 static cell_t pawn_json_array_replace_bool(IPluginContext *pContext, const cell_t *params)
@@ -674,7 +692,7 @@ static cell_t pawn_json_array_replace_bool(IPluginContext *pContext, const cell_
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_bool(handle->m_pDocument_mut, params[3])) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_bool(handle->m_pDocument_mut, params[3])) != nullptr;
 }
 
 static cell_t pawn_json_array_replace_float(IPluginContext *pContext, const cell_t *params)
@@ -683,7 +701,7 @@ static cell_t pawn_json_array_replace_float(IPluginContext *pContext, const cell
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_float(handle->m_pDocument_mut, sp_ftoc(params[3]))) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_float(handle->m_pDocument_mut, sp_ftoc(params[3]))) != nullptr;
 }
 
 static cell_t pawn_json_array_replace_integer(IPluginContext *pContext, const cell_t *params)
@@ -692,7 +710,7 @@ static cell_t pawn_json_array_replace_integer(IPluginContext *pContext, const ce
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_int(handle->m_pDocument_mut, params[3])) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_int(handle->m_pDocument_mut, params[3])) != nullptr;
 }
 
 static cell_t pawn_json_array_replace_integer64(IPluginContext *pContext, const cell_t *params)
@@ -704,7 +722,7 @@ static cell_t pawn_json_array_replace_integer64(IPluginContext *pContext, const 
 	char *val;
 	pContext->LocalToString(params[3], &val);
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_uint(handle->m_pDocument_mut, strtoll(val, NULL, 10))) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_uint(handle->m_pDocument_mut, strtoll(val, nullptr, 10))) != nullptr;
 }
 
 static cell_t pawn_json_array_replace_null(IPluginContext *pContext, const cell_t *params)
@@ -713,7 +731,7 @@ static cell_t pawn_json_array_replace_null(IPluginContext *pContext, const cell_
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_null(handle->m_pDocument_mut)) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_null(handle->m_pDocument_mut)) != nullptr;
 }
 
 static cell_t pawn_json_array_replace_string(IPluginContext *pContext, const cell_t *params)
@@ -725,7 +743,7 @@ static cell_t pawn_json_array_replace_string(IPluginContext *pContext, const cel
 	char *val;
 	pContext->LocalToString(params[3], &val);
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_str(handle->m_pDocument_mut, val)) != NULL;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_strcpy(handle->m_pDocument_mut, val)) != nullptr;
 }
 
 static cell_t pawn_json_array_append_value(IPluginContext *pContext, const cell_t *params)
@@ -774,7 +792,7 @@ static cell_t pawn_json_array_append_integer64(IPluginContext *pContext, const c
 	char *val;
 	pContext->LocalToString(params[2], &val);
 
-	return yyjson_mut_arr_append(handle->m_pVal_mut, yyjson_mut_uint(handle->m_pDocument_mut, strtoll(val, NULL, 10)));
+	return yyjson_mut_arr_append(handle->m_pVal_mut, yyjson_mut_uint(handle->m_pDocument_mut, strtoll(val, nullptr, 10)));
 }
 
 static cell_t pawn_json_array_append_null(IPluginContext *pContext, const cell_t *params)
@@ -795,7 +813,7 @@ static cell_t pawn_json_array_append_string(IPluginContext *pContext, const cell
 	char *str;
 	pContext->LocalToString(params[2], &str);
 
-	return yyjson_mut_arr_append(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, str));
+	return yyjson_mut_arr_append(handle->m_pVal_mut, yyjson_mut_strcpy(handle->m_pDocument_mut, str));
 }
 
 static cell_t pawn_json_array_remove(IPluginContext *pContext, const cell_t *params)
@@ -804,7 +822,7 @@ static cell_t pawn_json_array_remove(IPluginContext *pContext, const cell_t *par
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_remove(handle->m_pVal_mut, params[2]) != NULL;
+	return yyjson_mut_arr_remove(handle->m_pVal_mut, params[2]) != nullptr;
 }
 
 static cell_t pawn_json_array_remove_first(IPluginContext *pContext, const cell_t *params)
@@ -813,7 +831,7 @@ static cell_t pawn_json_array_remove_first(IPluginContext *pContext, const cell_
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_remove_first(handle->m_pVal_mut) != NULL;
+	return yyjson_mut_arr_remove_first(handle->m_pVal_mut) != nullptr;
 }
 
 static cell_t pawn_json_array_remove_last(IPluginContext *pContext, const cell_t *params)
@@ -822,7 +840,7 @@ static cell_t pawn_json_array_remove_last(IPluginContext *pContext, const cell_t
 
 	if (!handle) return BAD_HANDLE;
 
-	return yyjson_mut_arr_remove_last(handle->m_pVal_mut) != NULL;
+	return yyjson_mut_arr_remove_last(handle->m_pVal_mut) != nullptr;
 }
 
 static cell_t pawn_json_array_remove_range(IPluginContext *pContext, const cell_t *params)
@@ -849,10 +867,10 @@ static cell_t pawn_json_to_string(IPluginContext *pContext, const cell_t *params
 
 	if (!handle) return BAD_HANDLE;
 
-	char *json_str = yyjson_mut_val_write(handle->m_pVal_mut, params[4], NULL);
+	char *json_str = yyjson_mut_val_write(handle->m_pVal_mut, params[4], nullptr);
 
 	if (json_str) {
-		pContext->StringToLocalUTF8(params[2], params[3], json_str, NULL);
+		pContext->StringToLocalUTF8(params[2], params[3], json_str, nullptr);
 
 		free(json_str);
 		return 1;
@@ -875,7 +893,7 @@ static cell_t pawn_json_to_file(IPluginContext *pContext, const cell_t *params)
 
 	yyjson_write_err writeError;
 
-	bool is_success = yyjson_mut_write_file(realpath, handle->m_pDocument_mut, params[3], NULL, &writeError);
+	bool is_success = yyjson_mut_write_file(realpath, handle->m_pDocument_mut, params[3], nullptr, &writeError);
 
 	if (writeError.code) {
 		pContext->ReportError("write error (%u): %s", writeError.code, writeError.msg);
@@ -912,7 +930,7 @@ static cell_t pawn_json_object_get_key_name_by_index(IPluginContext *pContext, c
 		return 0;
 	}
 
-	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(key), NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(key), nullptr);
 
 	return 1;
 }
@@ -940,7 +958,7 @@ static cell_t pawn_json_object_get_value_at(IPluginContext *pContext, const cell
 	YYJsonWrapper *pYYJsonWrapper = new YYJsonWrapper();
 
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj_iter_get_val(key);
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -965,7 +983,7 @@ static cell_t pawn_json_object_get_value(IPluginContext *pContext, const cell_t 
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -1039,7 +1057,7 @@ static cell_t pawn_json_object_get_integer64(IPluginContext *pContext, const cel
 
 	char result[20];
 	snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(obj));
-	pContext->StringToLocalUTF8(params[3], params[4], result, NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
 
 	return 1;
 }
@@ -1057,7 +1075,7 @@ static cell_t pawn_json_object_get_string(IPluginContext *pContext, const cell_t
 
 	if (!obj) return BAD_HANDLE;
 	
-	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(obj), NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(obj), nullptr);
 
 	return 1;
 }
@@ -1109,7 +1127,7 @@ static cell_t pawn_json_object_has_key(IPluginContext *pContext, const cell_t *p
 	
 	yyjson_mut_val *val = ptr_use ? yyjson_mut_doc_ptr_get(handle->m_pDocument_mut, key) : yyjson_mut_obj_iter_get(&iter, key);
 
-	return val != NULL;
+	return val != nullptr;
 }
 
 static cell_t pawn_json_object_rename_key(IPluginContext *pContext, const cell_t *params)
@@ -1149,7 +1167,7 @@ static cell_t pawn_json_object_set_bool(IPluginContext *pContext, const cell_t *
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_bool(handle->m_pDocument_mut,  params[3]));
+	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_bool(handle->m_pDocument_mut, params[3]));
 }
 
 static cell_t pawn_json_object_set_float(IPluginContext *pContext, const cell_t *params)
@@ -1186,7 +1204,7 @@ static cell_t pawn_json_object_set_integer64(IPluginContext *pContext, const cel
 	pContext->LocalToString(params[2], &key);
 	pContext->LocalToString(params[3], &val);
 
-	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_uint(handle->m_pDocument_mut, strtoll(val, NULL, 10)));
+	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_uint(handle->m_pDocument_mut, strtoll(val, nullptr, 10)));
 }
 
 static cell_t pawn_json_object_set_null(IPluginContext *pContext, const cell_t *params)
@@ -1211,7 +1229,7 @@ static cell_t pawn_json_object_set_string(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &key);
 	pContext->LocalToString(params[3], &value);
 
-	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_str(handle->m_pDocument_mut, value));
+	return yyjson_mut_obj_put(handle->m_pVal_mut, yyjson_mut_str(handle->m_pDocument_mut, key), yyjson_mut_strcpy(handle->m_pDocument_mut, value));
 }
 
 static cell_t pawn_json_object_remove(IPluginContext *pContext, const cell_t *params)
@@ -1223,7 +1241,7 @@ static cell_t pawn_json_object_remove(IPluginContext *pContext, const cell_t *pa
 	char *key;
 	pContext->LocalToString(params[2], &key);
 
-	return yyjson_mut_obj_remove_key(handle->m_pVal_mut, key) != NULL;
+	return yyjson_mut_obj_remove_key(handle->m_pVal_mut, key) != nullptr;
 }
 
 static cell_t pawn_json_pointer_get(IPluginContext *pContext, const cell_t *params)
@@ -1238,7 +1256,7 @@ static cell_t pawn_json_pointer_get(IPluginContext *pContext, const cell_t *para
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1247,7 +1265,7 @@ static cell_t pawn_json_pointer_get(IPluginContext *pContext, const cell_t *para
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, NULL, &err);
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper, &sec, nullptr, &err);
 	
 	if (!pYYJsonWrapper->m_handle)
 	{
@@ -1268,7 +1286,7 @@ static cell_t pawn_json_pointer_get_bool(IPluginContext *pContext, const cell_t 
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1293,7 +1311,7 @@ static cell_t pawn_json_pointer_get_float(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1313,7 +1331,7 @@ static cell_t pawn_json_pointer_get_int(IPluginContext *pContext, const cell_t *
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1333,7 +1351,7 @@ static cell_t pawn_json_pointer_get_integer64(IPluginContext *pContext, const ce
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1342,7 +1360,7 @@ static cell_t pawn_json_pointer_get_integer64(IPluginContext *pContext, const ce
 
 	char result[20];
 	snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(ptr));
-	pContext->StringToLocalUTF8(params[3], params[4], result, NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
 
 	return 1;
 }
@@ -1357,7 +1375,7 @@ static cell_t pawn_json_pointer_get_string(IPluginContext *pContext, const cell_
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1369,7 +1387,7 @@ static cell_t pawn_json_pointer_get_string(IPluginContext *pContext, const cell_
 		return 0;
 	}
 	
-	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(ptr), NULL);
+	pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(ptr), nullptr);
 
 	return 1;
 }
@@ -1384,7 +1402,7 @@ static cell_t pawn_json_pointer_get_is_null(IPluginContext *pContext, const cell
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrGetError;
-	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), NULL, &ptrGetError);
+	yyjson_mut_val *ptr = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
 
 	if (ptrGetError.code) {
 		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
@@ -1392,6 +1410,26 @@ static cell_t pawn_json_pointer_get_is_null(IPluginContext *pContext, const cell
 	}
 
 	return yyjson_mut_is_null(ptr);
+}
+
+static cell_t pawn_json_pointer_get_content_length(IPluginContext *pContext, const cell_t *params)
+{
+	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	char *path;
+	pContext->LocalToString(params[2], &path);
+
+	yyjson_ptr_err ptrGetError;
+	yyjson_mut_val *val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut, path, strlen(path), nullptr, &ptrGetError);
+
+	if (ptrGetError.code) {
+		pContext->ReportError("JSON pointer get error (%u): %s at position: %d", ptrGetError.code, ptrGetError.msg, ptrGetError.pos);
+		return BAD_HANDLE;
+	}
+
+	return yyjson_mut_get_len(val);
 }
 
 static cell_t pawn_json_pointer_set(IPluginContext *pContext, const cell_t *params)
@@ -1407,7 +1445,7 @@ static cell_t pawn_json_pointer_set(IPluginContext *pContext, const cell_t *para
 	yyjson_mut_val *val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut, handle2->m_pVal_mut);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle1->m_pDocument_mut, path, strlen(path), val_copy, true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle1->m_pDocument_mut, path, strlen(path), val_copy, true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1427,7 +1465,7 @@ static cell_t pawn_json_pointer_set_bool(IPluginContext *pContext, const cell_t 
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut, params[3]), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut, params[3]), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1447,7 +1485,7 @@ static cell_t pawn_json_pointer_set_float(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1467,7 +1505,7 @@ static cell_t pawn_json_pointer_set_int(IPluginContext *pContext, const cell_t *
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, params[3]), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, params[3]), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1488,7 +1526,7 @@ static cell_t pawn_json_pointer_set_integer64(IPluginContext *pContext, const ce
 	pContext->LocalToString(params[3], &val);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, NULL, 10)), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, nullptr, 10)), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1509,7 +1547,7 @@ static cell_t pawn_json_pointer_set_string(IPluginContext *pContext, const cell_
 	pContext->LocalToString(params[3], &str);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_str(handle->m_pDocument_mut, str), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_strcpy(handle->m_pDocument_mut, str), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1529,7 +1567,7 @@ static cell_t pawn_json_pointer_set_null(IPluginContext *pContext, const cell_t 
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrSetError;
-	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut), true, NULL, &ptrSetError);
+	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
 		pContext->ReportError("JSON pointer set error (%u): %s at position: %d", ptrSetError.code, ptrSetError.msg, ptrSetError.pos);
@@ -1552,7 +1590,7 @@ static cell_t pawn_json_pointer_add(IPluginContext *pContext, const cell_t *para
 	yyjson_mut_val *val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut, handle2->m_pVal_mut);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle1->m_pDocument_mut, path, strlen(path), val_copy, true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle1->m_pDocument_mut, path, strlen(path), val_copy, true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1572,7 +1610,7 @@ static cell_t pawn_json_pointer_add_bool(IPluginContext *pContext, const cell_t 
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut, params[3]), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut, params[3]), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1592,7 +1630,7 @@ static cell_t pawn_json_pointer_add_float(IPluginContext *pContext, const cell_t
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut, sp_ctof(params[3])), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1612,7 +1650,7 @@ static cell_t pawn_json_pointer_add_int(IPluginContext *pContext, const cell_t *
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, params[3]), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, params[3]), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1633,7 +1671,7 @@ static cell_t pawn_json_pointer_add_integer64(IPluginContext *pContext, const ce
 	pContext->LocalToString(params[3], &val);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, NULL, 10)), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut, strtoll(val, nullptr, 10)), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1654,7 +1692,7 @@ static cell_t pawn_json_pointer_add_string(IPluginContext *pContext, const cell_
 	pContext->LocalToString(params[3], &str);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_str(handle->m_pDocument_mut, str), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_strcpy(handle->m_pDocument_mut, str), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1674,7 +1712,7 @@ static cell_t pawn_json_pointer_add_null(IPluginContext *pContext, const cell_t 
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrAddError;
-	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut), true, NULL, &ptrAddError);
+	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut, path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
 		pContext->ReportError("JSON pointer add error (%u): %s at position: %d", ptrAddError.code, ptrAddError.msg, ptrAddError.pos);
@@ -1694,7 +1732,7 @@ static cell_t pawn_json_pointer_remove(IPluginContext *pContext, const cell_t *p
 	pContext->LocalToString(params[2], &path);
 
 	yyjson_ptr_err ptrRemoveError;
-	bool success = yyjson_mut_ptr_removex(handle->m_pVal_mut, path, strlen(path), NULL, &ptrRemoveError) != NULL;
+	bool success = yyjson_mut_ptr_removex(handle->m_pVal_mut, path, strlen(path), nullptr, &ptrRemoveError) != nullptr;
 
 	if (ptrRemoveError.code) {
 		pContext->ReportError("JSON pointer remove error (%u): %s at position: %d", ptrRemoveError.code, ptrRemoveError.msg, ptrRemoveError.pos);
@@ -1774,6 +1812,8 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.Equals", pawn_json_equals},
 	{"YYJSON.DeepCopy", pawn_json_deep_copy},
 	{"YYJSON.GetTypeDesc", pawn_json_get_type_desc},
+	{"YYJSON.GetSerializedLength", pawn_json_get_serialized_length},
+	{"YYJSON.SerializedLength.get", pawn_json_get_serialized_length},
 	{"YYJSON.Type.get", pawn_json_get_type},
 	{"YYJSON.SubType.get", pawn_json_get_subtype},
 	{"YYJSON.IsArray.get", pawn_json_is_array},
@@ -1800,6 +1840,7 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.PtrGetInt64", pawn_json_pointer_get_integer64},
 	{"YYJSON.PtrGetString", pawn_json_pointer_get_string},
 	{"YYJSON.PtrGetIsNull", pawn_json_pointer_get_is_null},
+	{"YYJSON.PtrGetContentLength", pawn_json_pointer_get_content_length},
 	{"YYJSON.PtrSet", pawn_json_pointer_set},
 	{"YYJSON.PtrSetBool", pawn_json_pointer_set_bool},
 	{"YYJSON.PtrSetFloat", pawn_json_pointer_set_float},
@@ -1815,5 +1856,5 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.PtrAddString", pawn_json_pointer_add_string},
 	{"YYJSON.PtrAddNull", pawn_json_pointer_add_null},
 	{"YYJSON.PtrRemove", pawn_json_pointer_remove},
-	{NULL, NULL}
+	{nullptr, nullptr}
 };
