@@ -112,7 +112,7 @@ char key[64];
 YYJSON value;
 
 // Method 1: Using Foreach (Recommended)
-while (obj.Foreach(key, sizeof(key), value))
+while (obj.ForeachObject(key, sizeof(key), value))
 {
   PrintToServer("Key: %s", key);
   // Process value
@@ -136,7 +136,7 @@ YYJSON value;
 int index;
 
 // Method 1: Using Foreach (Recommended)
-while (arr.Foreach(index, value))
+while (arr.ForeachArray(index, value))
 {
   // Process value
   delete value;

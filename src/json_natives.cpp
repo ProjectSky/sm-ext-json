@@ -1968,7 +1968,6 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSONObject.Clear", json_obj_clear},
 	{"YYJSONObject.FromString", json_obj_parse_str},
 	{"YYJSONObject.FromFile", json_obj_parse_file},
-	{"YYJSONObject.Foreach", json_obj_foreach},
 
 	// JSONArray
 	{"YYJSONArray.YYJSONArray", json_arr_init},
@@ -2003,7 +2002,6 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSONArray.Clear", json_arr_clear},
 	{"YYJSONArray.FromString", json_arr_parse_str},
 	{"YYJSONArray.FromFile", json_arr_parse_file},
-	{"YYJSONArray.Foreach", json_arr_foreach},
 
 	// JSON
 	{"YYJSON.ToString", json_doc_write_to_str},

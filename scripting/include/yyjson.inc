@@ -65,7 +65,7 @@ stock YYJSON_WRITE_FLAG YYJSON_REAL_PRECISION(int n)
 methodmap YYJSON < Handle
 {
   /**
-  * Iterates over the object's key-value pairs (Same as Foreach, but accepts YYJSON handle)
+  * Iterates over the object's key-value pairs
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   *
@@ -80,7 +80,7 @@ methodmap YYJSON < Handle
   public native bool ForeachObject(char[] buffer, int maxlength, YYJSON &value);
 
   /**
-  * Iterates over the array's values (Same as Foreach, but accepts YYJSON handle)
+  * Iterates over the array's values
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   *
@@ -594,21 +594,6 @@ methodmap YYJSONObject < YYJSON
   public static native YYJSONObject FromString(const char[] buffer, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
 
   /**
-  * Iterates over the object's key-value pairs
-  *
-  * @note                    Needs to be freed using delete or CloseHandle()
-  *
-  * @param buffer            Buffer to copy key name to
-  * @param maxlength         Maximum length of the string buffer
-  * @param value             JSON handle to store the current value
-  *
-  * @return                  True if there are more elements, false when iteration is complete
-  *
-  * @error                   Invalid handle or handle is not an object
-  */
-  public native bool Foreach(char[] buffer, int maxlength, YYJSON &value);
-
-  /**
   * Gets a value from the object
   *
   * @note                    This function takes a linear search time
@@ -844,20 +829,6 @@ methodmap YYJSONArray < YYJSON
   * @return                  Array handle, or null on failure
   */
   public static native YYJSONArray FromString(const char[] buffer, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
-
-  /**
-  * Iterates over the array's values
-  *
-  * @note                    Needs to be freed using delete or CloseHandle()
-  *
-  * @param index             Variable to store current array index (starting from 0)
-  * @param value             JSON handle to store the current value
-  *
-  * @return                  True if there are more elements, false when iteration is complete
-  *
-  * @error                   Invalid handle or handle is not an array
-  */
-  public native bool Foreach(int &index, YYJSON &value);
 
   /**
   * Gets a value from the array
