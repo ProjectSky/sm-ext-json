@@ -1,43 +1,50 @@
 # SourceMod JSON Extension
 
-## What is this?
-This is a [SourceMod](http://www.sourcemod.net/) extension that provides some methods for manipulating JSON data
+## Overview
+A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive JSON manipulation capabilities, powered by [YYJSON](https://github.com/ibireme/yyjson).
 
-## Features
-* Relies on [YYJSON](https://github.com/ibireme/yyjson) which A high performance JSON library written in ANSI C
-* Supports querying and modifying using [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
-* Supports decoding and encoding (also with pretty format)
-* Supports x64
+## Key Features
+* High-performance JSON parsing and serialization using YYJSON
+* Support for [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) operations
+* x64 support
+* Easy-to-use API for both objects and arrays
+* Pretty printing support
 
-## How to build this?
-``` bash
-clone project
+## Building from Source
+```bash
+# Clone the repository
+git clone https://github.com/ProjectSky/sm-ext-yyjson.git
+cd sm-ext-yyjson
+
+# Create build directory
 mkdir build && cd build
-python ../configure.py --enable-optimize --symbol-files --sm-path=YOU_SOURCEMOD_PATH --targets=x64,x86
+
+# Configure and build
+python ../configure.py --enable-optimize --symbol-files \
+    --sm-path=YOUR_SOURCEMOD_PATH \
+    --targets=x64,x86
 ambuild
 ```
 
-## Native
-* [yyjson.inc](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/yyjson.inc)
+## Documentation
+* [API Reference](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/yyjson.inc)
+* [Latest Builds](https://github.com/ProjectSky/sm-ext-yyjson/actions)
 
-# Binary files
-* [GitHub Actions](https://github.com/ProjectSky/sm-ext-yyjson/actions)
+## Usage Examples
 
-# NOTES
-* Not fully tested, some function may not work
+### Working with Objects
+```cpp
+// Creating and manipulating JSON objects
+YYJSONObject obj = new YYJSONObject();
+obj.SetInt("int", 1);
+obj.SetInt64("int64", "9223372036854775800");
+obj.SetFloat("float", 2.0);
+obj.SetBool("bool", true);
+obj.SetString("str", "Hello World");
+obj.SetNull("null");
+delete obj;
 
-# Example
-``` cpp
-// Create JSONObject
-YYJSONObject hJSONObject = new YYJSONObject();
-hJSONObject.SetInt("int", 1);
-hJSONObject.SetInt64("int64", "9223372036854775800");
-hJSONObject.SetFloat("float", 2.0);
-hJSONObject.SetBool("bool", true);
-hJSONObject.SetString("str", "Hello World");
-hJSONObject.SetNull("null");
-delete hJSONObject;
-/*
+/* Output:
 {
   "int": 1,
   "int64": 9223372036854775800,
@@ -47,17 +54,21 @@ delete hJSONObject;
   "null": null
 }
 */
+```
 
-// Create JSONArray
-YYJSONArray hJSONArray = new YYJSONArray();
-hJSONArray.PushInt(1);
-hJSONArray.PushInt64("9223372036854775800");
-hJSONArray.PushFloat(2.0);
-hJSONArray.PushBool(true);
-hJSONArray.PushString("Hello World");
-hJSONArray.PushNull();
-delete hJSONArray;
-/*
+### Working with Arrays
+```cpp
+// Creating and manipulating JSON arrays
+YYJSONArray arr = new YYJSONArray();
+arr.PushInt(1);
+arr.PushInt64("9223372036854775800");
+arr.PushFloat(2.0);
+arr.PushBool(true);
+arr.PushString("Hello World");
+arr.PushNull();
+delete arr;
+
+/* Output:
 [
   1,
   9223372036854775800,
@@ -67,12 +78,16 @@ delete hJSONArray;
   null
 ]
 */
+```
 
-// JSON POINTER: Create JSONObject
-YYJSONObject hJSONObject = new YYJSONObject();
-hJSONObject.PtrSetInt("/a/b/c", 1);
-delete hJSONObject;
-/*
+### Using JSON Pointer
+```cpp
+// Creating nested structures
+YYJSONObject obj = new YYJSONObject();
+obj.PtrSetInt("/a/b/c", 1);
+delete obj;
+
+/* Output:
 {
   "a": {
     "b": {
@@ -82,50 +97,62 @@ delete hJSONObject;
 }
 */
 
-// JSON POINTER: Query data
-/*
-{
-  "bool": true,
-  "float": 1.234,
-  "int": 1234,
-  "int64": 9223372036854775807,
-  "null": null,
-  "string": "hello world",
-  "arr": [
-    false,
-    1.2344,
-    1234,
-    9223372036854775807,
-    null,
-    "Hello World"
-  ]
-}
-*/
-YYJSONObject hPtrTest = YYJSON.Parse("example.json", true);
-hPtrTest.PtrGetInt("/int"); // 1234
-hPtrTest.PtrGetFloat("/arr/1"); // 1.2344
-delete hPtrTest;
+// Querying data
+YYJSONObject data = YYJSON.Parse("example.json", true);
+int value = data.PtrGetInt("/int");        // Get value: 1234
+float fValue = data.PtrGetFloat("/arr/1"); // Get value: 1.2344
+delete data;
+```
 
-// Iteration: Objects
+### Iteration Examples
+
+#### Object Iteration
+```cpp
 char key[64];
-YYJSON val;
-for (int i = 0; i < hPtrTest.Size; i++)
+YYJSON value;
+
+// Method 1: Using Foreach (Recommended)
+while (obj.Foreach(key, sizeof(key), value))
 {
-  hPtrTest.GetKeyName(i, key, sizeof(key));
-  PrintToServer("key: %s", key);
-  val = hPtrTest.GetValueAt(i);
-  // do something
-  delete val;
+  PrintToServer("Key: %s", key);
+  // Process value
+  delete value;
 }
 
-// Iteration: Arrays
-YYJSONArray arr = hPtrTest.PtrGet("/arr");
-YYJSON val;
+// Method 2: Classic iteration
+for (int i = 0; i < obj.Size; i++)
+{
+  obj.GetKey(i, key, sizeof(key));
+  value = obj.GetValueAt(i);
+  // Process value
+  delete value;
+}
+```
+
+#### Array Iteration
+```cpp
+YYJSONArray arr = obj.PtrGet("/arr");
+YYJSON value;
+int index;
+
+// Method 1: Using Foreach (Recommended)
+while (arr.Foreach(index, value))
+{
+  // Process value
+  delete value;
+}
+
+// Method 2: Classic iteration
 for (int i = 0; i < arr.Length; i++)
 {
-  val = arr.Get(i);
-  // do something
-  delete val;
+  value = arr.Get(i);
+  // Process value
+  delete value;
 }
 delete arr;
 ```
+
+## Notes
+* Beta version - some functions may require additional testing
+* Please report any issues on GitHub
+* Contributions are welcome
