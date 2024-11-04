@@ -3,7 +3,7 @@
 
 #define SMEXT_CONF_NAME			"SourceMod YYJSON Extension"
 #define SMEXT_CONF_DESCRIPTION	"Provide JSON Native"
-#define SMEXT_CONF_VERSION		"1.0.6a"
+#define SMEXT_CONF_VERSION		"1.0.7"
 #define SMEXT_CONF_AUTHOR		"ProjectSky"
 #define SMEXT_CONF_URL			"https://github.com/ProjectSky/sm-ext-yyjson"
 #define SMEXT_CONF_LOGTAG		"yyjson"

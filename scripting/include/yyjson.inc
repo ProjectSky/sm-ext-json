@@ -23,7 +23,7 @@ enum YYJSON_SUBTYPE
   YYJSON_SUBTYPE_UINT  = 0 << 3,
   YYJSON_SUBTYPE_SINT  = 1 << 3,
   YYJSON_SUBTYPE_REAL  = 2 << 3,
-  YYJSON_SUBTYPE_NOESC = 1 << 3,
+  YYJSON_SUBTYPE_NOESC = 1 << 3
 }
 
 enum YYJSON_READ_FLAG
@@ -36,7 +36,7 @@ enum YYJSON_READ_FLAG
   YYJSON_READ_ALLOW_INF_AND_NAN       = 1 << 4,
   YYJSON_READ_NUMBER_AS_RAW           = 1 << 5,
   YYJSON_READ_ALLOW_INVALID_UNICODE   = 1 << 6,
-  YYJSON_READ_BIGNUM_AS_RAW           = 1 << 7,
+  YYJSON_READ_BIGNUM_AS_RAW           = 1 << 7
 }
 
 enum YYJSON_WRITE_FLAG
@@ -49,14 +49,24 @@ enum YYJSON_WRITE_FLAG
   YYJSON_WRITE_INF_AND_NAN_AS_NULL    = 1 << 4,
   YYJSON_WRITE_ALLOW_INVALID_UNICODE  = 1 << 5,
   YYJSON_WRITE_PRETTY_TWO_SPACES      = 1 << 6,
-  YYJSON_WRITE_NEWLINE_AT_END         = 1 << 7,
+  YYJSON_WRITE_NEWLINE_AT_END         = 1 << 7
 }
 
-/**
-* Write floating-point number using fixed-point notation
-* - This is similar to ECMAScript `Number.prototype.toFixed(prec)`, but with trailing zeros removed. The `prec` ranges from 1 to 15
-* - This will produce shorter output but may lose some precision
-*/
+enum YYJSON_SORT_ORDER
+{
+  YYJSON_SORT_ASC = 0,
+  YYJSON_SORT_DESC = 1
+}
+
+ /**
+ * Creates a write flag to control floating-point number precision in JSON output
+ * Similar to JavaScript's Number.prototype.toFixed(prec), but removes trailing zeros
+ *
+ * @param n                 Precision value (number of decimal places), must be between 1 and 15
+ * @return                  Write flag that can be combined with other YYJSON_WRITE_FLAG values
+ *
+ * @note                    This will produce shorter output but may lose some precision
+ */
 stock YYJSON_WRITE_FLAG YYJSON_REAL_PRECISION(int n)
 {
   return view_as<YYJSON_WRITE_FLAG>(n << 28);
@@ -283,11 +293,11 @@ methodmap YYJSON < Handle
   /**
   * Get JSON Handle serialized size in bytes (including null-terminator)
   *
-  * @param value             JSON handle
+  * @param flag              The JSON write options
   *
   * @return                  serialized size
   */
-  public static native int GetSize(const YYJSON value);
+  public native int GetSerializedSize(YYJSON_WRITE_FLAG flag = YYJSON_WRITE_NOFLAG);
 
   /**
   * Get value by a JSON Pointer
@@ -554,13 +564,6 @@ methodmap YYJSON < Handle
   property bool IsObject {
     public native get();
   }
-
-  /**
-  * Retrieves json serialized size
-  */
-  property int Size {
-    public native get();
-  }
 };
 
 methodmap YYJSONObject < YYJSON
@@ -686,17 +689,18 @@ methodmap YYJSONObject < YYJSON
 
   /**
   * Replaces all matching keys with the new key
-  * The key and new_key should be a null-terminated UTF-8 string
+  * The old_key and new_key should be a null-terminated UTF-8 string
   * The new_key is copied and held by doc
   *
   * @note                    This function takes a linear search time
   *
-  * @param key               Key string
-  * @param new_key           New key set
+  * @param old_key           The key to rename
+  * @param new_key           The new key name
+  * @param allow_duplicate   Whether to allow renaming even if new key exists
   *
   * @return                  True if at least one key was renamed, false otherwise
   */
-  public native bool RenameKey(const char[] key, const char[] new_key);
+  public native bool RenameKey(const char[] old_key, const char[] new_key, bool allow_duplicate = false);
 
   /**
   * Gets string data from the object
@@ -794,6 +798,21 @@ methodmap YYJSONObject < YYJSON
   * @return                  True if succeed, false otherwise
   */
   public native bool Clear();
+
+  /**
+  * Sorts the object's keys
+  *
+  * @note                    This function performs a lexicographical sort on the object's keys
+  *                          - The values maintain their association with their respective keys
+  *
+  * @param order             Sort order, use YYJSON_SORT_ASC for ascending (default)
+  *                          or YYJSON_SORT_DESC for descending
+  *
+  * @return                  True on success, false on failure
+  *
+  * @error                   Invalid handle or handle is not an object
+  */
+  public native bool Sort(YYJSON_SORT_ORDER order = YYJSON_SORT_ASC);
 
   /**
   * Retrieves the size of the object
@@ -1070,11 +1089,85 @@ methodmap YYJSONArray < YYJSON
   public native bool RemoveRange(int start_index, int end_index);
 
   /**
+  * Searches for a boolean value in the array and returns its index
+  *
+  * @param value             The boolean value to search for
+  *
+  * @return                  The index of the first matching element, or -1 if not found
+  *
+  * @error                   Invalid handle or handle is not an array
+  */
+  public native int IndexOfBool(bool value);
+
+  /**
+  * Searches for a string value in the array and returns its index
+  *
+  * @param value             The string value to search for
+  *
+  * @return                  The index of the first matching element, or -1 if not found
+  *
+  * @error                   Invalid handle or handle is not an array
+  */
+  public native int IndexOfString(const char[] value);
+
+  /**
+  * Searches for an integer value in the array and returns its index
+  *
+  * @param value             The integer value to search for
+  *
+  * @return                  The index of the first matching element, or -1 if not found
+  *
+  * @error                   Invalid handle or handle is not an array
+  */
+  public native int IndexOfInt(int value);
+
+  /**
+  * Searches for an integer64 value in the array and returns its index
+  *
+  * @param value             The integer64 value to search for as string
+  *
+  * @return                  The index of the first matching element, or -1 if not found
+  *
+  * @error                   Invalid handle, handle is not an array, or invalid integer64 string format
+  */
+  public native int IndexOfInt64(const char[] value);
+
+  /**
+  * Searches for a float value in the array and returns its index
+  *
+  * @param value             The float value to search for
+  *
+  * @return                  The index of the first matching element, or -1 if not found
+  *
+  * @error                   Invalid handle or handle is not an array
+  */
+  public native int IndexOfFloat(float value);
+
+  /**
   * Removes all elements from the array
   *
   * @return                  True if succeed, false otherwise
   */
   public native bool Clear();
+
+  /**
+  * Sorts the array elements
+  *
+  * @note                    Sorting rules:
+  *                          - Different types are sorted by their type ID
+  *                          - Strings are sorted lexicographically
+  *                          - Numbers are sorted by their numeric value
+  *                          - Booleans are sorted with false before true
+  *                          - Other types (null, object, array) are sorted by type only
+  *
+  * @param order             Sort order, use YYJSON_SORT_ASC for ascending (default)
+  *                          or YYJSON_SORT_DESC for descending
+  *
+  * @return  True on success, false on failure
+  *
+  * @error   Invalid handle or handle is not an array
+  */
+  public native bool Sort(YYJSON_SORT_ORDER order = YYJSON_SORT_ASC);
 
   /**
   * Retrieves the size of the array

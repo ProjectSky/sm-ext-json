@@ -8,7 +8,9 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 * Support for [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) operations
 * x64 support
 * Easy-to-use API for both objects and arrays
-* Pretty printing support
+* Pretty printing and writing support
+* Array and object sorting support
+* Iteration methods for arrays and objects
 
 ## Building from Source
 ```bash
@@ -150,6 +152,41 @@ for (int i = 0; i < arr.Length; i++)
   delete value;
 }
 delete arr;
+```
+
+### Sorting Arrays and Objects
+```cpp
+// Sorting JSON arrays
+YYJSONArray arr = YYJSON.Parse(
+  "[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]"
+);
+arr.Sort(); // Ascending order (default)
+// [1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]
+
+arr.Sort(YYJSON_SORT_DESC); // Descending order
+// [9, 6, 5, 5, 5, 4, 3, 3, 2, 1, 1]
+
+// Arrays with mixed types are sorted by type first, then by value
+YYJSONArray mixed = YYJSON.Parse(
+  "[true, 42, \"hello\", 1.23, false, \"world\"]"
+);
+mixed.Sort();
+// [false, true, 1.23, 42, "hello", "world"]
+
+// Sorting JSON objects by keys
+YYJSONObject obj = YYJSON.Parse(
+  "{\"zebra\": 1, \"alpha\": 2, \"beta\": 3, \"gamma\": 4}"
+);
+
+obj.Sort(); // Ascending order by keys (default)
+// {"alpha": 2, "beta": 3, "gamma": 4, "zebra": 1}
+
+obj.Sort(YYJSON_SORT_DESC); // Descending order by keys
+// {"zebra": 1, "gamma": 4, "beta": 3, "alpha": 2}
+
+delete arr;
+delete mixed;
+delete obj;
 ```
 
 ## Notes

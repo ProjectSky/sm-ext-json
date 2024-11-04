@@ -15,10 +15,11 @@ bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 	handlesys->InitAccessDefaults(nullptr, &haJSON);
 	haJSON.access[HandleAccess_Delete] = 0;
 
-	g_htJSON = handlesys->CreateType("YYJSON", &g_JSONHandler, 0, nullptr, &haJSON, myself->GetIdentity(), nullptr);
+	HandleError err;
+	g_htJSON = handlesys->CreateType("YYJSON", &g_JSONHandler, 0, nullptr, &haJSON, myself->GetIdentity(), &err);
 
 	if (!g_htJSON) {
-		strncpy(error, "Failed to create YYJSON handle type", maxlen);
+		snprintf(error, maxlen, "Failed to create YYJSON handle type (err: %d)", err);
 		return false;
 	}
 	
