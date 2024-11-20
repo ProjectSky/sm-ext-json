@@ -1,5 +1,15 @@
 #include "extension.h"
 
+static std::random_device g_randomDevice;
+static std::mt19937 g_randomGenerator(g_randomDevice());
+
+enum YYJSON_SORT_ORDER
+{
+	YYJSON_SORT_ASC = 0,
+	YYJSON_SORT_DESC = 1,
+	YYJSON_SORT_RANDOM = 2
+};
+
 static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 {
 	char* str;
@@ -24,7 +34,7 @@ static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 			yyjson_doc_free(idoc);
 			return BAD_HANDLE;
 		}
-
+		pYYJsonWrapper->m_readSize = yyjson_doc_get_read_size(idoc);
 		pYYJsonWrapper->m_pDocument_mut = CopyDocument(idoc);
 		pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut.get());
 	}
@@ -39,6 +49,7 @@ static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 			return BAD_HANDLE;
 		}
 
+		pYYJsonWrapper->m_readSize = yyjson_doc_get_read_size(idoc);
 		pYYJsonWrapper->m_pDocument_mut = CopyDocument(idoc);
 		pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut.get());
 	}
@@ -130,6 +141,7 @@ static cell_t json_obj_parse_str(IPluginContext* pContext, const cell_t* params)
 		return BAD_HANDLE;
 	}
 
+	pYYJsonWrapper->m_readSize = yyjson_doc_get_read_size(idoc);
 	pYYJsonWrapper->m_pDocument_mut = CopyDocument(idoc);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut.get());
 	yyjson_doc_free(idoc);
@@ -172,6 +184,7 @@ static cell_t json_obj_parse_file(IPluginContext* pContext, const cell_t* params
 		return BAD_HANDLE;
 	}
 
+	pYYJsonWrapper->m_readSize = yyjson_doc_get_read_size(idoc);
 	pYYJsonWrapper->m_pDocument_mut = CopyDocument(idoc);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut.get());
 	yyjson_doc_free(idoc);
@@ -212,6 +225,7 @@ static cell_t json_arr_parse_str(IPluginContext* pContext, const cell_t* params)
 		return BAD_HANDLE;
 	}
 
+	pYYJsonWrapper->m_readSize = yyjson_doc_get_read_size(idoc);
 	pYYJsonWrapper->m_pDocument_mut = CopyDocument(idoc);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut.get());
 	yyjson_doc_free(idoc);
@@ -254,6 +268,7 @@ static cell_t json_arr_parse_file(IPluginContext* pContext, const cell_t* params
 		return BAD_HANDLE;
 	}
 
+	pYYJsonWrapper->m_readSize = yyjson_doc_get_read_size(idoc);
 	pYYJsonWrapper->m_pDocument_mut = CopyDocument(idoc);
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_doc_get_root(pYYJsonWrapper->m_pDocument_mut.get());
 	yyjson_doc_free(idoc);
@@ -392,6 +407,11 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 	return -1;
 }
 
+// Checks if two floating-point numbers are close enough considering floating-point precision issues
+bool areClose(double a, double b, double epsilon = 1e-6) {
+	return std::abs(a - b) < epsilon || std::nextafter(a, b) == b;
+}
+
 static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
@@ -411,7 +431,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 
 	for (size_t i = 0; i < arr_size; i++) {
 		yyjson_mut_val* val = yyjson_mut_arr_iter_next(&iter);
-		if (yyjson_mut_is_real(val) && yyjson_mut_get_real(val) == searchValue) {
+		if (yyjson_mut_is_real(val) && areClose(yyjson_mut_get_real(val), searchValue)) {
 			return i;
 		}
 	}
@@ -453,6 +473,51 @@ static cell_t json_val_is_object(IPluginContext* pContext, const cell_t* params)
 	if (!handle) return BAD_HANDLE;
 
 	return yyjson_mut_is_obj(handle->m_pVal_mut);
+}
+
+static cell_t json_val_is_int(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_int(handle->m_pVal_mut);
+}
+
+static cell_t json_val_is_bool(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_bool(handle->m_pVal_mut);
+}
+
+static cell_t json_val_is_float(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_real(handle->m_pVal_mut);
+}
+
+static cell_t json_val_is_str(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_str(handle->m_pVal_mut);
+}
+
+static cell_t json_val_is_null(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return BAD_HANDLE;
+
+	return yyjson_mut_is_null(handle->m_pVal_mut);
 }
 
 static cell_t json_obj_init(IPluginContext* pContext, const cell_t* params)
@@ -683,6 +748,15 @@ static cell_t json_val_get_serialized_size(IPluginContext* pContext, const cell_
 	}
 
 	return 0;
+}
+
+static cell_t json_val_get_read_size(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle || !handle->m_readSize) return BAD_HANDLE;
+
+	return handle->m_readSize + 1;
 }
 
 static cell_t json_val_create_null(IPluginContext* pContext, const cell_t* params)
@@ -1274,13 +1348,14 @@ static cell_t json_doc_write_to_str(IPluginContext* pContext, const cell_t* para
 
 	if (!handle) return BAD_HANDLE;
 
-	char* json_str = yyjson_mut_val_write(handle->m_pVal_mut, params[4], nullptr);
+	size_t json_size;
+	char* json_str = yyjson_mut_val_write(handle->m_pVal_mut, params[4], &json_size);
 
 	if (json_str) {
 		pContext->StringToLocalUTF8(params[2], params[3], json_str, nullptr);
 
 		free(json_str);
-		return 1;
+		return json_size + 1;
 	}
 
 	return 0;
@@ -2387,7 +2462,7 @@ static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-	
+
 	if (!handle) return BAD_HANDLE;
 
 	if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
@@ -2396,7 +2471,12 @@ static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 		return BAD_HANDLE;
 	}
 
-	bool descending = params[2] == 1;
+	cell_t sort_mode = params[2];
+
+	if (sort_mode < YYJSON_SORT_ASC || sort_mode > YYJSON_SORT_RANDOM) {
+		pContext->ReportError("Invalid sort mode: %d (expected 0=ascending, 1=descending, 2=random)", sort_mode);
+		return BAD_HANDLE;
+	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
 	if (arr_size <= 1) return true;
@@ -2411,39 +2491,43 @@ static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 		values.push_back(val);
 	}
 
-	const auto compare = [descending](yyjson_mut_val* const a, yyjson_mut_val* const b) {
-		const yyjson_type type_a = yyjson_mut_get_type(a);
-		const yyjson_type type_b = yyjson_mut_get_type(b);
+	if (sort_mode == YYJSON_SORT_RANDOM) {
+		std::shuffle(values.begin(), values.end(), g_randomGenerator);
+	}
+	else {
+		const auto compare = [sort_mode](yyjson_mut_val* const a, yyjson_mut_val* const b) {
+			const yyjson_type type_a = yyjson_mut_get_type(a);
+			const yyjson_type type_b = yyjson_mut_get_type(b);
 
-		if (type_a != type_b) {
-			return descending ? type_a > type_b : type_a < type_b;
-		}
+			if (type_a != type_b) {
+				return sort_mode == YYJSON_SORT_DESC ? type_a > type_b : type_a < type_b;
+			}
 
-		switch (type_a) {
+			switch (type_a) {
 			case YYJSON_TYPE_STR: {
 				const char* str_a = yyjson_mut_get_str(a);
 				const char* str_b = yyjson_mut_get_str(b);
 				const int cmp = strcmp(str_a, str_b);
-				return descending ? cmp > 0 : cmp < 0;
+				return sort_mode == YYJSON_SORT_DESC ? cmp > 0 : cmp < 0;
 			}
 			case YYJSON_TYPE_NUM: {
 				const double num_a = yyjson_mut_get_num(a);
 				const double num_b = yyjson_mut_get_num(b);
-				return descending ? num_a > num_b : num_a < num_b;
+				return sort_mode == YYJSON_SORT_DESC ? num_a > num_b : num_a < num_b;
 			}
 			case YYJSON_TYPE_BOOL:
-				return descending ? 
+				return sort_mode == YYJSON_SORT_DESC ?
 					yyjson_mut_get_bool(a) > yyjson_mut_get_bool(b) :
 					yyjson_mut_get_bool(a) < yyjson_mut_get_bool(b);
 			default:
 				return false;
-		}
-	};
+			}
+			};
 
-	stable_sort(values.begin(), values.end(), compare);
+		std::stable_sort(values.begin(), values.end(), compare);
+	}
 
 	yyjson_mut_arr_clear(handle->m_pVal_mut);
-
 	for (auto sorted_val : values) {
 		yyjson_mut_arr_append(handle->m_pVal_mut, sorted_val);
 	}
@@ -2463,7 +2547,12 @@ static cell_t json_obj_sort(IPluginContext* pContext, const cell_t* params)
 		return BAD_HANDLE;
 	}
 
-	bool descending = params[2] == 1;
+	cell_t sort_mode = params[2];
+
+	if (sort_mode < YYJSON_SORT_ASC || sort_mode > YYJSON_SORT_RANDOM) {
+		pContext->ReportError("Invalid sort mode: %d (expected 0=ascending, 1=descending, 2=random)", sort_mode);
+		return BAD_HANDLE;
+	}
 
 	size_t obj_size = yyjson_mut_obj_size(handle->m_pVal_mut);
 	if (obj_size <= 1) return true;
@@ -2488,12 +2577,17 @@ static cell_t json_obj_sort(IPluginContext* pContext, const cell_t* params)
 			});
 	}
 
-	const auto compare = [descending](const KeyValuePair& a, const KeyValuePair& b) {
-		const int cmp = strcmp(a.key, b.key);
-		return descending ? cmp > 0 : cmp < 0;
-		};
+	if (sort_mode == YYJSON_SORT_RANDOM) {
+		std::shuffle(pairs.begin(), pairs.end(), g_randomGenerator);
+	}
+	else {
+		const auto compare = [sort_mode](const KeyValuePair& a, const KeyValuePair& b) {
+			const int cmp = strcmp(a.key, b.key);
+			return sort_mode == YYJSON_SORT_DESC ? cmp > 0 : cmp < 0;
+			};
 
-	stable_sort(pairs.begin(), pairs.end(), compare);
+		std::stable_sort(pairs.begin(), pairs.end(), compare);
+	}
 
 	yyjson_mut_obj_clear(handle->m_pVal_mut);
 	for (const auto& pair : pairs) {
@@ -2580,10 +2674,16 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.DeepCopy", json_doc_copy_deep},
 	{"YYJSON.GetTypeDesc", json_val_get_type_desc},
 	{"YYJSON.GetSerializedSize", json_val_get_serialized_size},
+	{"YYJSON.ReadSize.get", json_val_get_read_size},
 	{"YYJSON.Type.get", json_val_get_type},
 	{"YYJSON.SubType.get", json_val_get_subtype},
 	{"YYJSON.IsArray.get", json_val_is_array},
 	{"YYJSON.IsObject.get", json_val_is_object},
+	{"YYJSON.IsInt.get", json_val_is_int},
+	{"YYJSON.IsBool.get", json_val_is_bool},
+	{"YYJSON.IsFloat.get", json_val_is_float},
+	{"YYJSON.IsStr.get", json_val_is_str},
+	{"YYJSON.IsNull.get", json_val_is_null},
 	{"YYJSON.ForeachObject", json_obj_foreach},
 	{"YYJSON.ForeachArray", json_arr_foreach},
 

@@ -4,6 +4,7 @@
 #include "smsdk_ext.h"
 #include <yyjson.h>
 #include <yyjsonwrapper.h>
+#include <random>
 
 class JsonExtension : public SDKExtension
 {

@@ -12,6 +12,33 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 * Array and object sorting support
 * Iteration methods for arrays and objects
 
+## Performance
+Performance test results using [twitter.json](https://github.com/ibireme/yyjson_benchmark/blob/master/data/json/twitter.json) (0.60 MB):
+
+```
+=== YYJSON Performance Benchmark ===
+Test iterations: 100
+Data size: 0.60 MB
+Parse time: 0.056 seconds
+Stringify time: 0.015 seconds
+Parse operations per second: 1769.62 ops/sec
+Parse speed: 1065.77 MB/s (1.04 GB/s)
+Stringify speed: 3831.89 MB/s (3.74 GB/s)
+Stringify operations per second: 6362.53 ops/sec
+=== YYJSON Performance Benchmark End ===
+```
+
+Test environment:
+- OS: Ubuntu 22.04
+- CPU: AMD Ryzen 9 7950X3D
+- Test data: [twitter.json](https://github.com/ibireme/yyjson_benchmark/blob/master/data/json/twitter.json)
+- Test iterations: 100
+- SourceMod Version: 1.12.0.1
+- YYJSON Version: Latest version
+- Test script: [yyjson_perf_test.sp](scripting/yyjson_perf_test.sp)
+
+Note: Performance may vary depending on server hardware and load conditions.
+
 ## Building from Source
 ```bash
 # Clone the repository
@@ -32,11 +59,11 @@ ambuild
 * [API Reference](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/yyjson.inc)
 * [Latest Builds](https://github.com/ProjectSky/sm-ext-yyjson/actions)
 
-## Usage Examples
+### Basic Examples
 
-### Working with Objects
+#### Working with Objects
 ```cpp
-// Creating and manipulating JSON objects
+// Create a JSON object
 YYJSONObject obj = new YYJSONObject();
 obj.SetInt("int", 1);
 obj.SetInt64("int64", "9223372036854775800");
@@ -44,7 +71,6 @@ obj.SetFloat("float", 2.0);
 obj.SetBool("bool", true);
 obj.SetString("str", "Hello World");
 obj.SetNull("null");
-delete obj;
 
 /* Output:
 {
@@ -56,11 +82,13 @@ delete obj;
   "null": null
 }
 */
+
+delete obj;
 ```
 
-### Working with Arrays
+#### Working with Arrays
 ```cpp
-// Creating and manipulating JSON arrays
+// Create a JSON array
 YYJSONArray arr = new YYJSONArray();
 arr.PushInt(1);
 arr.PushInt64("9223372036854775800");
@@ -68,7 +96,6 @@ arr.PushFloat(2.0);
 arr.PushBool(true);
 arr.PushString("Hello World");
 arr.PushNull();
-delete arr;
 
 /* Output:
 [
@@ -80,14 +107,17 @@ delete arr;
   null
 ]
 */
+
+delete arr;
 ```
 
-### Using JSON Pointer
+### Advanced Features
+
+#### Using JSON Pointer
 ```cpp
-// Creating nested structures
+// Create nested structures
 YYJSONObject obj = new YYJSONObject();
 obj.PtrSetInt("/a/b/c", 1);
-delete obj;
 
 /* Output:
 {
@@ -99,97 +129,116 @@ delete obj;
 }
 */
 
-// Querying data
+delete obj;
+
+// Query data
 YYJSONObject data = YYJSON.Parse("example.json", true);
 int value = data.PtrGetInt("/int");        // Get value: 1234
 float fValue = data.PtrGetFloat("/arr/1"); // Get value: 1.2344
 delete data;
 ```
 
-### Iteration Examples
-
-#### Object Iteration
+#### Array and Object Iteration
 ```cpp
+// Object iteration
+YYJSONObject obj = YYJSON.Parse("{\"a\": 1, \"b\": 2, \"c\": 3}");
 char key[64];
 YYJSON value;
 
 // Method 1: Using Foreach (Recommended)
-while (obj.ForeachObject(key, sizeof(key), value))
-{
+while (obj.ForeachObject(key, sizeof(key), value)) {
   PrintToServer("Key: %s", key);
-  // Process value
   delete value;
 }
 
 // Method 2: Classic iteration
-for (int i = 0; i < obj.Size; i++)
-{
+for (int i = 0; i < obj.Size; i++) {
   obj.GetKey(i, key, sizeof(key));
   value = obj.GetValueAt(i);
-  // Process value
   delete value;
 }
-```
 
-#### Array Iteration
-```cpp
-YYJSONArray arr = obj.PtrGet("/arr");
-YYJSON value;
+delete obj;
+
+// Array iteration
+YYJSONArray arr = YYJSON.Parse("[1, 2, 3, 4, 5]");
 int index;
 
 // Method 1: Using Foreach (Recommended)
-while (arr.ForeachArray(index, value))
-{
-  // Process value
+while (arr.ForeachArray(index, value)) {
+  PrintToServer("Index: %d", index);
   delete value;
 }
 
 // Method 2: Classic iteration
-for (int i = 0; i < arr.Length; i++)
-{
+for (int i = 0; i < arr.Length; i++) {
   value = arr.Get(i);
-  // Process value
   delete value;
 }
+
 delete arr;
 ```
 
-### Sorting Arrays and Objects
+#### Array Search Operations
 ```cpp
-// Sorting JSON arrays
+// Create a test array
 YYJSONArray arr = YYJSON.Parse(
-  "[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]"
+  "[42, true, \"hello\", 3.14, \"world\", false, 42]"
 );
-arr.Sort(); // Ascending order (default)
+
+// Search for values (returns first occurrence)
+int index;
+index = arr.IndexOfInt(42);           // Returns 0
+index = arr.IndexOfBool(true);        // Returns 1
+index = arr.IndexOfString("hello");   // Returns 2
+index = arr.IndexOfFloat(3.14);       // Returns 3
+index = arr.IndexOfString("world");   // Returns 4
+index = arr.IndexOfBool(false);       // Returns 5
+
+// Search for non-existent values
+index = arr.IndexOfInt(999);          // Returns -1
+index = arr.IndexOfString("missing"); // Returns -1
+index = arr.IndexOfFloat(2.718);      // Returns -1
+
+delete arr;
+```
+
+#### Sorting Arrays and Objects
+```cpp
+// Array sorting
+YYJSONArray arr = YYJSON.Parse("[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]");
+
+arr.Sort(); // Ascending (default)
 // [1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]
 
-arr.Sort(YYJSON_SORT_DESC); // Descending order
+arr.Sort(YYJSON_SORT_DESC); // Descending
 // [9, 6, 5, 5, 5, 4, 3, 3, 2, 1, 1]
 
-// Arrays with mixed types are sorted by type first, then by value
+arr.Sort(YYJSON_SORT_RANDOM); // Random
+// [5, 2, 9, 1, 6, 3, 4, 5, 1, 3, 5] (example output)
+
+// Mixed type array sorting
 YYJSONArray mixed = YYJSON.Parse(
   "[true, 42, \"hello\", 1.23, false, \"world\"]"
 );
 mixed.Sort();
 // [false, true, 1.23, 42, "hello", "world"]
 
-// Sorting JSON objects by keys
+// Object sorting by keys
 YYJSONObject obj = YYJSON.Parse(
   "{\"zebra\": 1, \"alpha\": 2, \"beta\": 3, \"gamma\": 4}"
 );
 
-obj.Sort(); // Ascending order by keys (default)
+obj.Sort(); // Ascending (default)
 // {"alpha": 2, "beta": 3, "gamma": 4, "zebra": 1}
 
-obj.Sort(YYJSON_SORT_DESC); // Descending order by keys
+obj.Sort(YYJSON_SORT_DESC); // Descending
 // {"zebra": 1, "gamma": 4, "beta": 3, "alpha": 2}
+
+obj.Sort(YYJSON_SORT_RANDOM); // Random
+// {"beta": 3, "zebra": 1, "alpha": 2, "gamma": 4} (example output)
 
 delete arr;
 delete mixed;
 delete obj;
 ```
-
-## Notes
-* Beta version - some functions may require additional testing
-* Please report any issues on GitHub
-* Contributions are welcome
