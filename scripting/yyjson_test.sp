@@ -3,19 +3,19 @@
 
 public Plugin myinfo =
 {
-	name = "YYJSON Test Suite",
-	author = "ProjectSky",
+	name				= "YYJSON Test Suite",
+	author			= "ProjectSky",
 	description = "Test suite for YYJSON extension",
-	version = "1.0.0",
-	url = "https://github.com/ProjectSky/sm-ext-yyjson"
+	version			= "1.0.1",
+	url					= "https://github.com/ProjectSky/sm-ext-yyjson"
 };
 
 public void OnPluginStart()
 {
-	RegServerCmd("sm_yyjson_test", Command_Benchmark, "Run YYJSON test suite");
+	RegServerCmd("sm_yyjson_test", Command_RunTests, "Run YYJSON test suite");
 }
 
-Action Command_Benchmark(int args)
+Action Command_RunTests(int args)
 {
 	// Run all test cases
 	TestBasicOperations();
@@ -27,8 +27,10 @@ Action Command_Benchmark(int args)
 	TestIterationOperations();
 	TestTypeOperations();
 	TestFileOperations();
+	TestImmutabilityOperations();
 
 	PrintToServer("[YYJSON] All tests completed!");
+	return Plugin_Handled;
 }
 
 void TestBasicOperations()
@@ -80,7 +82,7 @@ void TestBasicOperations()
 	PrintToServer("Objects are equal: %d", YYJSON.Equals(obj, parsed));
 
 	// Test deep copy
-	YYJSONObject copy = new YYJSONObject();
+	YYJSONObject copy				= new YYJSONObject();
 	YYJSONObject copyResult = YYJSON.DeepCopy(copy, obj);
 	PrintToServer("Copy equals original: %d", YYJSON.Equals(copyResult, obj));
 
@@ -127,7 +129,7 @@ void TestArrayOperations()
 	PrintToServer("Fifth element is null: %d", arr.IsNull(4));
 
 	YYJSON first = arr.First;
-	YYJSON last = arr.Last;
+	YYJSON last	 = arr.Last;
 
 	// Test array properties
 	PrintToServer("Array length: %d", arr.Length);
@@ -229,7 +231,7 @@ void TestSortOperations()
 	PrintToServer("[YYJSON] Testing sort operations...");
 
 	// Test array sorting
-	YYJSONArray arr = YYJSON.Parse("[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]");
+	YYJSONArray arr = YYJSON.Parse("[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true);
 
 	PrintToServer("Original array:");
 	PrintArray(arr);
@@ -247,7 +249,7 @@ void TestSortOperations()
 	PrintArray(arr);
 
 	// Test mixed type array sorting
-	YYJSONArray mixed = YYJSON.Parse("[true, 42, \"hello\", 1.23, false, \"world\"]");
+	YYJSONArray mixed = YYJSON.Parse("[true, 42, \"hello\", 1.23, false, \"world\"]", .is_mutable_doc = true);
 	PrintToServer("Original mixed array:");
 	PrintArray(mixed);
 
@@ -256,7 +258,7 @@ void TestSortOperations()
 	PrintArray(mixed);
 
 	// Test object sorting
-	YYJSONObject obj = YYJSON.Parse("{\"zebra\": 1, \"alpha\": 2, \"beta\": 3}");
+	YYJSONObject obj = YYJSON.Parse("{\"zebra\": 1, \"alpha\": 2, \"beta\": 3}", .is_mutable_doc = true);
 	PrintToServer("Original object:");
 	PrintObject(obj);
 
@@ -352,28 +354,28 @@ void TestPointerOperations()
 void TestIterationOperations()
 {
 	PrintToServer("[YYJSON] Testing iteration operations...");
-	
+
 	// Test object iteration
 	YYJSONObject obj = YYJSON.Parse("{\"a\": 1, \"b\": 2, \"c\": 3}");
-	char key[64];
-	YYJSON value;
-	
+	char				 key[64];
+	YYJSON			 value;
+
 	while (obj.ForeachObject(key, sizeof(key), value))
 	{
 		PrintToServer("Key: %s", key);
 		delete value;
 	}
-	
+
 	// Test array iteration
 	YYJSONArray arr = YYJSON.Parse("[1, 2, 3, 4, 5]");
-	int index;
-	
+	int					index;
+
 	while (arr.ForeachArray(index, value))
 	{
 		PrintToServer("Index: %d", index);
 		delete value;
 	}
-	
+
 	delete obj;
 	delete arr;
 }
@@ -442,10 +444,70 @@ void TestFileOperations()
 	delete obj;
 }
 
+void TestImmutabilityOperations()
+{
+	PrintToServer("[YYJSON] Testing immutability operations...");
+
+	// Test immutable document creation
+	YYJSONObject immutable = YYJSON.Parse("{\"key\": 123, \"str\": \"test\"}", false, false);
+	PrintToServer("Created immutable document:");
+	PrintObject(immutable);
+
+	// Test property checks
+	PrintToServer("Is mutable: %d", immutable.IsMutable);
+	PrintToServer("Is immutable: %d", immutable.IsImmutable);
+
+	// Test read operations (should succeed)
+	PrintToServer("Read operations on immutable document:");
+	PrintToServer("Int value: %d", immutable.GetInt("key"));
+	char buffer[64];
+	immutable.GetString("str", buffer, sizeof(buffer));
+	PrintToServer("String value: %s", buffer);
+
+	// Test conversion to mutable
+	YYJSONObject mutable = immutable.ToMutable();
+	PrintToServer("\nConverted to mutable document:");
+	PrintToServer("Is mutable: %d", mutable.IsMutable);
+	PrintToServer("Is immutable: %d", mutable.IsImmutable);
+
+	// Now modifications should work
+	mutable.SetInt("key", 456)
+	PrintToServer("Successfully modified mutable document:");
+	PrintObject(mutable);
+
+	// Test conversion back to immutable
+	YYJSONObject backToImmutable = mutable.ToImmutable();
+	PrintToServer("\nConverted back to immutable:");
+	PrintToServer("Is mutable: %d", backToImmutable.IsMutable);
+	PrintToServer("Is immutable: %d", backToImmutable.IsImmutable);
+	delete backToImmutable;
+
+	delete mutable;
+
+	delete immutable;
+
+	// Test file operations with immutability
+	PrintToServer("\nTesting file operations with immutability...");
+
+	// Create and write a mutable document
+	YYJSONObject writeObj = new YYJSONObject();
+	writeObj.SetInt("test", 123);
+	writeObj.ToFile("test_immutable.json");
+	delete writeObj;
+
+	// Read as immutable
+	YYJSONObject readImmutable = YYJSON.Parse("test_immutable.json", true, false);
+	PrintToServer("Read as immutable document:");
+	PrintObject(readImmutable);
+	PrintToServer("Is mutable: %d", readImmutable.IsMutable);
+	PrintToServer("Is immutable: %d", readImmutable.IsImmutable);
+	delete readImmutable;
+}
+
 // Helper function to print array contents
 void PrintArray(YYJSONArray arr)
 {
-	int len = arr.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
+	int len				= arr.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
 	char[] buffer = new char[len];
 	arr.ToString(buffer, len, YYJSON_WRITE_PRETTY_TWO_SPACES);
 	PrintToServer("%s", buffer);
@@ -454,7 +516,7 @@ void PrintArray(YYJSONArray arr)
 // Helper function to print object contents
 void PrintObject(YYJSONObject obj)
 {
-	int len = obj.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
+	int len				= obj.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
 	char[] buffer = new char[len];
 	obj.ToString(buffer, len, YYJSON_WRITE_PRETTY_TWO_SPACES);
 	PrintToServer("%s", buffer);

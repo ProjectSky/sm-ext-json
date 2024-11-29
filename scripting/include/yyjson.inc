@@ -3,7 +3,6 @@
 #endif
 #define _yyjson_included
 
-
 // JSON value types
 enum YYJSON_TYPE
 {
@@ -97,6 +96,22 @@ methodmap YYJSON < Handle
   public native bool ForeachArray(int &index, YYJSON &value);
 
   /**
+  * Converts an immutable JSON document to a mutable one
+  *
+  * @return                  Handle to the new mutable JSON document, INVALID_HANDLE on failure
+  * @error                   If the document is already mutable
+  */
+  public native any ToMutable();
+
+  /**
+  * Converts a mutable JSON document to an immutable one
+  *
+  * @return                  Handle to the new immutable JSON document, INVALID_HANDLE on failure
+  * @error                   If the document is already immutable
+  */
+  public native any ToImmutable();
+
+  /**
   * Write a document to JSON file with options
   *
   * @note                    On 32-bit operating system, files larger than 2GB may fail to write
@@ -127,10 +142,11 @@ methodmap YYJSON < Handle
   * @param string            String or file to parse
   * @param is_file           True to treat string param as file, false otherwise
   * @param flag              The JSON read options
+  * @param is_mutable_doc    True to create a mutable document, false to create an immutable one
   *
   * @return                  JSON handle, false on failure
   */
-  public static native any Parse(const char[] string, bool is_file = false, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
+  public static native any Parse(const char[] string, bool is_file = false, bool is_mutable_doc = false, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
 
   /**
   * Copies and returns a new mutable value from input, returns NULL on error. This makes a deep-copy on the mutable value. The memory was managed by mutable document
@@ -590,6 +606,20 @@ methodmap YYJSON < Handle
   * Retrieves json is null
   */
   property bool IsNull {
+    public native get();
+  }
+
+  /**
+  * Retrieves json is mutable doc
+  */
+  property bool IsMutable {
+    public native get();
+  }
+
+  /**
+  * Retrieves json is immutable doc
+  */
+  property bool IsImmutable {
     public native get();
   }
 

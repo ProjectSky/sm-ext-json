@@ -11,6 +11,7 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 * Pretty printing and writing support
 * Array and object sorting support
 * Iteration methods for arrays and objects
+* Support for both mutable and immutable JSON documents
 
 ## Performance
 Performance test results using [twitter.json](https://github.com/ibireme/yyjson_benchmark/blob/master/data/json/twitter.json) (0.60 MB):
@@ -19,12 +20,12 @@ Performance test results using [twitter.json](https://github.com/ibireme/yyjson_
 === YYJSON Performance Benchmark ===
 Test iterations: 100
 Data size: 0.60 MB
-Parse time: 0.056 seconds
-Stringify time: 0.015 seconds
-Parse operations per second: 1769.62 ops/sec
-Parse speed: 1065.77 MB/s (1.04 GB/s)
-Stringify speed: 3831.89 MB/s (3.74 GB/s)
-Stringify operations per second: 6362.53 ops/sec
+Parse time: 0.024 seconds
+Stringify time: 0.012 seconds
+Parse operations per second: 4155.23 ops/sec
+Parse speed: 2502.53 MB/s (2.44 GB/s)
+Stringify speed: 4768.10 MB/s (4.65 GB/s)
+Stringify operations per second: 7917.03 ops/sec
 === YYJSON Performance Benchmark End ===
 ```
 
@@ -206,7 +207,7 @@ delete arr;
 #### Sorting Arrays and Objects
 ```cpp
 // Array sorting
-YYJSONArray arr = YYJSON.Parse("[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]");
+YYJSONArray arr = YYJSON.Parse("[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true);
 
 arr.Sort(); // Ascending (default)
 // [1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]
@@ -219,14 +220,14 @@ arr.Sort(YYJSON_SORT_RANDOM); // Random
 
 // Mixed type array sorting
 YYJSONArray mixed = YYJSON.Parse(
-  "[true, 42, \"hello\", 1.23, false, \"world\"]"
+  "[true, 42, \"hello\", 1.23, false, \"world\"]", .is_mutable_doc = true
 );
 mixed.Sort();
 // [false, true, 1.23, 42, "hello", "world"]
 
 // Object sorting by keys
 YYJSONObject obj = YYJSON.Parse(
-  "{\"zebra\": 1, \"alpha\": 2, \"beta\": 3, \"gamma\": 4}"
+  "{\"zebra\": 1, \"alpha\": 2, \"beta\": 3, \"gamma\": 4}", .is_mutable_doc = true
 );
 
 obj.Sort(); // Ascending (default)
@@ -242,3 +243,66 @@ delete arr;
 delete mixed;
 delete obj;
 ```
+
+## Working with Immutable Documents
+When parsing JSON documents, you can choose whether to create a mutable or immutable document:
+
+```cpp
+// Create an immutable document (read-only)
+YYJSONObject obj = YYJSON.Parse("example.json", .is_mutable_doc = false);
+
+// Create a mutable document (read-write)
+YYJSONObject obj = YYJSON.Parse("example.json", .is_mutable_doc = true);
+```
+
+Immutable documents:
+* Are read-only and cannot be modified
+* Use less memory
+* Throw errors when attempting modification operations
+
+### Operations on Immutable Documents
+Immutable documents support a variety of read operations:
+
+- **Type Checking**: You can check the type of values within the document.
+- **Value Retrieval**: You can retrieve values using keys or indices.
+- **Iteration**: You can iterate over arrays and objects.
+- **Comparison**: You can compare immutable documents with other documents.
+
+Example of operations with immutable documents:
+```cpp
+// Create an immutable document
+YYJSONObject obj = YYJSON.Parse("example.json", .is_mutable_doc = false);
+
+// Reading is allowed
+int value = obj.GetInt("key"); // Works fine
+float fValue = obj.GetFloat("key2");  // Works fine
+
+// Modifications will fail with clear error messages
+obj.SetInt("key", 123); // Error: Cannot set value in an immutable JSON object
+obj.Remove("key"); // Error: Cannot remove value from an immutable JSON object
+obj.Sort(); // Error: Cannot sort an immutable JSON object
+
+delete obj;
+```
+
+### Converting Between Mutable and Immutable
+You can convert between mutable and immutable documents using deep copy:
+
+```cpp
+// Create an immutable document
+YYJSONObject immutable = YYJSON.Parse("example.json", .is_mutable_doc = false);
+
+// Create a mutable copy
+YYJSONObject mutable = immutable.ToMutable();
+
+// Now you can modify the mutable copy
+mutable.SetInt("key", 123);
+
+delete mutable;
+delete immutable;
+```
+
+### Performance Considerations
+* Use immutable documents when you only need to read JSON data
+* Use mutable documents when you need to modify the JSON structure
+* Immutable documents generally use less memory than mutable ones

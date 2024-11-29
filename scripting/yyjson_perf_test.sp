@@ -22,7 +22,7 @@ public void OnPluginStart()
 	g_hProfiler = new Profiler();
 }
 
-public Action Command_Benchmark(int args)
+Action Command_Benchmark(int args)
 {
 	YYJSON json = YYJSON.Parse("twitter.json", true);
 

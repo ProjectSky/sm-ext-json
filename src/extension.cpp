@@ -44,7 +44,7 @@ YYJsonWrapper* JsonExtension::GetJSONPointer(IPluginContext* pContext, Handle_t 
 	YYJsonWrapper* pYYJsonWrapper;
 	if ((err = handlesys->ReadHandle(handle, g_htJSON, &sec, (void**)&pYYJsonWrapper)) != HandleError_None)
 	{
-		pContext->ThrowNativeError("Invalid YYJSON handle %x (error %d)", handle, err);
+		pContext->ReportError("Invalid YYJSON handle %x (error %d)", handle, err);
 		return nullptr;
 	}
 
