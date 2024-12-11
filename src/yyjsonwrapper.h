@@ -18,7 +18,12 @@ public:
 	YYJsonWrapper(const YYJsonWrapper&) = delete;
 	YYJsonWrapper& operator=(const YYJsonWrapper&) = delete;
 
-	void ResetArrayIndex() {
+	void ResetObjectIterator() {
+		m_iterInitialized = false;
+	}
+
+	void ResetArrayIterator() {
+		m_iterInitialized = false;
 		m_arrayIndex = 0;
 	}
 

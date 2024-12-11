@@ -96,6 +96,33 @@ methodmap YYJSON < Handle
   public native bool ForeachArray(int &index, YYJSON &value);
 
   /**
+  * Same as ForeachObject, but only iterates over the object's keys
+  *
+  * @note                    Use this when you only need keys (faster than ForeachObject since it doesn't create value handles)
+  *
+  * @param buffer            Buffer to copy key name to
+  * @param maxlength         Maximum length of the string buffer
+  *
+  * @return                  True if there are more elements, false when iteration is complete
+  *
+  * @error                   Invalid handle or handle is not an object
+  */
+  public native bool ForeachKey(char[] buffer, int maxlength);
+
+  /**
+  * Same as ForeachArray, but only iterates over the array's indexes
+  *
+  * @note                    Use this when you only need indexes (faster than ForeachArray since it doesn't create value handles)
+  *
+  * @param index             Variable to store current array index (starting from 0)
+  *
+  * @return                  True if there are more elements, false when iteration is complete
+  *
+  * @error                   Invalid handle or handle is not an array
+  */
+  public native bool ForeachIndex(int &index);
+
+  /**
   * Converts an immutable JSON document to a mutable one
   *
   * @return                  Handle to the new mutable JSON document, INVALID_HANDLE on failure
@@ -1266,8 +1293,8 @@ methodmap YYJSONArray < YYJSON
 };
 
 public Extension __ext_yyjson = {
-    name = "yyjson",
-    file = "yyjson.ext",
+  name = "yyjson",
+  file = "yyjson.ext",
 #if defined AUTOLOAD_EXTENSIONS
   autoload = 1,
 #else

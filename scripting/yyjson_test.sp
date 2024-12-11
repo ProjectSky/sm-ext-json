@@ -357,8 +357,8 @@ void TestIterationOperations()
 
 	// Test object iteration
 	YYJSONObject obj = YYJSON.Parse("{\"a\": 1, \"b\": 2, \"c\": 3}");
-	char				 key[64];
-	YYJSON			 value;
+	char key[64];
+	YYJSON value;
 
 	while (obj.ForeachObject(key, sizeof(key), value))
 	{
@@ -368,7 +368,7 @@ void TestIterationOperations()
 
 	// Test array iteration
 	YYJSONArray arr = YYJSON.Parse("[1, 2, 3, 4, 5]");
-	int					index;
+	int index;
 
 	while (arr.ForeachArray(index, value))
 	{
@@ -385,11 +385,11 @@ void TestTypeOperations()
 	PrintToServer("[YYJSON] Testing type operations...");
 
 	// Test value creation
-	YYJSON boolVal	= YYJSON.CreateBool(true);
-	YYJSON intVal		= YYJSON.CreateInt(42);
+	YYJSON boolVal  = YYJSON.CreateBool(true);
+	YYJSON intVal   = YYJSON.CreateInt(42);
 	YYJSON floatVal = YYJSON.CreateFloat(3.14);
-	YYJSON strVal		= YYJSON.CreateString("test");
-	YYJSON nullVal	= YYJSON.CreateNull();
+	YYJSON strVal   = YYJSON.CreateString("test");
+	YYJSON nullVal  = YYJSON.CreateNull();
 
 	// Test value types
 	PrintToServer("Value types:");
@@ -449,7 +449,7 @@ void TestImmutabilityOperations()
 	PrintToServer("[YYJSON] Testing immutability operations...");
 
 	// Test immutable document creation
-	YYJSONObject immutable = YYJSON.Parse("{\"key\": 123, \"str\": \"test\"}", false, false);
+	YYJSONObject immutable = YYJSON.Parse("{\"key\": 123, \"str\": \"test\"}");
 	PrintToServer("Created immutable document:");
 	PrintObject(immutable);
 
@@ -481,9 +481,7 @@ void TestImmutabilityOperations()
 	PrintToServer("Is mutable: %d", backToImmutable.IsMutable);
 	PrintToServer("Is immutable: %d", backToImmutable.IsImmutable);
 	delete backToImmutable;
-
 	delete mutable;
-
 	delete immutable;
 
 	// Test file operations with immutability
@@ -496,7 +494,7 @@ void TestImmutabilityOperations()
 	delete writeObj;
 
 	// Read as immutable
-	YYJSONObject readImmutable = YYJSON.Parse("test_immutable.json", true, false);
+	YYJSONObject readImmutable = YYJSON.Parse("test_immutable.json", true);
 	PrintToServer("Read as immutable document:");
 	PrintObject(readImmutable);
 	PrintToServer("Is mutable: %d", readImmutable.IsMutable);
@@ -507,7 +505,7 @@ void TestImmutabilityOperations()
 // Helper function to print array contents
 void PrintArray(YYJSONArray arr)
 {
-	int len				= arr.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
+	int len = arr.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
 	char[] buffer = new char[len];
 	arr.ToString(buffer, len, YYJSON_WRITE_PRETTY_TWO_SPACES);
 	PrintToServer("%s", buffer);
@@ -516,7 +514,7 @@ void PrintArray(YYJSONArray arr)
 // Helper function to print object contents
 void PrintObject(YYJSONObject obj)
 {
-	int len				= obj.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
+	int len = obj.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
 	char[] buffer = new char[len];
 	obj.ToString(buffer, len, YYJSON_WRITE_PRETTY_TWO_SPACES);
 	PrintToServer("%s", buffer);

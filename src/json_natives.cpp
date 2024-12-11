@@ -3124,6 +3124,7 @@ static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 		}
 	}
 
+	handle->ResetObjectIterator();
 	return false;
 }
 
@@ -3210,7 +3211,109 @@ static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 		}
 	}
 
-	handle->ResetArrayIndex();
+	handle->ResetArrayIterator();
+	return false;
+}
+
+static cell_t json_obj_foreach_key(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return BAD_HANDLE;
+
+	if (handle->IsMutable()) {
+		if (!yyjson_mut_is_obj(handle->m_pVal_mut)) {
+			return pContext->ThrowNativeError("Type mismatch: expected object value, got %s",
+				yyjson_mut_get_type_desc(handle->m_pVal_mut));
+		}
+
+		if (!handle->m_iterInitialized) {
+			if (!yyjson_mut_obj_iter_init(handle->m_pVal_mut, &handle->m_iterObj)) {
+				return pContext->ThrowNativeError("Failed to initialize object iterator");
+			}
+			handle->m_iterInitialized = true;
+		}
+
+		yyjson_mut_val* key = yyjson_mut_obj_iter_next(&handle->m_iterObj);
+		if (key) {
+			yyjson_mut_val* val = yyjson_mut_obj_iter_get_val(key);
+			pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_str(key), nullptr);
+			return true;
+		}
+	} else {
+		if (!yyjson_is_obj(handle->m_pVal)) {
+			return pContext->ThrowNativeError("Type mismatch: expected object value, got %s",
+				yyjson_get_type_desc(handle->m_pVal));
+		}
+
+		if (!handle->m_iterInitialized) {
+			if (!yyjson_obj_iter_init(handle->m_pVal, &handle->m_iterObjImm)) {
+				return pContext->ThrowNativeError("Failed to initialize object iterator");
+			}
+			handle->m_iterInitialized = true;
+		}
+
+		yyjson_val* key = yyjson_obj_iter_next(&handle->m_iterObjImm);
+		if (key) {
+			yyjson_val* val = yyjson_obj_iter_get_val(key);
+			pContext->StringToLocalUTF8(params[2], params[3], yyjson_get_str(key), nullptr);
+			return true;
+		}
+	}
+
+	handle->ResetObjectIterator();
+	return false;
+}
+
+static cell_t json_arr_foreach_index(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return BAD_HANDLE;
+
+	if (handle->IsMutable()) {
+		if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
+			return pContext->ThrowNativeError("Type mismatch: expected array value, got %s",
+				yyjson_mut_get_type_desc(handle->m_pVal_mut));
+		}
+
+		if (!handle->m_iterInitialized) {
+			if (!yyjson_mut_arr_iter_init(handle->m_pVal_mut, &handle->m_iterArr)) {
+				return pContext->ThrowNativeError("Failed to initialize array iterator");
+			}
+			handle->m_iterInitialized = true;
+		}
+
+		yyjson_mut_val* val = yyjson_mut_arr_iter_next(&handle->m_iterArr);
+		if (val) {
+			cell_t* index;
+			pContext->LocalToPhysAddr(params[2], &index);
+			*index = handle->m_arrayIndex;
+			handle->m_arrayIndex++;
+			return true;
+		}
+	} else {
+		if (!yyjson_is_arr(handle->m_pVal)) {
+			return pContext->ThrowNativeError("Type mismatch: expected array value, got %s",
+				yyjson_get_type_desc(handle->m_pVal));
+		}
+
+		if (!handle->m_iterInitialized) {
+			if (!yyjson_arr_iter_init(handle->m_pVal, &handle->m_iterArrImm)) {
+				return pContext->ThrowNativeError("Failed to initialize array iterator");
+			}
+			handle->m_iterInitialized = true;
+		}
+
+		yyjson_val* val = yyjson_arr_iter_next(&handle->m_iterArrImm);
+		if (val) {
+			cell_t* index;
+			pContext->LocalToPhysAddr(params[2], &index);
+			*index = handle->m_arrayIndex;
+			handle->m_arrayIndex++;
+			return true;
+		}
+	}
+
+	handle->ResetArrayIterator();
 	return false;
 }
 
@@ -3507,6 +3610,8 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.IsImmutable.get", json_val_is_immutable},
 	{"YYJSON.ForeachObject", json_obj_foreach},
 	{"YYJSON.ForeachArray", json_arr_foreach},
+	{"YYJSON.ForeachKey", json_obj_foreach_key},
+	{"YYJSON.ForeachIndex", json_arr_foreach_index},
 	{"YYJSON.ToMutable", json_doc_to_mutable},
 	{"YYJSON.ToImmutable", json_doc_to_immutable},
 
