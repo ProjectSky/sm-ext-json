@@ -134,7 +134,7 @@ delete obj;
 
 // Query data
 YYJSONObject data = YYJSON.Parse("example.json", true);
-int value = data.PtrGetInt("/int");        // Get value: 1234
+int value = data.PtrGetInt("/int"); // Get value: 1234
 float fValue = data.PtrGetFloat("/arr/1"); // Get value: 1.2344
 delete data;
 ```
@@ -249,10 +249,10 @@ When parsing JSON documents, you can choose whether to create a mutable or immut
 
 ```cpp
 // Create an immutable document (read-only)
-YYJSONObject obj = YYJSON.Parse("example.json", .is_mutable_doc = false);
+YYJSONObject obj = YYJSON.Parse("example.json", true);
 
 // Create a mutable document (read-write)
-YYJSONObject obj = YYJSON.Parse("example.json", .is_mutable_doc = true);
+YYJSONObject obj = YYJSON.Parse("example.json", true, true);
 ```
 
 Immutable documents:
@@ -271,7 +271,7 @@ Immutable documents support a variety of read operations:
 Example of operations with immutable documents:
 ```cpp
 // Create an immutable document
-YYJSONObject obj = YYJSON.Parse("example.json", .is_mutable_doc = false);
+YYJSONObject obj = YYJSON.Parse("example.json", true);
 
 // Reading is allowed
 int value = obj.GetInt("key"); // Works fine
@@ -290,7 +290,7 @@ You can convert between mutable and immutable documents using deep copy:
 
 ```cpp
 // Create an immutable document
-YYJSONObject immutable = YYJSON.Parse("example.json", .is_mutable_doc = false);
+YYJSONObject immutable = YYJSON.Parse("example.json", true);
 
 // Create a mutable copy
 YYJSONObject mutable = immutable.ToMutable();
