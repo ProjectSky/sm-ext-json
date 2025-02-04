@@ -194,7 +194,7 @@ while (arr.ForeachIndex(index)) {
   PrintToServer("Index: %d", index);
 }
 
-// Method 2: Classic iteration
+// Method 3: Classic iteration
 for (int i = 0; i < arr.Length; i++) {
   value = arr.Get(i);
   delete value;
