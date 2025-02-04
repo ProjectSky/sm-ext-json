@@ -132,10 +132,23 @@ obj.PtrSetInt("/a/b/c", 1);
 
 delete obj;
 
-// Query data
+/* example.json:
+{
+  "int": 1234,
+  "arr": [1, 1.2344, 3],
+  "nested": {
+    "obj": {
+      "value": 42
+    }
+  }
+}
+*/
+
 YYJSONObject data = YYJSON.Parse("example.json", true);
-int value = data.PtrGetInt("/int"); // Get value: 1234
-float fValue = data.PtrGetFloat("/arr/1"); // Get value: 1.2344
+// Access values using JSON Pointer
+int value = data.PtrGetInt("/int"); // Returns: 1234
+float fValue = data.PtrGetFloat("/arr/1"); // Returns: 1.2344
+int nested = data.PtrGetInt("/nested/obj/value"); // Returns: 42
 delete data;
 ```
 
@@ -152,7 +165,12 @@ while (obj.ForeachObject(key, sizeof(key), value)) {
   delete value;
 }
 
-// Method 2: Classic iteration
+// Method 2: Using ForeachKey (only used for keys)
+while (obj.ForeachKey(key, sizeof(key))) {
+  PrintToServer("Key: %s", key);
+}
+
+// Method 3: Classic iteration
 for (int i = 0; i < obj.Size; i++) {
   obj.GetKey(i, key, sizeof(key));
   value = obj.GetValueAt(i);
@@ -169,6 +187,11 @@ int index;
 while (arr.ForeachArray(index, value)) {
   PrintToServer("Index: %d", index);
   delete value;
+}
+
+// Method 2: Using ForeachIndex (only used for index)
+while (arr.ForeachIndex(index)) {
+  PrintToServer("Index: %d", index);
 }
 
 // Method 2: Classic iteration
@@ -207,7 +230,9 @@ delete arr;
 #### Sorting Arrays and Objects
 ```cpp
 // Array sorting
-YYJSONArray arr = YYJSON.Parse("[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true);
+YYJSONArray arr = YYJSON.Parse(
+	"[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true
+);
 
 arr.Sort(); // Ascending (default)
 // [1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]
@@ -275,7 +300,7 @@ YYJSONObject obj = YYJSON.Parse("example.json", true);
 
 // Reading is allowed
 int value = obj.GetInt("key"); // Works fine
-float fValue = obj.GetFloat("key2");  // Works fine
+float fValue = obj.GetFloat("key2"); // Works fine
 
 // Modifications will fail with clear error messages
 obj.SetInt("key", 123); // Error: Cannot set value in an immutable JSON object

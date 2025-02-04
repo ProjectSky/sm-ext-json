@@ -313,10 +313,10 @@ static cell_t json_arr_parse_file(IPluginContext* pContext, const cell_t* params
 	return pYYJsonWrapper.release()->m_handle;
 }
 
-static cell_t json_arr_index_of_bool(IPluginContext* pContext, const cell_t* params)
+static cell_t json_arr_index_of_bool(IPluginContext *pContext, const cell_t *params)
 {
-	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-
+	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	
 	if (!handle) return BAD_HANDLE;
 
 	bool searchValue = params[2];
@@ -327,31 +327,24 @@ static cell_t json_arr_index_of_bool(IPluginContext* pContext, const cell_t* par
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
 
-		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		yyjson_mut_arr_iter iter;
-		yyjson_mut_arr_iter_init(handle->m_pVal_mut, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_mut_val* val = yyjson_mut_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_mut_val *val;
+		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_bool(val) && yyjson_mut_get_bool(val) == searchValue) {
-				return i;
+				return idx;
 			}
 		}
-	}
-	else {
+	} else {
 		if (!yyjson_is_arr(handle->m_pVal)) {
 			return pContext->ThrowNativeError("Type mismatch: expected array value, got %s",
 				yyjson_get_type_desc(handle->m_pVal));
 		}
 
-		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		yyjson_arr_iter iter;
-		yyjson_arr_iter_init(handle->m_pVal, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_val* val = yyjson_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_val *val;
+		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_bool(val) && yyjson_get_bool(val) == searchValue) {
-				return i;
+				return idx;
 			}
 		}
 	}
@@ -374,31 +367,24 @@ static cell_t json_arr_index_of_str(IPluginContext* pContext, const cell_t* para
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
 
-		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		yyjson_mut_arr_iter iter;
-		yyjson_mut_arr_iter_init(handle->m_pVal_mut, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_mut_val* val = yyjson_mut_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_mut_val *val;
+		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_str(val) && strcmp(yyjson_mut_get_str(val), searchStr) == 0) {
-				return i;
+				return idx;
 			}
 		}
-	}
-	else {
+	} else {
 		if (!yyjson_is_arr(handle->m_pVal)) {
 			return pContext->ThrowNativeError("Type mismatch: expected array value, got %s",
 				yyjson_get_type_desc(handle->m_pVal));
 		}
 
-		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		yyjson_arr_iter iter;
-		yyjson_arr_iter_init(handle->m_pVal, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_val* val = yyjson_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_val *val;
+		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_str(val) && strcmp(yyjson_get_str(val), searchStr) == 0) {
-				return i;
+				return idx;
 			}
 		}
 	}
@@ -420,14 +406,11 @@ static cell_t json_arr_index_of_int(IPluginContext* pContext, const cell_t* para
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
 
-		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		yyjson_mut_arr_iter iter;
-		yyjson_mut_arr_iter_init(handle->m_pVal_mut, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_mut_val* val = yyjson_mut_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_mut_val *val;
+		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_int(val) && yyjson_mut_get_int(val) == searchValue) {
-				return i;
+				return idx;
 			}
 		}
 	}
@@ -437,14 +420,11 @@ static cell_t json_arr_index_of_int(IPluginContext* pContext, const cell_t* para
 				yyjson_get_type_desc(handle->m_pVal));
 		}
 
-		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		yyjson_arr_iter iter;
-		yyjson_arr_iter_init(handle->m_pVal, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_val* val = yyjson_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_val *val;
+		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_int(val) && yyjson_get_int(val) == searchValue) {
-				return i;
+				return idx;
 			}
 		}
 	}
@@ -475,14 +455,11 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
 
-		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		yyjson_mut_arr_iter iter;
-		yyjson_mut_arr_iter_init(handle->m_pVal_mut, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_mut_val* val = yyjson_mut_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_mut_val *val;
+		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_int(val) && yyjson_mut_get_sint(val) == searchValue) {
-				return i;
+				return idx;
 			}
 		}
 	}
@@ -492,24 +469,16 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 				yyjson_get_type_desc(handle->m_pVal));
 		}
 
-		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		yyjson_arr_iter iter;
-		yyjson_arr_iter_init(handle->m_pVal, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_val* val = yyjson_arr_iter_next(&iter);
+		size_t idx, max;
+		yyjson_val *val;
+		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_int(val) && yyjson_get_sint(val) == searchValue) {
-				return i;
+				return idx;
 			}
 		}
 	}
 
 	return -1;
-}
-
-// Checks if two floating-point numbers are close enough considering floating-point precision issues
-bool areClose(double a, double b, double epsilon = 1e-6) {
-	return std::abs(a - b) < epsilon || std::nextafter(a, b) == b;
 }
 
 static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* params)
@@ -518,7 +487,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 
 	if (!handle) return BAD_HANDLE;
 
-	float searchValue = sp_ctof(params[2]);
+	double searchValue = (double)sp_ctof(params[2]);
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
@@ -526,14 +495,14 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
 
-		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		yyjson_mut_arr_iter iter;
-		yyjson_mut_arr_iter_init(handle->m_pVal_mut, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_mut_val* val = yyjson_mut_arr_iter_next(&iter);
-			if (yyjson_mut_is_real(val) && areClose(yyjson_mut_get_real(val), searchValue)) {
-				return i;
+		size_t idx, max;
+		yyjson_mut_val *val;
+		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
+			if (yyjson_mut_is_real(val)) {
+				double val_num = yyjson_mut_get_real(val);
+				if (fabs(val_num - searchValue) < 1e-6 || std::nextafter(val_num, searchValue) == searchValue) {
+					return idx;
+				}
 			}
 		}
 	}
@@ -543,14 +512,14 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 				yyjson_get_type_desc(handle->m_pVal));
 		}
 
-		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		yyjson_arr_iter iter;
-		yyjson_arr_iter_init(handle->m_pVal, &iter);
-
-		for (size_t i = 0; i < arr_size; i++) {
-			yyjson_val* val = yyjson_arr_iter_next(&iter);
-			if (yyjson_is_real(val) && areClose(yyjson_get_real(val), searchValue)) {
-				return i;
+		size_t idx, max;
+		yyjson_val *val;
+		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
+			if (yyjson_is_real(val)) {
+				double val_num = yyjson_get_real(val);
+				if (fabs(val_num - searchValue) < 1e-6 || std::nextafter(val_num, searchValue) == searchValue) {
+					return idx;
+				}
 			}
 		}
 	}
@@ -3344,10 +3313,9 @@ static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 	values.clear();
 	values.reserve(arr_size);
 
-	yyjson_mut_arr_iter iter;
-	yyjson_mut_arr_iter_init(handle->m_pVal_mut, &iter);
-	yyjson_mut_val* val;
-	while ((val = yyjson_mut_arr_iter_next(&iter))) {
+	size_t idx, max;
+	yyjson_mut_val *val;
+	yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 		values.push_back(val);
 	}
 
@@ -3434,11 +3402,10 @@ static cell_t json_obj_sort(IPluginContext* pContext, const cell_t* params)
 	pairs.clear();
 	pairs.reserve(obj_size);
 
-	yyjson_mut_obj_iter iter;
-	yyjson_mut_obj_iter_init(handle->m_pVal_mut, &iter);
-	yyjson_mut_val* key;
-	while ((key = yyjson_mut_obj_iter_next(&iter))) {
-		pairs.emplace_back(key, yyjson_mut_obj_iter_get_val(key));
+	size_t idx, max;
+  yyjson_mut_val *key, *val;
+	yyjson_mut_obj_foreach(handle->m_pVal_mut, idx, max, key, val) {
+		pairs.emplace_back(key, val);
 	}
 
 	if (sort_mode == YYJSON_SORT_RANDOM) {

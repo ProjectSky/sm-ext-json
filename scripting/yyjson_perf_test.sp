@@ -17,7 +17,7 @@ public Plugin myinfo = {
 
 public void OnPluginStart()
 {
-  RegServerCmd("sm_yyjson_benchmark", Command_Benchmark, "Run YYJSON performance benchmark");
+	RegServerCmd("sm_yyjson_benchmark", Command_Benchmark, "Run YYJSON performance benchmark");
 
 	g_hProfiler = new Profiler();
 }

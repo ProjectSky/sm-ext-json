@@ -1726,11 +1726,25 @@ yyjson_doc *yyjson_mut_val_imut_copy(yyjson_mut_val *mval,
     return doc;
 }
 
-static_inline bool unsafe_yyjson_num_equals(void *lhs, void *rhs) {
-    yyjson_val_uni *luni = &((yyjson_val *)lhs)->uni;
-    yyjson_val_uni *runi = &((yyjson_val *)rhs)->uni;
+static_inline bool areClose(double a, double b) {
+    return fabs(a - b) < 1e-6 || nextafter(a, b) == b;
+}
+
+static_inline bool unsafe_yyjson_num_equals(void* lhs, void* rhs) {
+    yyjson_val_uni* luni = &((yyjson_val*)lhs)->uni;
+    yyjson_val_uni* runi = &((yyjson_val*)rhs)->uni;
     yyjson_subtype lt = unsafe_yyjson_get_subtype(lhs);
     yyjson_subtype rt = unsafe_yyjson_get_subtype(rhs);
+
+    // if either is a float, use areClose to compare
+    if (lt == YYJSON_SUBTYPE_REAL || rt == YYJSON_SUBTYPE_REAL) {
+        return areClose(
+            lt == YYJSON_SUBTYPE_REAL ? luni->f64 : (double)luni->i64,
+            rt == YYJSON_SUBTYPE_REAL ? runi->f64 : (double)runi->i64
+        );
+    }
+
+    // otherwise use the original comparison logic
     if (lt == rt) return luni->u64 == runi->u64;
     if (lt == YYJSON_SUBTYPE_SINT && rt == YYJSON_SUBTYPE_UINT) {
         return luni->i64 >= 0 && luni->u64 == runi->u64;
