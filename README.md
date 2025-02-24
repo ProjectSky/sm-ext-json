@@ -58,7 +58,7 @@ ambuild
 
 ## Documentation
 * [API Reference](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/yyjson.inc)
-* [Latest Builds](https://github.com/ProjectSky/sm-ext-yyjson/actions)
+* [Latest Release](https://github.com/ProjectSky/sm-ext-yyjson/releases)
 
 ### Basic Examples
 
@@ -231,7 +231,7 @@ delete arr;
 ```cpp
 // Array sorting
 YYJSONArray arr = YYJSON.Parse(
-	"[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true
+  "[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true
 );
 
 arr.Sort(); // Ascending (default)
@@ -267,6 +267,94 @@ obj.Sort(YYJSON_SORT_RANDOM); // Random
 delete arr;
 delete mixed;
 delete obj;
+```
+
+#### Using FromStrings
+```cpp
+// Create object from key-value string arrays
+char pairs[][] = {"name", "test", "type", "demo", "version", "1.0.0"};
+	
+YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
+
+/* Output:
+{
+  "name": "test",
+  "type": "demo", 
+  "version": "1.0.0"
+}
+*/
+
+// Create array from string array
+char items[][] = {"apple", "banana", "orange"};
+YYJSONArray arr = YYJSONArray.FromStrings(items, sizeof(items));
+
+/* Output:
+[
+  "apple",
+  "banana", 
+  "orange"
+]
+*/
+
+delete obj;
+delete arr;
+```
+
+#### Using JSON Pack
+```cpp
+// Create object with mixed types
+YYJSON packed = YYJSON.Pack("{s:s,s:i,s:f,s:b,s:n}",
+  "name", "John",
+  "age", 25,
+  "height", 1.75,
+  "active", true,
+  "extra"
+);
+
+/* Output:
+{
+  "name": "John",
+  "age": 25,
+  "height": 1.75,
+  "active": true,
+  "extra": null
+}
+*/
+
+// Create nested structures
+YYJSON nested = YYJSON.Pack("{s:{s:s,s:[i,i,i]}}",
+  "user",
+    "name", "John",
+    "scores", 85, 90, 95
+);
+
+/* Output:
+{
+  "user": {
+    "name": "John",
+    "scores": [85, 90, 95]
+  }
+}
+*/
+
+// Create array with mixed types
+YYJSON array = YYJSON.Pack("[s,i,f,b,n]",
+    "test", 42, 3.14, true
+);
+
+/* Output:
+[
+  "test",
+  42,
+  3.14,
+  true,
+  null
+]
+*/
+
+delete packed;
+delete nested;
+delete array;
 ```
 
 ## Working with Immutable Documents

@@ -10,6 +10,267 @@ enum YYJSON_SORT_ORDER
 	YYJSON_SORT_RANDOM = 2
 };
 
+#define JSON_PACK_ERROR_MSG_SIZE 256
+typedef struct {
+	char msg[JSON_PACK_ERROR_MSG_SIZE];
+} yyjson_error_t;
+
+static void json_pack_set_error(yyjson_error_t *error, const char *fmt, ...) {
+	if (error) {
+		va_list args;
+		va_start(args, fmt);
+		vsnprintf(error->msg, JSON_PACK_ERROR_MSG_SIZE, fmt, args);
+		va_end(args);
+
+		error->msg[JSON_PACK_ERROR_MSG_SIZE - 1] = '\0';
+	}
+}
+
+static const char* skip_separators(const char* ptr) {
+	while (*ptr && (isspace(*ptr) || *ptr == ':' || *ptr == ',')) {
+		ptr++;
+	}
+	return ptr;
+}
+
+yyjson_mut_val* json_pack(yyjson_mut_doc* doc, const char* fmt, yyjson_error_t* error, IPluginContext* pContext, const cell_t* params, unsigned int& param_index) {
+	if (!doc || !fmt || !*fmt) {
+		json_pack_set_error(error, "Invalid argument(s)");
+		return nullptr;
+	}
+
+	yyjson_mut_val* root = nullptr;
+	const char* ptr = fmt;
+
+	bool is_obj = false;
+	if (*ptr == '{') {
+		root = yyjson_mut_obj(doc);
+		is_obj = true;
+		ptr = skip_separators(ptr + 1);
+	} else if (*ptr == '[') {
+		root = yyjson_mut_arr(doc);
+		ptr = skip_separators(ptr + 1);
+	} else {
+		json_pack_set_error(error, "Invalid format string: expected '{' or '['");
+		return nullptr;
+	}
+
+	if (!root) {
+		json_pack_set_error(error, "Failed to create root object/array");
+		return nullptr;
+	}
+
+	yyjson_mut_val* key_val = nullptr;
+	yyjson_mut_val* val = nullptr;
+
+	while (*ptr && *ptr != '}' && *ptr != ']') {
+		if (is_obj) {
+			if (*ptr != 's') {
+				json_pack_set_error(error, "Object key must be string, got '%c'", *ptr);
+				return nullptr;
+			}
+		}
+		switch (*ptr) {
+			case 's': {
+				if (is_obj) {
+					char* key;
+					pContext->LocalToString(params[param_index++], &key);
+					if (!key) {
+						json_pack_set_error(error, "Invalid string key");
+						return nullptr;
+					}
+					key_val = yyjson_mut_strcpy(doc, key);
+					if (!key_val) {
+						json_pack_set_error(error, "Failed to create key");
+						return nullptr;
+					}
+					
+					ptr = skip_separators(ptr + 1);
+					if (*ptr != 's' && *ptr != 'i' && *ptr != 'f' && *ptr != 'b' && 
+						*ptr != 'n' && *ptr != '{' && *ptr != '[') {
+						json_pack_set_error(error, "Invalid value type after key");
+						return nullptr;
+					}
+					
+					if (*ptr == '{' || *ptr == '[') {
+						val = json_pack(doc, ptr, error, pContext, params, param_index);
+						if (!val) {
+							return nullptr;
+						}
+						int nested_level = 1;
+						ptr++;
+						while (nested_level > 0 && *ptr) {
+							if (*ptr == '{' || *ptr == '[') nested_level++;
+							if (*ptr == '}' || *ptr == ']') nested_level--;
+							ptr++;
+						}
+					} else {
+						switch (*ptr) {
+							case 's': {
+								char* val_str;
+								pContext->LocalToString(params[param_index++], &val_str);
+								if (!val_str) {
+									json_pack_set_error(error, "Invalid string value");
+									return nullptr;
+								}
+								val = yyjson_mut_strcpy(doc, val_str);
+								ptr++;
+								break;
+							}
+							case 'i': {
+								cell_t* val_int;
+								pContext->LocalToPhysAddr(params[param_index++], &val_int);
+								val = yyjson_mut_int(doc, *val_int);
+								ptr++;
+								break;
+							}
+							case 'f': {
+								cell_t* val_float;
+								pContext->LocalToPhysAddr(params[param_index++], &val_float);
+								val = yyjson_mut_float(doc, sp_ctof(*val_float));
+								ptr++;
+								break;
+							}
+							case 'b': {
+								cell_t* val_bool;
+								pContext->LocalToPhysAddr(params[param_index++], &val_bool);
+								val = yyjson_mut_bool(doc, *val_bool != 0);
+								ptr++;
+								break;
+							}
+							case 'n': {
+								val = yyjson_mut_null(doc);
+								ptr++;
+								break;
+							}
+						}
+					}
+					
+					if (!val) {
+						json_pack_set_error(error, "Failed to create value");
+						return nullptr;
+					}
+					
+					if (!yyjson_mut_obj_add(root, key_val, val)) {
+						json_pack_set_error(error, "Failed to add value to object");
+						return nullptr;
+					}
+				} else {
+					char* val_str;
+					pContext->LocalToString(params[param_index++], &val_str);
+					if (!val_str) {
+						json_pack_set_error(error, "Invalid string value");
+						return nullptr;
+					}
+					if (!yyjson_mut_arr_add_strcpy(doc, root, val_str)) {
+						json_pack_set_error(error, "Failed to add string to array");
+						return nullptr;
+					}
+					ptr++;
+				}
+				break;
+			}
+			case 'i': {
+				cell_t* val_int;
+				pContext->LocalToPhysAddr(params[param_index++], &val_int);
+				if (!yyjson_mut_arr_add_int(doc, root, *val_int)) {
+					json_pack_set_error(error, "Failed to add integer to array");
+					return nullptr;
+				}
+				ptr++;
+				break;
+			}
+			case 'b': {
+				cell_t* val_bool;
+				pContext->LocalToPhysAddr(params[param_index++], &val_bool);
+				if (!yyjson_mut_arr_add_bool(doc, root, *val_bool != 0)) {
+					json_pack_set_error(error, "Failed to add boolean to array");
+					return nullptr;
+				}
+				ptr++;
+				break;
+			}
+			case 'n': {
+				if (!yyjson_mut_arr_add_null(doc, root)) {
+					json_pack_set_error(error, "Failed to add null to array");
+					return nullptr;
+				}
+				ptr++;
+				break;
+			}
+			case 'f': {
+				cell_t* val_float;
+				pContext->LocalToPhysAddr(params[param_index++], &val_float);
+				if (!yyjson_mut_arr_add_float(doc, root, sp_ctof(*val_float))) {
+					json_pack_set_error(error, "Failed to add float to array");
+					return nullptr;
+				}
+				ptr++;
+				break;
+			}
+			case '{':
+			case '[': {
+				val = json_pack(doc, ptr, error, pContext, params, param_index);
+				if (!val) {
+					return nullptr;
+				}
+				if (!yyjson_mut_arr_append(root, val)) {
+					json_pack_set_error(error, "Failed to add nested value to array");
+					return nullptr;
+				}
+				// Skip the nested format string
+				int nested_level = 1;
+				ptr++;
+				while (nested_level > 0 && *ptr) {
+					if (*ptr == '{' || *ptr == '[') nested_level++;
+					if (*ptr == '}' || *ptr == ']') nested_level--;
+					ptr++;
+				}
+				break;
+			}
+			default: {
+				json_pack_set_error(error, "Invalid format character: %c", *ptr);
+				return nullptr;
+			}
+		}
+		ptr = skip_separators(ptr);
+	}
+
+	if (*ptr != (is_obj ? '}' : ']')) {
+		json_pack_set_error(error, "Unexpected end of format string");
+		return nullptr;
+	}
+
+	return root;
+}
+
+static cell_t json_val_pack(IPluginContext* pContext, const cell_t* params) {
+	char* fmt;
+	pContext->LocalToString(params[1], &fmt);
+	
+	auto pYYJsonWrapper = CreateWrapper();
+	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
+	
+	yyjson_error_t error;
+	unsigned int param_index = 2;
+	
+	pYYJsonWrapper->m_pVal_mut = json_pack(pYYJsonWrapper->m_pDocument_mut.get(), fmt, &error, pContext, params, param_index);
+	
+	if (!pYYJsonWrapper->m_pVal_mut) {
+		return pContext->ThrowNativeError("Failed to pack JSON: %s", error.msg);
+	}
+	
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.get(), &sec, nullptr, &err);
+	
+	if (!pYYJsonWrapper->m_handle) {
+		return pContext->ThrowNativeError("Failed to create handle for packed JSON (error code: %d)", err);
+	}
+	
+	return pYYJsonWrapper.release()->m_handle;
+}
+
 static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 {
 	char* str;
@@ -682,6 +943,76 @@ static cell_t json_obj_init(IPluginContext* pContext, const cell_t* params)
 	return pYYJsonWrapper.release()->m_handle;
 }
 
+static cell_t json_obj_init_with_str(IPluginContext* pContext, const cell_t* params)
+{
+	cell_t* addr;
+	pContext->LocalToPhysAddr(params[1], &addr);
+	cell_t array_size = params[2];
+	
+	// Validate array size
+	if (array_size < 2) {
+		return pContext->ThrowNativeError("Array must contain at least one key-value pair");
+	}
+	if (array_size % 2 != 0) {
+		return pContext->ThrowNativeError("Array must contain an even number of strings (got %d)", array_size);
+	}
+	
+	cell_t pair_count = array_size / 2;
+	
+	// Create array of C strings for key-value pairs
+	std::vector<const char*> kv_pairs;
+	kv_pairs.reserve(array_size);
+	
+	// Convert and validate each string from the SourcePawn array
+	for (cell_t i = 0; i < array_size; i += 2) {
+		char* key;
+		char* value;
+		
+		// Get and validate key
+		if (pContext->LocalToString(addr[i], &key) != SP_ERROR_NONE) {
+			return pContext->ThrowNativeError("Failed to read key at index %d", i);
+		}
+		if (!key || !key[0]) {
+			return pContext->ThrowNativeError("Empty key at index %d", i);
+		}
+		
+		// Get value (can be empty)
+		if (pContext->LocalToString(addr[i + 1], &value) != SP_ERROR_NONE) {
+			return pContext->ThrowNativeError("Failed to read value at index %d", i + 1);
+		}
+		if (!value) {
+			return pContext->ThrowNativeError("Invalid value at index %d", i + 1);
+		}
+		
+		kv_pairs.push_back(key);
+		kv_pairs.push_back(value);
+	}
+
+	auto pYYJsonWrapper = CreateWrapper();
+	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
+	
+	// Create object with key-value pairs
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj_with_kv(
+		pYYJsonWrapper->m_pDocument_mut.get(),
+		kv_pairs.data(),
+		pair_count
+	);
+
+	if (!pYYJsonWrapper->m_pVal_mut) {
+		return pContext->ThrowNativeError("Failed to create JSON object from key-value pairs");
+	}
+
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.get(), &sec, nullptr, &err);
+
+	if (!pYYJsonWrapper->m_handle) {
+		return pContext->ThrowNativeError("Failed to create handle (error code: %d)", err);
+	}
+
+	return pYYJsonWrapper.release()->m_handle;
+}
+
 static cell_t json_val_create_bool(IPluginContext* pContext, const cell_t* params)
 {
 	auto pYYJsonWrapper = CreateWrapper();
@@ -934,6 +1265,48 @@ static cell_t json_arr_init(IPluginContext* pContext, const cell_t* params)
 	if (!pYYJsonWrapper->m_handle)
 	{
 		return pContext->ThrowNativeError("Failed to create handle for initialized JSON array (error code: %d)", err);
+	}
+
+	return pYYJsonWrapper.release()->m_handle;
+}
+
+static cell_t json_arr_init_with_str(IPluginContext* pContext, const cell_t* params)
+{
+	cell_t* addr;
+	pContext->LocalToPhysAddr(params[1], &addr);
+	cell_t array_size = params[2];
+	
+	// Create array of C strings
+	std::vector<const char*> strs;
+	strs.reserve(array_size);
+	
+	// Convert each string from the SourcePawn array
+	for (cell_t i = 0; i < array_size; i++) {
+		char* str;
+		pContext->LocalToString(addr[i], &str);
+		strs.push_back(str);
+	}
+
+	auto pYYJsonWrapper = CreateWrapper();
+	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
+	
+	// Create array with strings
+	pYYJsonWrapper->m_pVal_mut = yyjson_mut_arr_with_strcpy(
+		pYYJsonWrapper->m_pDocument_mut.get(),
+		strs.data(),
+		strs.size()
+	);
+
+	if (!pYYJsonWrapper->m_pVal_mut) {
+		return pContext->ThrowNativeError("Failed to create JSON array from strings");
+	}
+
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.get(), &sec, nullptr, &err);
+
+	if (!pYYJsonWrapper->m_handle) {
+		return pContext->ThrowNativeError("Failed to create handle (error code: %d)", err);
 	}
 
 	return pYYJsonWrapper.release()->m_handle;
@@ -3490,6 +3863,7 @@ const sp_nativeinfo_t json_natives[] =
 {
 	// JSONObject
 	{"YYJSONObject.YYJSONObject", json_obj_init},
+	{"YYJSONObject.FromStrings", json_obj_init_with_str},
 	{"YYJSONObject.Size.get", json_obj_get_size},
 	{"YYJSONObject.Get", json_obj_get_val},
 	{"YYJSONObject.GetBool", json_obj_get_bool},
@@ -3517,6 +3891,7 @@ const sp_nativeinfo_t json_natives[] =
 
 	// JSONArray
 	{"YYJSONArray.YYJSONArray", json_arr_init},
+	{"YYJSONArray.FromStrings", json_arr_init_with_str},
 	{"YYJSONArray.Length.get", json_arr_get_size},
 	{"YYJSONArray.Get", json_arr_get_val},
 	{"YYJSONArray.First.get", json_arr_get_first},
@@ -3583,6 +3958,7 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.ToImmutable", json_doc_to_immutable},
 
 	// JSON CREATE & GET
+	{"YYJSON.Pack", json_val_pack},
 	{"YYJSON.CreateBool", json_val_create_bool},
 	{"YYJSON.CreateFloat", json_val_create_float},
 	{"YYJSON.CreateInt", json_val_create_int},

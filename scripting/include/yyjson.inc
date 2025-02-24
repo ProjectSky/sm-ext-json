@@ -67,6 +67,28 @@ enum YYJSON_SORT_ORDER
 methodmap YYJSON < Handle
 {
   /**
+  * Creates a JSON value using a format string and arguments
+  * Format specifiers:
+  * - s: string
+  * - i: integer
+  * - f: float
+  * - b: boolean
+  * - n: null
+  * - {: start object
+  * - }: end object
+  * - [: start array
+  * - ]: end array
+  *
+  * @param format             Format string
+  * @param ...                Arguments based on format string
+  *
+  * @return                   JSON handle
+  *
+  * @error                    If format string is invalid or arguments don't match
+  */
+  public static native any Pack(const char[] format, any ...);
+
+  /**
   * Iterates over the object's key-value pairs
   *
   * @note                    Needs to be freed using delete or CloseHandle()
@@ -674,6 +696,19 @@ methodmap YYJSONObject < YYJSON
   public native YYJSONObject();
 
   /**
+  * Creates a new JSON object from an array of strings representing key-value pairs.
+  * The array must contain an even number of strings, where even indices are keys 
+  * and odd indices are values. Keys cannot be empty strings.
+  *
+  * @param pairs             Array of strings containing alternating keys and values.
+  * @param size              Total size of the array (must be even).
+  * @return                  New JSON object handle.
+  * @error                   If array size is invalid, any key is empty, or if creation fails.
+  *
+  */
+  public static native YYJSONObject FromStrings(const char[][] pairs, int size);
+
+  /**
   * Loads a JSON object from a file
   *
   * @param file              File to read from
@@ -926,6 +961,15 @@ methodmap YYJSONArray < YYJSON
   * @note Needs to be freed using delete or CloseHandle()
   */
   public native YYJSONArray();
+
+  /**
+  * Creates a new JSON array from an array of strings.
+  *
+  * @param strings           Array of strings to create array from.
+  * @param size              Size of the array.
+  * @return                  New JSON array handle, or null if creation failed.
+  */
+  public static native YYJSONArray FromStrings(const char[][] strings, int size);
 
   /**
   * Loads a JSON array from a file
