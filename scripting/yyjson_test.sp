@@ -74,11 +74,6 @@ void TestBasicOperations()
 
 	// Test parsing
 	YYJSONObject parsed = YYJSON.Parse(buffer);
-	if (!parsed)
-	{
-		PrintToServer("[YYJSON] Parse failed!");
-		return;
-	}
 
 	// Test equality
 	PrintToServer("Objects are equal: %d", YYJSON.Equals(obj, parsed));
@@ -436,12 +431,9 @@ void TestFileOperations()
 	PrintToServer("Reading from file...");
 	YYJSONObject loaded = YYJSON.Parse("test.json", true);
 
-	if (loaded)
-	{
-		PrintToServer("File content:");
-		PrintJson(loaded);
-		delete loaded;
-	}
+	PrintToServer("File content:");
+	PrintJson(loaded);
+	delete loaded;
 
 	delete obj;
 }

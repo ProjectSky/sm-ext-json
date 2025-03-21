@@ -297,8 +297,8 @@ static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Failed to parse JSON file: %s (error code: %u, msg: %s, position: %d)",
 				str, readError.code, readError.msg, readError.pos);
 		} else {
-			return pContext->ThrowNativeError("Failed to parse JSON str: %s (error code: %u, position: %d, content: %.32s...)",
-				readError.msg, readError.code, readError.pos, str);
+			return pContext->ThrowNativeError("Failed to parse JSON str: %s (error code: %u, position: %d)",
+				readError.msg, readError.code, readError.pos);
 		}
 	}
 
@@ -329,7 +329,7 @@ static cell_t json_doc_equals(IPluginContext* pContext, const cell_t* params)
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[2]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	// if both are mutable, compare them directly
 	if (handle1->IsMutable() && handle2->IsMutable()) {
@@ -345,7 +345,6 @@ static cell_t json_doc_equals(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Failed to create mutable documents for comparison");
 		}
 
-		// get root values
 		yyjson_mut_val* val1_mut = yyjson_mut_doc_get_root(doc1_mut.get());
 		yyjson_mut_val* val2_mut = yyjson_mut_doc_get_root(doc2_mut.get());
 
@@ -353,7 +352,6 @@ static cell_t json_doc_equals(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Failed to get root values from mutable documents");
 		}
 
-		// compare mutable values
 		return yyjson_mut_equals(val1_mut, val2_mut);
 	}
 
@@ -380,7 +378,7 @@ static cell_t json_doc_copy_deep(IPluginContext* pContext, const cell_t* params)
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[2]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	auto pYYJsonWrapper = CreateWrapper();
 	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
@@ -411,7 +409,7 @@ static cell_t json_val_get_type_desc(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_type_desc(handle->m_pVal_mut), nullptr);
@@ -433,8 +431,8 @@ static cell_t json_obj_parse_str(IPluginContext* pContext, const cell_t* params)
 	yyjson_doc* idoc = yyjson_read_opts(str, strlen(str), params[2], nullptr, &readError);
 
 	if (readError.code) {
-		return pContext->ThrowNativeError("Failed to parse JSON str: %s (error code: %u, position: %d, content: %.32s...)",
-			readError.msg, readError.code, readError.pos, str);
+		return pContext->ThrowNativeError("Failed to parse JSON str: %s (error code: %u, position: %d)",
+			readError.msg, readError.code, readError.pos);
 	}
 
 	yyjson_val* root = yyjson_doc_get_root(idoc);
@@ -509,8 +507,8 @@ static cell_t json_arr_parse_str(IPluginContext* pContext, const cell_t* params)
 	yyjson_doc* idoc = yyjson_read_opts(str, strlen(str), params[2], nullptr, &readError);
 
 	if (readError.code) {
-		return pContext->ThrowNativeError("Failed to parse JSON string: %s (error code: %u, position: %d, content: %.32s...)",
-			readError.msg, readError.code, readError.pos, str);
+		return pContext->ThrowNativeError("Failed to parse JSON string: %s (error code: %u, position: %d)",
+			readError.msg, readError.code, readError.pos);
 	}
 
 	yyjson_val* root = yyjson_doc_get_root(idoc);
@@ -578,7 +576,7 @@ static cell_t json_arr_index_of_bool(IPluginContext *pContext, const cell_t *par
 {
 	YYJsonWrapper *handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	bool searchValue = params[2];
 
@@ -592,7 +590,7 @@ static cell_t json_arr_index_of_bool(IPluginContext *pContext, const cell_t *par
 		yyjson_mut_val *val;
 		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_bool(val) && yyjson_mut_get_bool(val) == searchValue) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	} else {
@@ -605,7 +603,7 @@ static cell_t json_arr_index_of_bool(IPluginContext *pContext, const cell_t *par
 		yyjson_val *val;
 		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_bool(val) && yyjson_get_bool(val) == searchValue) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	}
@@ -617,7 +615,7 @@ static cell_t json_arr_index_of_str(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* searchStr;
 	pContext->LocalToString(params[2], &searchStr);
@@ -632,7 +630,7 @@ static cell_t json_arr_index_of_str(IPluginContext* pContext, const cell_t* para
 		yyjson_mut_val *val;
 		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_str(val) && strcmp(yyjson_mut_get_str(val), searchStr) == 0) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	} else {
@@ -645,7 +643,7 @@ static cell_t json_arr_index_of_str(IPluginContext* pContext, const cell_t* para
 		yyjson_val *val;
 		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_str(val) && strcmp(yyjson_get_str(val), searchStr) == 0) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	}
@@ -657,7 +655,7 @@ static cell_t json_arr_index_of_int(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	int searchValue = params[2];
 
@@ -671,7 +669,7 @@ static cell_t json_arr_index_of_int(IPluginContext* pContext, const cell_t* para
 		yyjson_mut_val *val;
 		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_int(val) && yyjson_mut_get_int(val) == searchValue) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	}
@@ -685,7 +683,7 @@ static cell_t json_arr_index_of_int(IPluginContext* pContext, const cell_t* para
 		yyjson_val *val;
 		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_int(val) && yyjson_get_int(val) == searchValue) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	}
@@ -697,7 +695,7 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* searchStr;
 	pContext->LocalToString(params[2], &searchStr);
@@ -720,7 +718,7 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 		yyjson_mut_val *val;
 		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_int(val) && yyjson_mut_get_sint(val) == searchValue) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	}
@@ -734,7 +732,7 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 		yyjson_val *val;
 		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_int(val) && yyjson_get_sint(val) == searchValue) {
-				return idx;
+				return static_cast<cell_t>(idx);
 			}
 		}
 	}
@@ -746,9 +744,9 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
-	double searchValue = (double)sp_ctof(params[2]);
+	double searchValue = static_cast<double>(sp_ctof(params[2]));
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
@@ -762,7 +760,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 			if (yyjson_mut_is_real(val)) {
 				double val_num = yyjson_mut_get_real(val);
 				if (fabs(val_num - searchValue) < 1e-6 || std::nextafter(val_num, searchValue) == searchValue) {
-					return idx;
+					return static_cast<cell_t>(idx);
 				}
 			}
 		}
@@ -779,7 +777,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 			if (yyjson_is_real(val)) {
 				double val_num = yyjson_get_real(val);
 				if (fabs(val_num - searchValue) < 1e-6 || std::nextafter(val_num, searchValue) == searchValue) {
-					return idx;
+					return static_cast<cell_t>(idx);
 				}
 			}
 		}
@@ -792,7 +790,7 @@ static cell_t json_val_get_type(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_get_type(handle->m_pVal_mut);
@@ -805,7 +803,7 @@ static cell_t json_val_get_subtype(IPluginContext* pContext, const cell_t* param
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_get_subtype(handle->m_pVal_mut);
@@ -818,7 +816,7 @@ static cell_t json_val_is_array(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_arr(handle->m_pVal_mut);
@@ -831,7 +829,7 @@ static cell_t json_val_is_object(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_obj(handle->m_pVal_mut);
@@ -844,7 +842,7 @@ static cell_t json_val_is_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_int(handle->m_pVal_mut);
@@ -853,11 +851,50 @@ static cell_t json_val_is_int(IPluginContext* pContext, const cell_t* params)
 	}
 }
 
+static cell_t json_val_is_uint(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	if (handle->IsMutable()) {
+		return yyjson_mut_is_uint(handle->m_pVal_mut);
+	} else {
+		return yyjson_is_uint(handle->m_pVal);
+	}
+}
+
+static cell_t json_val_is_sint(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	if (handle->IsMutable()) {
+		return yyjson_mut_is_sint(handle->m_pVal_mut);
+	} else {
+		return yyjson_is_sint(handle->m_pVal);
+	}
+}
+
+static cell_t json_val_is_num(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	if (handle->IsMutable()) {
+		return yyjson_mut_is_num(handle->m_pVal_mut);
+	} else {
+		return yyjson_is_num(handle->m_pVal);
+	}
+}
+
 static cell_t json_val_is_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_bool(handle->m_pVal_mut);
@@ -866,11 +903,37 @@ static cell_t json_val_is_bool(IPluginContext* pContext, const cell_t* params)
 	}
 }
 
+static cell_t json_val_is_true(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	if (handle->IsMutable()) {
+		return yyjson_mut_is_true(handle->m_pVal_mut);
+	} else {
+		return yyjson_is_true(handle->m_pVal);
+	}
+}
+
+static cell_t json_val_is_false(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	if (handle->IsMutable()) {
+		return yyjson_mut_is_false(handle->m_pVal_mut);
+	} else {
+		return yyjson_is_false(handle->m_pVal);
+	}
+}
+
 static cell_t json_val_is_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_real(handle->m_pVal_mut);
@@ -883,7 +946,7 @@ static cell_t json_val_is_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_str(handle->m_pVal_mut);
@@ -896,7 +959,7 @@ static cell_t json_val_is_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return yyjson_mut_is_null(handle->m_pVal_mut);
@@ -905,11 +968,24 @@ static cell_t json_val_is_null(IPluginContext* pContext, const cell_t* params)
 	}
 }
 
+static cell_t json_val_is_ctn(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	if (handle->IsMutable()) {
+		return yyjson_mut_is_ctn(handle->m_pVal_mut);
+	} else {
+		return yyjson_is_ctn(handle->m_pVal);
+	}
+}
+
 static cell_t json_val_is_mutable(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	return handle->IsMutable();
 }
@@ -918,7 +994,7 @@ static cell_t json_val_is_immutable(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	return handle->IsImmutable();
 }
@@ -949,7 +1025,6 @@ static cell_t json_obj_init_with_str(IPluginContext* pContext, const cell_t* par
 	pContext->LocalToPhysAddr(params[1], &addr);
 	cell_t array_size = params[2];
 	
-	// Validate array size
 	if (array_size < 2) {
 		return pContext->ThrowNativeError("Array must contain at least one key-value pair");
 	}
@@ -959,7 +1034,6 @@ static cell_t json_obj_init_with_str(IPluginContext* pContext, const cell_t* par
 	
 	cell_t pair_count = array_size / 2;
 	
-	// Create array of C strings for key-value pairs
 	std::vector<const char*> kv_pairs;
 	kv_pairs.reserve(array_size);
 	
@@ -968,7 +1042,6 @@ static cell_t json_obj_init_with_str(IPluginContext* pContext, const cell_t* par
 		char* key;
 		char* value;
 		
-		// Get and validate key
 		if (pContext->LocalToString(addr[i], &key) != SP_ERROR_NONE) {
 			return pContext->ThrowNativeError("Failed to read key at index %d", i);
 		}
@@ -976,7 +1049,6 @@ static cell_t json_obj_init_with_str(IPluginContext* pContext, const cell_t* par
 			return pContext->ThrowNativeError("Empty key at index %d", i);
 		}
 		
-		// Get value (can be empty)
 		if (pContext->LocalToString(addr[i + 1], &value) != SP_ERROR_NONE) {
 			return pContext->ThrowNativeError("Failed to read value at index %d", i + 1);
 		}
@@ -991,7 +1063,6 @@ static cell_t json_obj_init_with_str(IPluginContext* pContext, const cell_t* par
 	auto pYYJsonWrapper = CreateWrapper();
 	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
 	
-	// Create object with key-value pairs
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj_with_kv(
 		pYYJsonWrapper->m_pDocument_mut.get(),
 		kv_pairs.data(),
@@ -1121,35 +1192,43 @@ static cell_t json_val_get_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
-	if (!yyjson_mut_is_bool(handle->m_pVal_mut)) {
-		return pContext->ThrowNativeError("Type mismatch: expected boolean value, got %s",
-			yyjson_mut_get_type_desc(handle->m_pVal_mut));
+	if (handle->IsMutable()) {
+		if (!yyjson_mut_is_bool(handle->m_pVal_mut)) {
+			return pContext->ThrowNativeError("Type mismatch: expected boolean value, got %s",
+				yyjson_mut_get_type_desc(handle->m_pVal_mut));
+		}
+		return yyjson_mut_get_bool(handle->m_pVal_mut);
 	}
-
-	return yyjson_mut_get_bool(handle->m_pVal_mut);
+	else {
+		if (!yyjson_is_bool(handle->m_pVal)) {
+			return pContext->ThrowNativeError("Type mismatch: expected boolean value, got %s",
+				yyjson_get_type_desc(handle->m_pVal));
+		}
+		return yyjson_get_bool(handle->m_pVal);
+	}
 }
 
 static cell_t json_val_get_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_real(handle->m_pVal_mut)) {
 			return pContext->ThrowNativeError("Type mismatch: expected float value, got %s",
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
-		return sp_ftoc(yyjson_mut_get_real(handle->m_pVal_mut));
+		return sp_ftoc(static_cast<float>(yyjson_mut_get_real(handle->m_pVal_mut)));
 	}
 	else {
 		if (!yyjson_is_real(handle->m_pVal)) {
 			return pContext->ThrowNativeError("Type mismatch: expected float value, got %s",
 				yyjson_get_type_desc(handle->m_pVal));
 		}
-		return sp_ftoc(yyjson_get_real(handle->m_pVal));
+		return sp_ftoc(static_cast<float>(yyjson_get_real(handle->m_pVal)));
 	}
 }
 
@@ -1157,29 +1236,48 @@ static cell_t json_val_get_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
-	if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
-		return pContext->ThrowNativeError("Type mismatch: expected integer value, got %s",
-			yyjson_mut_get_type_desc(handle->m_pVal_mut));
+	if (handle->IsMutable()) {
+		if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
+			return pContext->ThrowNativeError("Type mismatch: expected integer value, got %s",
+				yyjson_mut_get_type_desc(handle->m_pVal_mut));
+		}
+		return yyjson_mut_get_int(handle->m_pVal_mut);
 	}
-
-	return yyjson_mut_get_int(handle->m_pVal_mut);
+	else {
+		if (!yyjson_is_int(handle->m_pVal)) {
+			return pContext->ThrowNativeError("Type mismatch: expected integer value, got %s",
+				yyjson_get_type_desc(handle->m_pVal));
+		}
+		return yyjson_get_int(handle->m_pVal);
+	}
 }
 
 static cell_t json_val_get_integer64(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
-	if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
-		return pContext->ThrowNativeError("Type mismatch: expected integer64 value, got %s",
-			yyjson_mut_get_type_desc(handle->m_pVal_mut));
+	int64_t value;
+
+	if (handle->IsMutable()) {
+		if (!yyjson_mut_is_int(handle->m_pVal_mut)) {
+			return pContext->ThrowNativeError("Type mismatch: expected integer64 value, got %s",
+				yyjson_mut_get_type_desc(handle->m_pVal_mut));
+		}
+		value = yyjson_mut_get_sint(handle->m_pVal_mut);
+	} else {
+		if (!yyjson_is_int(handle->m_pVal)) {
+			return pContext->ThrowNativeError("Type mismatch: expected integer64 value, got %s",
+				yyjson_get_type_desc(handle->m_pVal));
+		}
+		value = yyjson_get_sint(handle->m_pVal);
 	}
 
-	char result[20];
-	snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(handle->m_pVal_mut));
+	char result[21];
+	snprintf(result, sizeof(result), "%" PRId64, value);
 	pContext->StringToLocalUTF8(params[2], params[3], result, nullptr);
 
 	return 1;
@@ -1189,14 +1287,32 @@ static cell_t json_val_get_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
-	if (!yyjson_mut_is_str(handle->m_pVal_mut)) {
-		return pContext->ThrowNativeError("Type mismatch: expected string value, got %s",
-			yyjson_mut_get_type_desc(handle->m_pVal_mut));
+	const char* str;
+
+	if (handle->IsMutable()) {
+		if (!yyjson_mut_is_str(handle->m_pVal_mut)) {
+			return pContext->ThrowNativeError("Type mismatch: expected string value, got %s",
+				yyjson_mut_get_type_desc(handle->m_pVal_mut));
+		}
+		str = yyjson_mut_get_str(handle->m_pVal_mut);
+	} else {
+		if (!yyjson_is_str(handle->m_pVal)) {
+			return pContext->ThrowNativeError("Type mismatch: expected string value, got %s",
+				yyjson_get_type_desc(handle->m_pVal));
+		}
+		str = yyjson_get_str(handle->m_pVal);
 	}
 
-	pContext->StringToLocalUTF8(params[2], params[3], yyjson_mut_get_str(handle->m_pVal_mut), nullptr);
+	size_t len = strlen(str) + 1;
+	size_t maxlen = static_cast<size_t>(params[3]);
+
+	if (len > maxlen) {
+		return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+	}
+
+	pContext->StringToLocalUTF8(params[2], maxlen, str, nullptr);
 
 	return 1;
 }
@@ -1205,7 +1321,7 @@ static cell_t json_val_get_serialized_size(IPluginContext* pContext, const cell_
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	size_t json_size;
 	char* json_str;
@@ -1218,7 +1334,7 @@ static cell_t json_val_get_serialized_size(IPluginContext* pContext, const cell_
 
 	if (json_str) {
 		free(json_str);
-		return json_size + 1;
+		return static_cast<cell_t>(json_size + 1);
 	}
 
 	return 0;
@@ -1228,9 +1344,9 @@ static cell_t json_val_get_read_size(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle || !handle->m_readSize) return BAD_HANDLE;
+	if (!handle || !handle->m_readSize) return 0;
 
-	return handle->m_readSize + 1;
+	return static_cast<cell_t>(handle->m_readSize + 1);
 }
 
 static cell_t json_val_create_null(IPluginContext* pContext, const cell_t* params)
@@ -1276,11 +1392,9 @@ static cell_t json_arr_init_with_str(IPluginContext* pContext, const cell_t* par
 	pContext->LocalToPhysAddr(params[1], &addr);
 	cell_t array_size = params[2];
 	
-	// Create array of C strings
 	std::vector<const char*> strs;
 	strs.reserve(array_size);
 	
-	// Convert each string from the SourcePawn array
 	for (cell_t i = 0; i < array_size; i++) {
 		char* str;
 		pContext->LocalToString(addr[i], &str);
@@ -1290,7 +1404,6 @@ static cell_t json_arr_init_with_str(IPluginContext* pContext, const cell_t* par
 	auto pYYJsonWrapper = CreateWrapper();
 	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
 	
-	// Create array with strings
 	pYYJsonWrapper->m_pVal_mut = yyjson_mut_arr_with_strcpy(
 		pYYJsonWrapper->m_pDocument_mut.get(),
 		strs.data(),
@@ -1316,12 +1429,12 @@ static cell_t json_arr_get_size(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
-		return yyjson_mut_arr_size(handle->m_pVal_mut);
+		return static_cast<cell_t>(yyjson_mut_arr_size(handle->m_pVal_mut));
 	} else {
-		return yyjson_arr_size(handle->m_pVal);
+		return static_cast<cell_t>(yyjson_arr_size(handle->m_pVal));
 	}
 }
 
@@ -1329,32 +1442,34 @@ static cell_t json_arr_get_val(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	auto pYYJsonWrapper = CreateWrapper();
 
+	size_t index = static_cast<size_t>(params[2]);
+
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		if (!val) {
-			return pContext->ThrowNativeError("Failed to get value at index %d", params[2]);
+			return pContext->ThrowNativeError("Failed to get value at index %d", index);
 		}
 
 		pYYJsonWrapper->m_pDocument_mut = handle->m_pDocument_mut;
 		pYYJsonWrapper->m_pVal_mut = val;
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		if (!val) {
-			return pContext->ThrowNativeError("Failed to get value at index %d", params[2]);
+			return pContext->ThrowNativeError("Failed to get value at index %d", index);
 		}
 
 		pYYJsonWrapper->m_pDocument = handle->m_pDocument;
@@ -1377,7 +1492,7 @@ static cell_t json_arr_get_first(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	auto pYYJsonWrapper = CreateWrapper();
 
@@ -1425,7 +1540,7 @@ static cell_t json_arr_get_last(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	auto pYYJsonWrapper = CreateWrapper();
 
@@ -1473,31 +1588,33 @@ static cell_t json_arr_get_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
 
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		if (!yyjson_mut_is_bool(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected boolean value, got %s",
-				params[2], yyjson_mut_get_type_desc(val));
+				index, yyjson_mut_get_type_desc(val));
 		}
 
 		return yyjson_mut_get_bool(val);
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		if (!yyjson_is_bool(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected boolean value, got %s",
-				params[2], yyjson_get_type_desc(val));
+				index, yyjson_get_type_desc(val));
 		}
 
 		return yyjson_get_bool(val);
@@ -1508,34 +1625,36 @@ static cell_t json_arr_get_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
 
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		if (!yyjson_mut_is_real(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected float value, got %s",
-				params[2], yyjson_mut_get_type_desc(val));
+				index, yyjson_mut_get_type_desc(val));
 		}
 
-		return sp_ftoc(yyjson_mut_get_real(val));
+		return sp_ftoc(static_cast<float>(yyjson_mut_get_real(val)));
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		if (!yyjson_is_real(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected float value, got %s",
-				params[2], yyjson_get_type_desc(val));
+				index, yyjson_get_type_desc(val));
 		}
 
-		return sp_ftoc(yyjson_get_real(val));
+		return sp_ftoc(static_cast<float>(yyjson_get_real(val)));
 	}
 }
 
@@ -1543,31 +1662,33 @@ static cell_t json_arr_get_integer(IPluginContext* pContext, const cell_t* param
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
 
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		if (!yyjson_mut_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected integer value, got %s",
-				params[2], yyjson_mut_get_type_desc(val));
+				index, yyjson_mut_get_type_desc(val));
 		}
 
 		return yyjson_mut_get_int(val);
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		if (!yyjson_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected integer value, got %s",
-				params[2], yyjson_get_type_desc(val));
+				index, yyjson_get_type_desc(val));
 		}
 
 		return yyjson_get_int(val);
@@ -1578,79 +1699,96 @@ static cell_t json_arr_get_integer64(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
+	int64_t value;
 
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		if (!yyjson_mut_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected integer64 value, got %s",
-				params[2], yyjson_mut_get_type_desc(val));
+				index, yyjson_mut_get_type_desc(val));
 		}
-
-		char result[20];
-		snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(val));
-		pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
-
-		return 1;
+		value = yyjson_mut_get_sint(val);
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		if (!yyjson_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected integer64 value, got %s",
-				params[2], yyjson_get_type_desc(val));
+				index, yyjson_get_type_desc(val));
 		}
-
-		char result[20];
-		snprintf(result, sizeof(result), "%" PRIu64, yyjson_get_uint(val));
-		pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
-
-		return 1;
+		value = yyjson_get_sint(val);
 	}
+
+	char result[21];
+	snprintf(result, sizeof(result), "%" PRId64, value);
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
+
+	return 1;
 }
 
 static cell_t json_arr_get_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
 
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		if (!yyjson_mut_is_str(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected string value, got %s",
-				params[2], yyjson_mut_get_type_desc(val));
+				index, yyjson_mut_get_type_desc(val));
 		}
 
-		pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(val), nullptr);
+		const char* str = yyjson_mut_get_str(val);
+		size_t len = yyjson_mut_get_len(val) + 1;
+		size_t maxlen = static_cast<size_t>(params[4]);
+
+		if (len > maxlen) {
+			return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+		}
+
+		pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
 
 		return 1;
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		if (!yyjson_is_str(val)) {
 			return pContext->ThrowNativeError("Type mismatch at index %d: expected string value, got %s",
-				params[2], yyjson_get_type_desc(val));
+				index, yyjson_get_type_desc(val));
 		}
 
-		pContext->StringToLocalUTF8(params[3], params[4], yyjson_get_str(val), nullptr);
+		const char* str = yyjson_get_str(val);
+		size_t len = yyjson_get_len(val) + 1;
+		size_t maxlen = static_cast<size_t>(params[4]);
+
+		if (len > maxlen) {
+			return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+		}
+
+		pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
 
 		return 1;
 	}
@@ -1660,23 +1798,25 @@ static cell_t json_arr_is_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
 
 	if (handle->IsMutable()) {
 		size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, params[2]);
+		yyjson_mut_val* val = yyjson_mut_arr_get(handle->m_pVal_mut, index);
 		return yyjson_mut_is_null(val);
 	} else {
 		size_t arr_size = yyjson_arr_size(handle->m_pVal);
-		if (params[2] >= arr_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+		if (index >= arr_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 		}
 
-		yyjson_val* val = yyjson_arr_get(handle->m_pVal, params[2]);
+		yyjson_val* val = yyjson_arr_get(handle->m_pVal, index);
 		return yyjson_is_null(val);
 	}
 }
@@ -1686,18 +1826,20 @@ static cell_t json_arr_replace_val(IPluginContext* pContext, const cell_t* param
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[3]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	if (!handle1->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle1->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+	
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
-	yyjson_mut_val* val_copy;
+	yyjson_mut_val* val_copy = nullptr;
 	if (handle2->IsMutable()) {
 		val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut.get(), handle2->m_pVal_mut);
 	} else {
@@ -1708,72 +1850,80 @@ static cell_t json_arr_replace_val(IPluginContext* pContext, const cell_t* param
 		return pContext->ThrowNativeError("Failed to copy JSON value");
 	}
 
-	return yyjson_mut_arr_replace(handle1->m_pVal_mut, params[2], val_copy) != nullptr;
+	return yyjson_mut_arr_replace(handle1->m_pVal_mut, index, val_copy) != nullptr;
 }
 
 static cell_t json_arr_replace_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_bool(handle->m_pDocument_mut.get(), params[3])) != nullptr;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, index, yyjson_mut_bool(handle->m_pDocument_mut.get(), params[3])) != nullptr;
 }
 
 static cell_t json_arr_replace_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_float(handle->m_pDocument_mut.get(), sp_ctof(params[3]))) != nullptr;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, index, yyjson_mut_float(handle->m_pDocument_mut.get(), sp_ctof(params[3]))) != nullptr;
 }
 
 static cell_t json_arr_replace_integer(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_int(handle->m_pDocument_mut.get(), params[3])) != nullptr;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, index, yyjson_mut_int(handle->m_pDocument_mut.get(), params[3])) != nullptr;
 }
 
 static cell_t json_arr_replace_integer64(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
 	char* value;
@@ -1787,46 +1937,50 @@ static cell_t json_arr_replace_integer64(IPluginContext* pContext, const cell_t*
 		return pContext->ThrowNativeError("Invalid integer64 value: %s", value);
 	}
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_int(handle->m_pDocument_mut.get(), num)) != nullptr;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, index, yyjson_mut_int(handle->m_pDocument_mut.get(), num)) != nullptr;
 }
 
 static cell_t json_arr_replace_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_null(handle->m_pDocument_mut.get())) != nullptr;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, index, yyjson_mut_null(handle->m_pDocument_mut.get())) != nullptr;
 }
 
 static cell_t json_arr_replace_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
 	char* val;
 	pContext->LocalToString(params[3], &val);
 
-	return yyjson_mut_arr_replace(handle->m_pVal_mut, params[2], yyjson_mut_strcpy(handle->m_pDocument_mut.get(), val)) != nullptr;
+	return yyjson_mut_arr_replace(handle->m_pVal_mut, index, yyjson_mut_strcpy(handle->m_pDocument_mut.get(), val)) != nullptr;
 }
 
 static cell_t json_arr_append_val(IPluginContext* pContext, const cell_t* params)
@@ -1834,13 +1988,13 @@ static cell_t json_arr_append_val(IPluginContext* pContext, const cell_t* params
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[2]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	if (!handle1->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
 	}
 
-	yyjson_mut_val* val_copy;
+	yyjson_mut_val* val_copy = nullptr;
 	if (handle2->IsMutable()) {
 		val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut.get(), handle2->m_pVal_mut);
 	} else {
@@ -1858,7 +2012,7 @@ static cell_t json_arr_append_bool(IPluginContext* pContext, const cell_t* param
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
@@ -1871,7 +2025,7 @@ static cell_t json_arr_append_float(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
@@ -1884,7 +2038,7 @@ static cell_t json_arr_append_int(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
@@ -1897,7 +2051,7 @@ static cell_t json_arr_append_integer64(IPluginContext* pContext, const cell_t* 
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
@@ -1921,7 +2075,7 @@ static cell_t json_arr_append_null(IPluginContext* pContext, const cell_t* param
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
@@ -1934,7 +2088,7 @@ static cell_t json_arr_append_str(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot append value to an immutable JSON array");
@@ -1950,25 +2104,27 @@ static cell_t json_arr_remove(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON array");
 	}
 
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size) {
-		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], arr_size);
+	size_t index = static_cast<size_t>(params[2]);
+
+	if (index >= arr_size) {
+		return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, arr_size);
 	}
 
-	return yyjson_mut_arr_remove(handle->m_pVal_mut, params[2]) != nullptr;
+	return yyjson_mut_arr_remove(handle->m_pVal_mut, index) != nullptr;
 }
 
 static cell_t json_arr_remove_first(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON array");
@@ -1985,7 +2141,7 @@ static cell_t json_arr_remove_last(IPluginContext* pContext, const cell_t* param
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON array");
@@ -2002,26 +2158,29 @@ static cell_t json_arr_remove_range(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON array");
 	}
 
+	size_t start_index = static_cast<size_t>(params[2]);
+	size_t end_index = static_cast<size_t>(params[3]);
 	size_t arr_size = yyjson_mut_arr_size(handle->m_pVal_mut);
-	if (params[2] >= arr_size || params[3] > arr_size || params[2] > params[3]) {
+
+	if (start_index >= arr_size || end_index > arr_size || start_index > end_index) {
 		return pContext->ThrowNativeError("Invalid range [%d, %d) for array of size %d",
-			params[2], params[3], arr_size);
+			start_index, end_index, arr_size);
 	}
 
-	return yyjson_mut_arr_remove_range(handle->m_pVal_mut, params[2], params[3]);
+	return yyjson_mut_arr_remove_range(handle->m_pVal_mut, start_index, end_index);
 }
 
 static cell_t json_arr_clear(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot clear an immutable JSON array");
@@ -2034,7 +2193,7 @@ static cell_t json_doc_write_to_str(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	size_t json_size;
 	char* json_str;
@@ -2048,7 +2207,7 @@ static cell_t json_doc_write_to_str(IPluginContext* pContext, const cell_t* para
 	if (json_str) {
 		pContext->StringToLocalUTF8(params[2], params[3], json_str, nullptr);
 		free(json_str);
-		return json_size + 1;
+		return static_cast<cell_t>(json_size + 1);
 	}
 
 	return 0;
@@ -2058,7 +2217,7 @@ static cell_t json_doc_write_to_file(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
@@ -2086,12 +2245,12 @@ static cell_t json_obj_get_size(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
-		return yyjson_mut_obj_size(handle->m_pVal_mut);
+		return static_cast<cell_t>(yyjson_mut_obj_size(handle->m_pVal_mut));
 	} else {
-		return yyjson_obj_size(handle->m_pVal);
+		return static_cast<cell_t>(yyjson_obj_size(handle->m_pVal));
 	}
 }
 
@@ -2099,18 +2258,20 @@ static cell_t json_obj_get_key(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
+
+	size_t index = static_cast<size_t>(params[2]);
 
 	if (handle->IsMutable()) {
 		size_t obj_size = yyjson_mut_obj_size(handle->m_pVal_mut);
-		if (params[2] >= obj_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], obj_size);
+		if (index >= obj_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, obj_size);
 		}
 
 		yyjson_mut_obj_iter iter;
 		yyjson_mut_obj_iter_init(handle->m_pVal_mut, &iter);
 
-		for (size_t i = 0; i < params[2]; i++) {
+		for (size_t i = 0; i < index; i++) {
 			yyjson_mut_obj_iter_next(&iter);
 		}
 
@@ -2122,14 +2283,14 @@ static cell_t json_obj_get_key(IPluginContext* pContext, const cell_t* params)
 		pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(key), nullptr);
 	} else {
 		size_t obj_size = yyjson_obj_size(handle->m_pVal);
-		if (params[2] >= obj_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], obj_size);
+		if (index >= obj_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, obj_size);
 		}
 
 		yyjson_obj_iter iter;
 		yyjson_obj_iter_init(handle->m_pVal, &iter);
 
-		for (size_t i = 0; i < params[2]; i++) {
+		for (size_t i = 0; i < index; i++) {
 			yyjson_obj_iter_next(&iter);
 		}
 
@@ -2148,49 +2309,50 @@ static cell_t json_obj_get_val_at(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
 	auto pYYJsonWrapper = CreateWrapper();
 
+	size_t index = static_cast<size_t>(params[2]);
+
 	if (handle->IsMutable()) {
 		size_t obj_size = yyjson_mut_obj_size(handle->m_pVal_mut);
-		if (params[2] >= obj_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], obj_size);
-			return BAD_HANDLE;
+		if (index >= obj_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, obj_size);
 		}
 
 		yyjson_mut_obj_iter iter;
 		yyjson_mut_obj_iter_init(handle->m_pVal_mut, &iter);
 
-		for (size_t i = 0; i < params[2]; i++) {
+		for (size_t i = 0; i < index; i++) {
 			yyjson_mut_obj_iter_next(&iter);
 		}
 
 		yyjson_mut_val* key = yyjson_mut_obj_iter_next(&iter);
 		if (!key) {
-			return 0;
+			return pContext->ThrowNativeError("Failed to get key at index %d", index);
 		}
 
 		pYYJsonWrapper->m_pDocument_mut = handle->m_pDocument_mut;
 		pYYJsonWrapper->m_pVal_mut = yyjson_mut_obj_iter_get_val(key);
 	} else {
 		size_t obj_size = yyjson_obj_size(handle->m_pVal);
-		if (params[2] >= obj_size) {
-			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", params[2], obj_size);
+		if (index >= obj_size) {
+			return pContext->ThrowNativeError("Index %d is out of bounds (size: %d)", index, obj_size);
 		}
 
 		yyjson_obj_iter iter;
 		yyjson_obj_iter_init(handle->m_pVal, &iter);
 
-		for (size_t i = 0; i < params[2]; i++) {
+		for (size_t i = 0; i < index; i++) {
 			yyjson_obj_iter_next(&iter);
 		}
 
 		yyjson_val* key = yyjson_obj_iter_next(&iter);
 		if (!key) {
-			return 0;
+			return pContext->ThrowNativeError("Failed to get key at index %d", index);
 		}
 
 		pYYJsonWrapper->m_pDocument = handle->m_pDocument;
@@ -2211,7 +2373,7 @@ static cell_t json_obj_get_val(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2252,7 +2414,7 @@ static cell_t json_obj_get_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2286,7 +2448,7 @@ static cell_t json_obj_get_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2301,7 +2463,7 @@ static cell_t json_obj_get_float(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch for key '%s': expected float value, got %s", key, yyjson_mut_get_type_desc(val));
 		}
 
-		return sp_ftoc(yyjson_mut_get_real(val));
+		return sp_ftoc(static_cast<float>(yyjson_mut_get_real(val)));
 	} else {
 		yyjson_val* val = yyjson_obj_get(handle->m_pVal, key);
 		if (!val) {
@@ -2312,7 +2474,7 @@ static cell_t json_obj_get_float(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch for key '%s': expected float value, got %s", key, yyjson_get_type_desc(val));
 		}
 
-		return sp_ftoc(yyjson_get_real(val));
+		return sp_ftoc(static_cast<float>(yyjson_get_real(val)));
 	}
 }
 
@@ -2320,7 +2482,7 @@ static cell_t json_obj_get_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2354,10 +2516,11 @@ static cell_t json_obj_get_integer64(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
+	int64_t value;
 
 	if (handle->IsMutable()) {
 		yyjson_mut_val* val = yyjson_mut_obj_get(handle->m_pVal_mut, key);
@@ -2368,12 +2531,7 @@ static cell_t json_obj_get_integer64(IPluginContext* pContext, const cell_t* par
 		if (!yyjson_mut_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch for key '%s': expected integer64 value, got %s", key, yyjson_mut_get_type_desc(val));
 		}
-
-		char result[20];
-		snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(val));
-		pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
-
-		return 1;
+		value = yyjson_mut_get_sint(val);
 	} else {
 		yyjson_val* val = yyjson_obj_get(handle->m_pVal, key);
 		if (!val) {
@@ -2383,20 +2541,21 @@ static cell_t json_obj_get_integer64(IPluginContext* pContext, const cell_t* par
 		if (!yyjson_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch for key '%s': expected integer64 value, got %s", key, yyjson_get_type_desc(val));
 		}
-
-		char result[20];
-		snprintf(result, sizeof(result), "%" PRIu64, yyjson_get_uint(val));
-		pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
-
-		return 1;
+		value = yyjson_get_sint(val);
 	}
+
+	char result[21];
+	snprintf(result, sizeof(result), "%" PRId64, value);
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
+
+	return 1;
 }
 
 static cell_t json_obj_get_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2411,7 +2570,15 @@ static cell_t json_obj_get_str(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch for key '%s': expected string value, got %s", key, yyjson_mut_get_type_desc(val));
 		}
 
-		pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(val), nullptr);
+		const char* str = yyjson_mut_get_str(val);
+		size_t len = yyjson_mut_get_len(val) + 1;
+		size_t maxlen = static_cast<size_t>(params[4]);
+
+		if (len > maxlen) {
+			return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+		}
+
+		pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
 
 		return 1;
 	} else {
@@ -2424,7 +2591,15 @@ static cell_t json_obj_get_str(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch for key '%s': expected string value, got %s", key, yyjson_get_type_desc(val));
 		}
 
-		pContext->StringToLocalUTF8(params[3], params[4], yyjson_get_str(val), nullptr);
+		const char* str = yyjson_get_str(val);
+		size_t len = yyjson_get_len(val) + 1;
+		size_t maxlen = static_cast<size_t>(params[4]);
+
+		if (len > maxlen) {
+			return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+		}
+
+		pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
 
 		return 1;
 	}
@@ -2434,7 +2609,7 @@ static cell_t json_obj_clear(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot clear an immutable JSON object");
@@ -2447,7 +2622,7 @@ static cell_t json_obj_is_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2473,7 +2648,7 @@ static cell_t json_obj_has_key(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* key;
 	pContext->LocalToString(params[2], &key);
@@ -2501,7 +2676,7 @@ static cell_t json_obj_rename_key(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot rename key in an immutable JSON object");
@@ -2531,7 +2706,7 @@ static cell_t json_obj_set_val(IPluginContext* pContext, const cell_t* params)
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[3]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	if (!handle1->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2540,7 +2715,7 @@ static cell_t json_obj_set_val(IPluginContext* pContext, const cell_t* params)
 	char* key;
 	pContext->LocalToString(params[2], &key);
 
-	yyjson_mut_val* val_copy;
+	yyjson_mut_val* val_copy = nullptr;
 	if (handle2->IsMutable()) {
 		val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut.get(), handle2->m_pVal_mut);
 	} else {
@@ -2558,7 +2733,7 @@ static cell_t json_obj_set_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2574,7 +2749,7 @@ static cell_t json_obj_set_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2590,7 +2765,7 @@ static cell_t json_obj_set_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2606,7 +2781,7 @@ static cell_t json_obj_set_integer64(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2631,7 +2806,7 @@ static cell_t json_obj_set_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2647,7 +2822,7 @@ static cell_t json_obj_set_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON object");
@@ -2664,7 +2839,7 @@ static cell_t json_obj_remove(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON object");
@@ -2680,14 +2855,14 @@ static cell_t json_ptr_get_val(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	auto pYYJsonWrapper = CreateWrapper();
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (!val) {
@@ -2701,7 +2876,6 @@ static cell_t json_ptr_get_val(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
 		}
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (!val) {
@@ -2732,13 +2906,13 @@ static cell_t json_ptr_get_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
-
+	yyjson_ptr_err ptrGetError;
+	
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2751,7 +2925,6 @@ static cell_t json_ptr_get_bool(IPluginContext* pContext, const cell_t* params)
 
 		return yyjson_mut_get_bool(val);
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2770,13 +2943,13 @@ static cell_t json_ptr_get_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2787,9 +2960,8 @@ static cell_t json_ptr_get_float(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch at path '%s': expected float value, got %s", path, yyjson_mut_get_type_desc(val));
 		}
 
-		return sp_ftoc(yyjson_mut_get_real(val));
+		return sp_ftoc(static_cast<float>(yyjson_mut_get_real(val)));
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2800,7 +2972,7 @@ static cell_t json_ptr_get_float(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch at path '%s': expected float value, got %s", path, yyjson_get_type_desc(val));
 		}
 
-		return sp_ftoc(yyjson_get_real(val));
+		return sp_ftoc(static_cast<float>(yyjson_get_real(val)));
 	}
 }
 
@@ -2808,13 +2980,13 @@ static cell_t json_ptr_get_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2827,7 +2999,6 @@ static cell_t json_ptr_get_int(IPluginContext* pContext, const cell_t* params)
 
 		return yyjson_mut_get_int(val);
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2846,13 +3017,14 @@ static cell_t json_ptr_get_integer64(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
+	int64_t value;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2862,14 +3034,8 @@ static cell_t json_ptr_get_integer64(IPluginContext* pContext, const cell_t* par
 		if (!yyjson_mut_is_int(val)) {
 			return pContext->ThrowNativeError("Type mismatch at path '%s': expected integer64 value, got %s", path, yyjson_mut_get_type_desc(val));
 		}
-
-		char result[20];
-		snprintf(result, sizeof(result), "%" PRIu64, yyjson_mut_get_uint(val));
-		pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
-
-		return 1;
+		value = yyjson_mut_get_sint(val);
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2880,25 +3046,27 @@ static cell_t json_ptr_get_integer64(IPluginContext* pContext, const cell_t* par
 			return pContext->ThrowNativeError("Type mismatch at path '%s': expected integer64 value, got %s", path, yyjson_get_type_desc(val));
 		}
 
-		char result[20];
-		snprintf(result, sizeof(result), "%" PRIu64, yyjson_get_uint(val));
-		pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
-
-		return 1;
+		value = yyjson_get_sint(val);
 	}
+
+	char result[21];
+	snprintf(result, sizeof(result), "%" PRId64, value);
+	pContext->StringToLocalUTF8(params[3], params[4], result, nullptr);
+
+	return 1;
 }
 
 static cell_t json_ptr_get_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2909,11 +3077,18 @@ static cell_t json_ptr_get_str(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch at path '%s': expected string value, got %s", path, yyjson_mut_get_type_desc(val));
 		}
 
-		pContext->StringToLocalUTF8(params[3], params[4], yyjson_mut_get_str(val), nullptr);
+		const char* str = yyjson_mut_get_str(val);
+		size_t len = yyjson_mut_get_len(val) + 1;
+		size_t maxlen = static_cast<size_t>(params[4]);
+
+		if (len > maxlen) {
+			return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+		}
+
+		pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
 
 		return 1;
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2924,7 +3099,15 @@ static cell_t json_ptr_get_str(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch at path '%s': expected string value, got %s", path, yyjson_get_type_desc(val));
 		}
 
-		pContext->StringToLocalUTF8(params[3], params[4], yyjson_get_str(val), nullptr);
+		const char* str = yyjson_get_str(val);
+		size_t len = yyjson_get_len(val) + 1;
+		size_t maxlen = static_cast<size_t>(params[4]);
+
+		if (len > maxlen) {
+			return pContext->ThrowNativeError("Buffer is too small (need %d, have %d)", len, maxlen);
+		}
+
+		pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
 
 		return 1;
 	}
@@ -2934,13 +3117,13 @@ static cell_t json_ptr_get_is_null(IPluginContext* pContext, const cell_t* param
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2949,7 +3132,6 @@ static cell_t json_ptr_get_is_null(IPluginContext* pContext, const cell_t* param
 
 		return yyjson_mut_is_null(val);
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
@@ -2964,29 +3146,37 @@ static cell_t json_ptr_get_length(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
 
 	if (handle->IsMutable()) {
-		yyjson_ptr_err ptrGetError;
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
 			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
 		}
 
-		return yyjson_mut_get_len(val);
+		// +1 for the null terminator
+		if (yyjson_mut_is_str(val)) {
+			return static_cast<cell_t>(yyjson_mut_get_len(val) + 1);
+		}
+
+		return static_cast<cell_t>(yyjson_mut_get_len(val));
 	} else {
-		yyjson_ptr_err ptrGetError;
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
 			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
 		}
 
-		return yyjson_get_len(val);
+		if (yyjson_is_str(val)) {
+			return static_cast<cell_t>(yyjson_get_len(val) + 1);
+		}
+
+		return static_cast<cell_t>(yyjson_get_len(val));
 	}
 }
 
@@ -2995,7 +3185,7 @@ static cell_t json_ptr_set_val(IPluginContext* pContext, const cell_t* params)
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[3]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	if (!handle1->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3004,7 +3194,7 @@ static cell_t json_ptr_set_val(IPluginContext* pContext, const cell_t* params)
 	char* path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val* val_copy;
+	yyjson_mut_val* val_copy = nullptr;
 	if (handle2->IsMutable()) {
 		val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut.get(), handle2->m_pVal_mut);
 	} else {
@@ -3029,7 +3219,7 @@ static cell_t json_ptr_set_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3052,7 +3242,7 @@ static cell_t json_ptr_set_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3075,7 +3265,7 @@ static cell_t json_ptr_set_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3098,7 +3288,7 @@ static cell_t json_ptr_set_integer64(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3130,7 +3320,7 @@ static cell_t json_ptr_set_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3154,7 +3344,7 @@ static cell_t json_ptr_set_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot set value in an immutable JSON document using pointer");
@@ -3178,7 +3368,7 @@ static cell_t json_ptr_add_val(IPluginContext* pContext, const cell_t* params)
 	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[3]);
 
-	if (!handle1 || !handle2) return BAD_HANDLE;
+	if (!handle1 || !handle2) return 0;
 
 	if (!handle1->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3187,7 +3377,7 @@ static cell_t json_ptr_add_val(IPluginContext* pContext, const cell_t* params)
 	char* path;
 	pContext->LocalToString(params[2], &path);
 
-	yyjson_mut_val* val_copy;
+	yyjson_mut_val* val_copy = nullptr;
 	if (handle2->IsMutable()) {
 		val_copy = yyjson_mut_val_mut_copy(handle1->m_pDocument_mut.get(), handle2->m_pVal_mut);
 	} else {
@@ -3212,7 +3402,7 @@ static cell_t json_ptr_add_bool(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3235,7 +3425,7 @@ static cell_t json_ptr_add_float(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3258,7 +3448,7 @@ static cell_t json_ptr_add_int(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3281,7 +3471,7 @@ static cell_t json_ptr_add_integer64(IPluginContext* pContext, const cell_t* par
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3313,7 +3503,7 @@ static cell_t json_ptr_add_str(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3337,7 +3527,7 @@ static cell_t json_ptr_add_null(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot add value to an immutable JSON document using pointer");
@@ -3360,7 +3550,7 @@ static cell_t json_ptr_remove_val(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON document using pointer");
@@ -3379,19 +3569,278 @@ static cell_t json_ptr_remove_val(IPluginContext* pContext, const cell_t* params
 	return success;
 }
 
+static cell_t json_ptr_try_get_val(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	auto pYYJsonWrapper = CreateWrapper();
+	char* path;
+	pContext->LocalToString(params[2], &path);
+	yyjson_ptr_err ptrGetError;
+
+	cell_t* addr;
+	pContext->LocalToPhysAddr(params[3], &addr);
+
+	if (handle->IsMutable()) {
+		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
+
+		if (!val) {
+			return 0;
+		}
+
+		if (ptrGetError.code) {
+			return 0;
+		}
+
+		pYYJsonWrapper->m_pDocument_mut = handle->m_pDocument_mut;
+		pYYJsonWrapper->m_pVal_mut = val;
+	} else {
+		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
+
+		if (!val) {
+			return 0;
+		}
+
+		if (ptrGetError.code) {
+			return 0;
+		}
+
+		pYYJsonWrapper->m_pDocument = handle->m_pDocument;
+		pYYJsonWrapper->m_pVal = val;
+	}
+
+	HandleError err;
+	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
+	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.get(), &sec, nullptr, &err);
+
+	if (!pYYJsonWrapper->m_handle) {
+		return 0;
+	}
+
+	*addr = pYYJsonWrapper.release()->m_handle;
+	return 1;
+}
+
+static cell_t json_ptr_try_get_bool(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return 0;
+
+	char* path;
+	pContext->LocalToString(params[2], &path);
+
+	cell_t* addr;
+	pContext->LocalToPhysAddr(params[3], &addr);
+
+	yyjson_ptr_err ptrGetError;
+	
+	if (handle->IsMutable()) {
+		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
+
+		if (!val) {
+			return 0;
+		}
+
+		if (ptrGetError.code) {
+			return 0;
+		}
+
+		if (!yyjson_mut_is_bool(val)) {
+			return 0;
+		}
+
+		*addr = yyjson_mut_get_bool(val);
+	} else {
+		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
+		
+		if (!val) {
+			return 0;
+		}
+
+		if (ptrGetError.code) {
+			return 0;
+		}
+
+		if (!yyjson_is_bool(val)) {
+			return 0;
+		}
+
+		*addr = yyjson_get_bool(val);
+	}
+	
+	return 1;
+}
+
+static cell_t json_ptr_try_get_float(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return 0;
+
+	char* path;
+	pContext->LocalToString(params[2], &path);
+
+	cell_t* addr;
+	pContext->LocalToPhysAddr(params[3], &addr);
+
+	yyjson_ptr_err ptrGetError;
+	
+	if (handle->IsMutable()) {
+		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
+
+		if (!val) {
+			return 0;
+		}
+
+		if (ptrGetError.code) {
+			return 0;
+		}
+
+		if (!yyjson_mut_is_num(val)) {
+			return 0;
+		}
+
+		*addr = sp_ftoc(static_cast<float>(yyjson_mut_get_num(val)));
+	} else {
+		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
+
+		if (!val) {
+			return 0;
+		}
+
+		if (ptrGetError.code) {
+			return 0;
+		}
+
+		if (!yyjson_is_num(val)) {
+			return 0;
+		}
+
+		*addr = sp_ftoc(static_cast<float>(yyjson_get_num(val)));
+	}
+	
+	return 1;
+}
+
+static cell_t json_ptr_try_get_int(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return 0;
+
+	char* path;
+	pContext->LocalToString(params[2], &path);
+
+	cell_t* addr;
+	pContext->LocalToPhysAddr(params[3], &addr);
+
+	yyjson_ptr_err ptrGetError;
+	
+	if (handle->IsMutable()) {
+		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
+
+		if (!val || ptrGetError.code || !yyjson_mut_is_int(val)) {
+			return 0;
+		}
+		*addr = yyjson_mut_get_int(val);
+	} else {
+		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
+
+		if (!val || ptrGetError.code || !yyjson_is_int(val)) {
+			return 0;
+		}
+		*addr = yyjson_get_int(val);
+	}
+	
+	return 1;
+}
+
+static cell_t json_ptr_try_get_integer64(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return 0;
+
+	char* path;
+	pContext->LocalToString(params[2], &path);
+	
+	int64_t value;
+	yyjson_ptr_err ptrGetError;
+	
+	if (handle->IsMutable()) {
+		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
+		if (!val || ptrGetError.code || !yyjson_mut_is_int(val)) {
+			return 0;
+		}
+		value = yyjson_mut_get_sint(val);
+	} else {
+		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
+		if (!val || ptrGetError.code || !yyjson_is_int(val)) {
+			return 0;
+		}
+		value = yyjson_get_sint(val);
+	}
+
+	size_t maxlen = static_cast<size_t>(params[4]);
+
+	char result[21];
+	snprintf(result, sizeof(result), "%" PRId64, value);
+	pContext->StringToLocalUTF8(params[3], maxlen, result, nullptr);
+	return 1;
+}
+
+static cell_t json_ptr_try_get_str(IPluginContext* pContext, const cell_t* params)
+{
+	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	if (!handle) return 0;
+
+	char* path;
+	pContext->LocalToString(params[2], &path);
+
+	yyjson_ptr_err ptrGetError;
+	const char* str;
+	size_t len;
+	
+	if (handle->IsMutable()) {
+		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
+
+		if (!val || ptrGetError.code || !yyjson_mut_is_str(val)) {
+			return 0;
+		}
+
+		str = yyjson_mut_get_str(val);
+		len = yyjson_mut_get_len(val) + 1;
+	} else {
+		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
+
+		if (!val || ptrGetError.code || !yyjson_is_str(val)) {
+			return 0;
+		}
+
+		str = yyjson_get_str(val);
+		len = yyjson_get_len(val) + 1;
+	}
+
+	size_t maxlen = static_cast<size_t>(params[4]);
+	if (len > maxlen) {
+		return 0;
+	}
+
+	pContext->StringToLocalUTF8(params[3], maxlen, str, nullptr);
+	
+	return 1;
+}
+
 static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
-		// check type
 		if (!yyjson_mut_is_obj(handle->m_pVal_mut)) {
 			return pContext->ThrowNativeError("Type mismatch: expected object value, got %s",
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
 
-		// initialize or continue iteration
 		if (!handle->m_iterInitialized) {
 			if (!yyjson_mut_obj_iter_init(handle->m_pVal_mut, &handle->m_iterObj)) {
 				return pContext->ThrowNativeError("Failed to initialize object iterator");
@@ -3399,7 +3848,6 @@ static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 			handle->m_iterInitialized = true;
 		}
 
-		// get next key
 		yyjson_mut_val* key = yyjson_mut_obj_iter_next(&handle->m_iterObj);
 		if (key) {
 			yyjson_mut_val* val = yyjson_mut_obj_iter_get_val(key);
@@ -3425,13 +3873,11 @@ static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 			return true;
 		}
 	} else {
-		// check type
 		if (!yyjson_is_obj(handle->m_pVal)) {
 			return pContext->ThrowNativeError("Type mismatch: expected object value, got %s",
 				yyjson_get_type_desc(handle->m_pVal));
 		}
 
-		// initialize or continue iteration
 		if (!handle->m_iterInitialized) {
 			if (!yyjson_obj_iter_init(handle->m_pVal, &handle->m_iterObjImm)) {
 				return pContext->ThrowNativeError("Failed to initialize object iterator");
@@ -3439,7 +3885,6 @@ static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 			handle->m_iterInitialized = true;
 		}
 
-		// get next key
 		yyjson_val* key = yyjson_obj_iter_next(&handle->m_iterObjImm);
 		if (key) {
 			yyjson_val* val = yyjson_obj_iter_get_val(key);
@@ -3473,7 +3918,7 @@ static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
@@ -3492,7 +3937,7 @@ static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 		if (val) {
 			cell_t* index;
 			pContext->LocalToPhysAddr(params[2], &index);
-			*index = handle->m_arrayIndex;
+			*index = static_cast<cell_t>(handle->m_arrayIndex);
 
 			auto pYYJsonWrapper = CreateWrapper();
 			pYYJsonWrapper->m_pDocument_mut = handle->m_pDocument_mut;
@@ -3530,7 +3975,7 @@ static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 		if (val) {
 			cell_t* index;
 			pContext->LocalToPhysAddr(params[2], &index);
-			*index = handle->m_arrayIndex;
+			*index = static_cast<cell_t>(handle->m_arrayIndex);
 
 			auto pYYJsonWrapper = CreateWrapper();
 			pYYJsonWrapper->m_pDocument = handle->m_pDocument;
@@ -3560,7 +4005,7 @@ static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 static cell_t json_obj_foreach_key(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_obj(handle->m_pVal_mut)) {
@@ -3609,7 +4054,7 @@ static cell_t json_obj_foreach_key(IPluginContext* pContext, const cell_t* param
 static cell_t json_arr_foreach_index(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
@@ -3628,7 +4073,7 @@ static cell_t json_arr_foreach_index(IPluginContext* pContext, const cell_t* par
 		if (val) {
 			cell_t* index;
 			pContext->LocalToPhysAddr(params[2], &index);
-			*index = handle->m_arrayIndex;
+			*index = static_cast<cell_t>(handle->m_arrayIndex);
 			handle->m_arrayIndex++;
 			return true;
 		}
@@ -3649,7 +4094,7 @@ static cell_t json_arr_foreach_index(IPluginContext* pContext, const cell_t* par
 		if (val) {
 			cell_t* index;
 			pContext->LocalToPhysAddr(params[2], &index);
-			*index = handle->m_arrayIndex;
+			*index = static_cast<cell_t>(handle->m_arrayIndex);
 			handle->m_arrayIndex++;
 			return true;
 		}
@@ -3663,7 +4108,7 @@ static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot sort an immutable JSON array");
@@ -3674,7 +4119,7 @@ static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 			yyjson_mut_get_type_desc(handle->m_pVal_mut));
 	}
 
-	cell_t sort_mode = params[2];
+	YYJSON_SORT_ORDER sort_mode = static_cast<YYJSON_SORT_ORDER>(params[2]);
 	if (sort_mode < YYJSON_SORT_ASC || sort_mode > YYJSON_SORT_RANDOM) {
 		return pContext->ThrowNativeError("Invalid sort mode: %d (expected 0=ascending, 1=descending, 2=random)", sort_mode);
 	}
@@ -3693,12 +4138,7 @@ static cell_t json_arr_sort(IPluginContext* pContext, const cell_t* params)
 	}
 
 	if (sort_mode == YYJSON_SORT_RANDOM) {
-		for (size_t i = arr_size - 1; i > 0; --i) {
-			size_t j = g_randomGenerator() % (i + 1);
-			if (i != j) {
-				std::swap(values[i], values[j]);
-			}
-		}
+		std::shuffle(values.begin(), values.end(), g_randomGenerator);
 	}
 	else {
 		auto compare = [sort_mode](yyjson_mut_val* a, yyjson_mut_val* b) {
@@ -3752,7 +4192,7 @@ static cell_t json_obj_sort(IPluginContext* pContext, const cell_t* params)
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Cannot sort an immutable JSON object");
@@ -3763,7 +4203,7 @@ static cell_t json_obj_sort(IPluginContext* pContext, const cell_t* params)
 			yyjson_mut_get_type_desc(handle->m_pVal_mut));
 	}
 
-	cell_t sort_mode = params[2];
+	YYJSON_SORT_ORDER sort_mode = static_cast<YYJSON_SORT_ORDER>(params[2]);
 	if (sort_mode < YYJSON_SORT_ASC || sort_mode > YYJSON_SORT_RANDOM) {
 		return pContext->ThrowNativeError("Invalid sort mode: %d (expected 0=ascending, 1=descending, 2=random)", sort_mode);
 	}
@@ -3776,18 +4216,13 @@ static cell_t json_obj_sort(IPluginContext* pContext, const cell_t* params)
 	pairs.reserve(obj_size);
 
 	size_t idx, max;
-  yyjson_mut_val *key, *val;
+	yyjson_mut_val *key, *val;
 	yyjson_mut_obj_foreach(handle->m_pVal_mut, idx, max, key, val) {
 		pairs.emplace_back(key, val);
 	}
 
 	if (sort_mode == YYJSON_SORT_RANDOM) {
-		for (size_t i = obj_size - 1; i > 0; --i) {
-			size_t j = g_randomGenerator() % (i + 1);
-			if (i != j) {
-				std::swap(pairs[i], pairs[j]);
-			}
-		}
+		std::shuffle(pairs.begin(), pairs.end(), g_randomGenerator);
 	}
 	else {
 		auto compare = [sort_mode](const auto& a, const auto& b) {
@@ -3812,7 +4247,7 @@ static cell_t json_doc_to_mutable(IPluginContext* pContext, const cell_t* params
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (handle->IsMutable()) {
 		return pContext->ThrowNativeError("Document is already mutable");
@@ -3837,7 +4272,7 @@ static cell_t json_doc_to_immutable(IPluginContext* pContext, const cell_t* para
 {
 	YYJsonWrapper* handle = g_JsonExtension.GetJSONPointer(pContext, params[1]);
 
-	if (!handle) return BAD_HANDLE;
+	if (!handle) return 0;
 
 	if (!handle->IsMutable()) {
 		return pContext->ThrowNativeError("Document is already immutable");
@@ -3944,10 +4379,16 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.IsArray.get", json_val_is_array},
 	{"YYJSON.IsObject.get", json_val_is_object},
 	{"YYJSON.IsInt.get", json_val_is_int},
+	{"YYJSON.IsUint.get", json_val_is_uint},
+	{"YYJSON.IsSint.get", json_val_is_sint},
+	{"YYJSON.IsNum.get", json_val_is_num},
 	{"YYJSON.IsBool.get", json_val_is_bool},
+	{"YYJSON.IsTrue.get", json_val_is_true},
+	{"YYJSON.IsFalse.get", json_val_is_false},
 	{"YYJSON.IsFloat.get", json_val_is_float},
 	{"YYJSON.IsStr.get", json_val_is_str},
 	{"YYJSON.IsNull.get", json_val_is_null},
+	{"YYJSON.IsCtn.get", json_val_is_ctn},
 	{"YYJSON.IsMutable.get", json_val_is_mutable},
 	{"YYJSON.IsImmutable.get", json_val_is_immutable},
 	{"YYJSON.ForeachObject", json_obj_foreach},
@@ -3995,5 +4436,11 @@ const sp_nativeinfo_t json_natives[] =
 	{"YYJSON.PtrAddString", json_ptr_add_str},
 	{"YYJSON.PtrAddNull", json_ptr_add_null},
 	{"YYJSON.PtrRemove", json_ptr_remove_val},
+	{"YYJSON.PtrTryGetVal", json_ptr_try_get_val},
+	{"YYJSON.PtrTryGetBool", json_ptr_try_get_bool},
+	{"YYJSON.PtrTryGetFloat", json_ptr_try_get_float},
+	{"YYJSON.PtrTryGetInt", json_ptr_try_get_int},
+	{"YYJSON.PtrTryGetInt64", json_ptr_try_get_integer64},
+	{"YYJSON.PtrTryGetString", json_ptr_try_get_str},
 	{nullptr, nullptr}
 };
