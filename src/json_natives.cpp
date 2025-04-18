@@ -259,6 +259,8 @@ static cell_t json_val_pack(IPluginContext* pContext, const cell_t* params) {
 	if (!pYYJsonWrapper->m_pVal_mut) {
 		return pContext->ThrowNativeError("Failed to pack JSON: %s", error.msg);
 	}
+  
+	yyjson_mut_doc_set_root(pYYJsonWrapper->m_pDocument_mut.get(), pYYJsonWrapper->m_pVal_mut);
 	
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
@@ -278,6 +280,7 @@ static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 
 	bool is_file = params[2];
 	bool is_mutable_doc = params[3];
+	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[4]);
 
 	yyjson_read_err readError;
 	yyjson_doc* idoc;
@@ -286,9 +289,13 @@ static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 	if (is_file) {
 		char realpath[PLATFORM_MAX_PATH];
 		smutils->BuildPath(Path_Game, realpath, sizeof(realpath), "%s", str);
-		idoc = yyjson_read_file(realpath, params[3], nullptr, &readError);
+		idoc = yyjson_read_file(realpath, read_flg, nullptr, &readError);
 	} else {
-		idoc = yyjson_read_opts(str, strlen(str), params[4], nullptr, &readError);
+		idoc = yyjson_read_opts(str, strlen(str), read_flg, nullptr, &readError);
+	}
+
+	if (!idoc) {
+		return pContext->ThrowNativeError("Failed to parse JSON data");
 	}
 
 	if (readError.code) {
@@ -430,12 +437,18 @@ static cell_t json_obj_parse_str(IPluginContext* pContext, const cell_t* params)
 	yyjson_read_err readError;
 	yyjson_doc* idoc = yyjson_read_opts(str, strlen(str), params[2], nullptr, &readError);
 
+	if (!idoc) {
+		return pContext->ThrowNativeError("Failed to parse JSON data");
+	}
+
 	if (readError.code) {
+		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Failed to parse JSON str: %s (error code: %u, position: %d)",
 			readError.msg, readError.code, readError.pos);
 	}
 
 	yyjson_val* root = yyjson_doc_get_root(idoc);
+	
 	if (!yyjson_is_obj(root)) {
 		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Root value is not an object (got %s)", yyjson_get_type_desc(root));
@@ -469,12 +482,18 @@ static cell_t json_obj_parse_file(IPluginContext* pContext, const cell_t* params
 	yyjson_read_err readError;
 	yyjson_doc* idoc = yyjson_read_file(realpath, params[2], nullptr, &readError);
 
+	if (!idoc) {
+		return pContext->ThrowNativeError("Failed to parse JSON data");
+	}
+
 	if (readError.code) {
+		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Failed to parse JSON file: %s (error code: %u, msg: %s, position: %d)",
 			realpath, readError.code, readError.msg, readError.pos);
 	}
 
 	yyjson_val* root = yyjson_doc_get_root(idoc);
+
 	if (!yyjson_is_obj(root)) {
 		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Root value in file is not an object (got %s)", yyjson_get_type_desc(root));
@@ -506,12 +525,18 @@ static cell_t json_arr_parse_str(IPluginContext* pContext, const cell_t* params)
 	yyjson_read_err readError;
 	yyjson_doc* idoc = yyjson_read_opts(str, strlen(str), params[2], nullptr, &readError);
 
+	if (!idoc) {
+		return pContext->ThrowNativeError("Failed to parse JSON data");
+	}
+
 	if (readError.code) {
+		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Failed to parse JSON string: %s (error code: %u, position: %d)",
 			readError.msg, readError.code, readError.pos);
 	}
 
 	yyjson_val* root = yyjson_doc_get_root(idoc);
+
 	if (!yyjson_is_arr(root)) {
 		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Root value is not an array (got %s)", yyjson_get_type_desc(root));
@@ -545,12 +570,18 @@ static cell_t json_arr_parse_file(IPluginContext* pContext, const cell_t* params
 	yyjson_read_err readError;
 	yyjson_doc* idoc = yyjson_read_file(realpath, params[2], nullptr, &readError);
 
+	if (!idoc) {
+		return pContext->ThrowNativeError("Failed to parse JSON data");
+	}
+
 	if (readError.code) {
+		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Failed to parse JSON file: %s (error code: %u, msg: %s, position: %d)",
 			realpath, readError.code, readError.msg, readError.pos);
 	}
 
 	yyjson_val* root = yyjson_doc_get_root(idoc);
+
 	if (!yyjson_is_arr(root)) {
 		yyjson_doc_free(idoc);
 		return pContext->ThrowNativeError("Root value in file is not an array (got %s)", yyjson_get_type_desc(root));
