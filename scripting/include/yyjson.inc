@@ -193,17 +193,18 @@ methodmap YYJSON < Handle
   public static native any Parse(const char[] string, bool is_file = false, bool is_mutable_doc = false, YYJSON_READ_FLAG flag = YYJSON_READ_NOFLAG);
 
   /**
-  * Copies and returns a new mutable value from input, returns NULL on error. This makes a deep-copy on the mutable value. The memory was managed by mutable document
+  * Creates a deep copy of a JSON value and returns it as a new JSON handle.
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   * @note                    This function is recursive and may cause a stack overflow if the object level is too deep
+  * @note                    The mutability of the returned copy depends on the targetDoc parameter
   *
-  * @param value1            JSON handle1
-  * @param value2            JSON handle2
+  * @param targetDoc         The target document that determines whether the copy will be mutable or immutable
+  * @param sourceValue       The source JSON value to be copied
   *
-  * @return                  JSON handle, false on failure
+  * @return                  New JSON handle on success, false on failure
   */
-  public static native any DeepCopy(const YYJSON value1, const YYJSON value2);
+  public static native any DeepCopy(const YYJSON targetDoc, const YYJSON sourceValue);
 
   /**
   * Returns the JSON value's type description

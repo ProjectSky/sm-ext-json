@@ -20,12 +20,12 @@ Performance test results using [twitter.json](https://github.com/ibireme/yyjson_
 === YYJSON Performance Benchmark ===
 Test iterations: 100
 Data size: 0.60 MB
-Parse time: 0.024 seconds
-Stringify time: 0.012 seconds
-Parse operations per second: 4155.23 ops/sec
-Parse speed: 2502.53 MB/s (2.44 GB/s)
-Stringify speed: 4768.10 MB/s (4.65 GB/s)
-Stringify operations per second: 7917.03 ops/sec
+Parse time: 0.025 seconds
+Stringify time: 0.013 seconds
+Parse operations per second: 3937.93 ops/sec
+Parse speed: 2371.66 MB/s (2.31 GB/s)
+Stringify speed: 4505.23 MB/s (4.39 GB/s)
+Stringify operations per second: 7480.55 ops/sec
 === YYJSON Performance Benchmark End ===
 ```
 
@@ -34,7 +34,7 @@ Test environment:
 - CPU: AMD Ryzen 9 7950X3D
 - Test data: [twitter.json](https://github.com/ibireme/yyjson_benchmark/blob/master/data/json/twitter.json)
 - Test iterations: 100
-- SourceMod Version: 1.12.0.1
+- SourceMod Version: 1.13.0.6966
 - YYJSON Version: Latest version
 - Test script: [yyjson_perf_test.sp](scripting/yyjson_perf_test.sp)
 

@@ -382,31 +382,66 @@ static cell_t json_doc_equals(IPluginContext* pContext, const cell_t* params)
 
 static cell_t json_doc_copy_deep(IPluginContext* pContext, const cell_t* params)
 {
-	YYJsonWrapper* handle1 = g_JsonExtension.GetJSONPointer(pContext, params[1]);
-	YYJsonWrapper* handle2 = g_JsonExtension.GetJSONPointer(pContext, params[2]);
+	YYJsonWrapper* targetDoc = g_JsonExtension.GetJSONPointer(pContext, params[1]);
+	YYJsonWrapper* sourceValue = g_JsonExtension.GetJSONPointer(pContext, params[2]);
 
-	if (!handle1 || !handle2) return 0;
+	if (!targetDoc || !sourceValue) return 0;
 
 	auto pYYJsonWrapper = CreateWrapper();
-	pYYJsonWrapper->m_pDocument_mut = CreateDocument();
 
-	if (handle2->IsMutable()) {
-		pYYJsonWrapper->m_pVal_mut = yyjson_mut_val_mut_copy(pYYJsonWrapper->m_pDocument_mut.get(), handle2->m_pVal_mut);
+	if (targetDoc->IsMutable()) {
+		pYYJsonWrapper->m_pDocument_mut = CreateDocument();
+		
+		yyjson_mut_val* val_copy = nullptr;
+		if (sourceValue->IsMutable()) {
+			val_copy = yyjson_mut_val_mut_copy(pYYJsonWrapper->m_pDocument_mut.get(), sourceValue->m_pVal_mut);
+		} else {
+			val_copy = yyjson_val_mut_copy(pYYJsonWrapper->m_pDocument_mut.get(), sourceValue->m_pVal);
+		}
+
+		if (!val_copy) {
+			return pContext->ThrowNativeError("Failed to copy JSON value");
+		}
+
+		yyjson_mut_doc_set_root(pYYJsonWrapper->m_pDocument_mut.get(), val_copy);
+		pYYJsonWrapper->m_pVal_mut = val_copy;
 	} else {
-		pYYJsonWrapper->m_pVal_mut = yyjson_val_mut_copy(pYYJsonWrapper->m_pDocument_mut.get(), handle2->m_pVal);
-	}
+		yyjson_mut_doc* temp_doc = yyjson_mut_doc_new(nullptr);
+		if (!temp_doc) {
+			return pContext->ThrowNativeError("Failed to create temporary mutable document");
+		}
 
-	if (!pYYJsonWrapper->m_pVal_mut) {
-		return pContext->ThrowNativeError("Failed to copy JSON value");
+		yyjson_mut_val* temp_val = nullptr;
+		if (sourceValue->IsMutable()) {
+			temp_val = yyjson_mut_val_mut_copy(temp_doc, sourceValue->m_pVal_mut);
+		} else {
+			temp_val = yyjson_val_mut_copy(temp_doc, sourceValue->m_pVal);
+		}
+
+		if (!temp_val) {
+			yyjson_mut_doc_free(temp_doc);
+			return pContext->ThrowNativeError("Failed to copy JSON value");
+		}
+
+		yyjson_mut_doc_set_root(temp_doc, temp_val);
+		
+		yyjson_doc* doc = yyjson_mut_doc_imut_copy(temp_doc, nullptr);
+		yyjson_mut_doc_free(temp_doc);
+		
+		if (!doc) {
+			return pContext->ThrowNativeError("Failed to create immutable document");
+		}
+
+		pYYJsonWrapper->m_pDocument = WrapImmutableDocument(doc);
+		pYYJsonWrapper->m_pVal = yyjson_doc_get_root(doc);
 	}
 
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
 	pYYJsonWrapper->m_handle = handlesys->CreateHandleEx(g_htJSON, pYYJsonWrapper.get(), &sec, nullptr, &err);
 
-	if (!pYYJsonWrapper->m_handle)
-	{
-		return pContext->ThrowNativeError("Failed to create handle for deep copy of JSON value (error code: %d)", err);
+	if (!pYYJsonWrapper->m_handle) {
+		return pContext->ThrowNativeError("Failed to create handle for JSON value (error code: %d)", err);
 	}
 
 	return pYYJsonWrapper.release()->m_handle;
@@ -790,7 +825,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_real(val)) {
 				double val_num = yyjson_mut_get_real(val);
-				if (fabs(val_num - searchValue) < 1e-6 || std::nextafter(val_num, searchValue) == searchValue) {
+				if (yyjson_equals_fp(val_num, searchValue)) {
 					return static_cast<cell_t>(idx);
 				}
 			}
@@ -807,7 +842,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_real(val)) {
 				double val_num = yyjson_get_real(val);
-				if (fabs(val_num - searchValue) < 1e-6 || std::nextafter(val_num, searchValue) == searchValue) {
+				if (yyjson_equals_fp(val_num, searchValue)) {
 					return static_cast<cell_t>(idx);
 				}
 			}
@@ -1252,6 +1287,7 @@ static cell_t json_val_get_float(IPluginContext* pContext, const cell_t* params)
 			return pContext->ThrowNativeError("Type mismatch: expected float value, got %s",
 				yyjson_mut_get_type_desc(handle->m_pVal_mut));
 		}
+
 		return sp_ftoc(static_cast<float>(yyjson_mut_get_real(handle->m_pVal_mut)));
 	}
 	else {

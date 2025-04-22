@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SM_EXT_YYJSON_YYJSONWRAPPER_H_
+#define SM_EXT_YYJSON_YYJSONWRAPPER_H_
 
 #include "extension.h"
 
@@ -77,3 +78,5 @@ inline std::shared_ptr<yyjson_mut_doc> CreateDocument() {
 inline std::shared_ptr<yyjson_doc> WrapImmutableDocument(yyjson_doc* doc) {
 	return std::shared_ptr<yyjson_doc>(doc, [](yyjson_doc*){});
 }
+
+#endif // SM_EXT_YYJSON_YYJSONWRAPPER_H_
