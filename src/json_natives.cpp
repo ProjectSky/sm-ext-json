@@ -2940,7 +2940,7 @@ static cell_t json_ptr_get_val(IPluginContext* pContext, const cell_t* params)
 		pYYJsonWrapper->m_pVal_mut = val;
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 	} else {
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
@@ -2953,7 +2953,7 @@ static cell_t json_ptr_get_val(IPluginContext* pContext, const cell_t* params)
 		pYYJsonWrapper->m_pVal = val;
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 	}
 
@@ -2983,7 +2983,7 @@ static cell_t json_ptr_get_bool(IPluginContext* pContext, const cell_t* params)
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_mut_is_bool(val)) {
@@ -2995,7 +2995,7 @@ static cell_t json_ptr_get_bool(IPluginContext* pContext, const cell_t* params)
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_is_bool(val)) {
@@ -3020,7 +3020,7 @@ static cell_t json_ptr_get_float(IPluginContext* pContext, const cell_t* params)
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_mut_is_real(val)) {
@@ -3032,7 +3032,7 @@ static cell_t json_ptr_get_float(IPluginContext* pContext, const cell_t* params)
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_is_real(val)) {
@@ -3057,7 +3057,7 @@ static cell_t json_ptr_get_int(IPluginContext* pContext, const cell_t* params)
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_mut_is_int(val)) {
@@ -3069,7 +3069,7 @@ static cell_t json_ptr_get_int(IPluginContext* pContext, const cell_t* params)
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_is_int(val)) {
@@ -3095,7 +3095,7 @@ static cell_t json_ptr_get_integer64(IPluginContext* pContext, const cell_t* par
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_mut_is_int(val)) {
@@ -3106,7 +3106,7 @@ static cell_t json_ptr_get_integer64(IPluginContext* pContext, const cell_t* par
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_is_int(val)) {
@@ -3137,7 +3137,7 @@ static cell_t json_ptr_get_str(IPluginContext* pContext, const cell_t* params)
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_mut_is_str(val)) {
@@ -3159,7 +3159,7 @@ static cell_t json_ptr_get_str(IPluginContext* pContext, const cell_t* params)
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (!yyjson_is_str(val)) {
@@ -3194,7 +3194,7 @@ static cell_t json_ptr_get_is_null(IPluginContext* pContext, const cell_t* param
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		return yyjson_mut_is_null(val);
@@ -3202,7 +3202,7 @@ static cell_t json_ptr_get_is_null(IPluginContext* pContext, const cell_t* param
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		return yyjson_is_null(val);
@@ -3223,7 +3223,7 @@ static cell_t json_ptr_get_length(IPluginContext* pContext, const cell_t* params
 		yyjson_mut_val* val = yyjson_mut_doc_ptr_getx(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		// +1 for the null terminator
@@ -3236,7 +3236,7 @@ static cell_t json_ptr_get_length(IPluginContext* pContext, const cell_t* params
 		yyjson_val* val = yyjson_doc_ptr_getx(handle->m_pDocument.get(), path, strlen(path), &ptrGetError);
 
 		if (ptrGetError.code) {
-			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos);
+			return pContext->ThrowNativeError("Failed to resolve JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrGetError.msg, ptrGetError.code, ptrGetError.pos, path);
 		}
 
 		if (yyjson_is_str(val)) {
@@ -3276,7 +3276,7 @@ static cell_t json_ptr_set_val(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_setx(handle1->m_pDocument_mut.get(), path, strlen(path), val_copy, true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3299,7 +3299,7 @@ static cell_t json_ptr_set_bool(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut.get(), params[3]), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3322,7 +3322,7 @@ static cell_t json_ptr_set_float(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut.get(), sp_ctof(params[3])), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3345,7 +3345,7 @@ static cell_t json_ptr_set_int(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut.get(), params[3]), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3377,7 +3377,7 @@ static cell_t json_ptr_set_integer64(IPluginContext* pContext, const cell_t* par
 	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut.get(), num), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3401,7 +3401,7 @@ static cell_t json_ptr_set_str(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_strcpy(handle->m_pDocument_mut.get(), str), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3424,7 +3424,7 @@ static cell_t json_ptr_set_null(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_setx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut.get()), true, nullptr, &ptrSetError);
 
 	if (ptrSetError.code) {
-		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos);
+		return pContext->ThrowNativeError("Failed to set JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrSetError.msg, ptrSetError.code, ptrSetError.pos, path);
 	}
 
 	return success;
@@ -3459,7 +3459,7 @@ static cell_t json_ptr_add_val(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_addx(handle1->m_pDocument_mut.get(), path, strlen(path), val_copy, true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3482,7 +3482,7 @@ static cell_t json_ptr_add_bool(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_bool(handle->m_pDocument_mut.get(), params[3]), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3505,7 +3505,7 @@ static cell_t json_ptr_add_float(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_float(handle->m_pDocument_mut.get(), sp_ctof(params[3])), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3528,7 +3528,7 @@ static cell_t json_ptr_add_int(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut.get(), params[3]), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3560,7 +3560,7 @@ static cell_t json_ptr_add_integer64(IPluginContext* pContext, const cell_t* par
 	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_int(handle->m_pDocument_mut.get(), num), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3584,7 +3584,7 @@ static cell_t json_ptr_add_str(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_strcpy(handle->m_pDocument_mut.get(), str), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3607,7 +3607,7 @@ static cell_t json_ptr_add_null(IPluginContext* pContext, const cell_t* params)
 	bool success = yyjson_mut_doc_ptr_addx(handle->m_pDocument_mut.get(), path, strlen(path), yyjson_mut_null(handle->m_pDocument_mut.get()), true, nullptr, &ptrAddError);
 
 	if (ptrAddError.code) {
-		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos);
+		return pContext->ThrowNativeError("Failed to add JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrAddError.msg, ptrAddError.code, ptrAddError.pos, path);
 	}
 
 	return success;
@@ -3630,7 +3630,7 @@ static cell_t json_ptr_remove_val(IPluginContext* pContext, const cell_t* params
 	bool success = yyjson_mut_doc_ptr_removex(handle->m_pDocument_mut.get(), path, strlen(path), nullptr, &ptrRemoveError) != nullptr;
 
 	if (ptrRemoveError.code) {
-		return pContext->ThrowNativeError("Failed to remove JSON pointer: %s (error code: %u, position: %d)", ptrRemoveError.msg, ptrRemoveError.code, ptrRemoveError.pos);
+		return pContext->ThrowNativeError("Failed to remove JSON pointer: %s (error code: %u, position: %d, path: %s)", ptrRemoveError.msg, ptrRemoveError.code, ptrRemoveError.pos, path);
 	}
 
 	return success;

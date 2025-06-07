@@ -39,7 +39,8 @@ enum YYJSON_READ_FLAG
   YYJSON_READ_ALLOW_INF_AND_NAN      = 1 << 4, // Allow nan/inf number (non-standard JSON)
   YYJSON_READ_NUMBER_AS_RAW          = 1 << 5, // Read numbers as raw strings
   YYJSON_READ_ALLOW_INVALID_UNICODE  = 1 << 6, // Allow invalid unicode when parsing string
-  YYJSON_READ_BIGNUM_AS_RAW          = 1 << 7  // Read big numbers as raw strings
+  YYJSON_READ_BIGNUM_AS_RAW          = 1 << 7, // Read big numbers as raw strings
+  YYJSON_READ_ALLOW_BOM              = 1 << 8  // Allow BOM (Byte Order Mark) at the beginning of the JSON string
 }
 
 // JSON writer flags for serialization behavior
@@ -53,7 +54,17 @@ enum YYJSON_WRITE_FLAG
   YYJSON_WRITE_INF_AND_NAN_AS_NULL    = 1 << 4, // Write inf/nan as null
   YYJSON_WRITE_ALLOW_INVALID_UNICODE  = 1 << 5, // Allow invalid unicode when encoding string
   YYJSON_WRITE_PRETTY_TWO_SPACES      = 1 << 6, // Use 2 spaces for indent when pretty print
-  YYJSON_WRITE_NEWLINE_AT_END         = 1 << 7  // Add newline at the end of output
+  YYJSON_WRITE_NEWLINE_AT_END         = 1 << 7, // Add newline at the end of output
+  YYJSON_WRITE_FP_TO_FLOAT            = 1 << 27 // Write floating-point numbers using single-precision (float)
+}
+
+/** Write floating-point number using fixed-point notation
+ - This is similar to ECMAScript Number.prototype.toFixed(prec) but with trailing zeros removed. The prec ranges from 1 to 15
+ - This will produce shorter output but may lose some precision
+*/
+stock YYJSON_WRITE_FLAG YYJSON_WRITE_FP_TO_FIXED(int n)
+{
+  return view_as<YYJSON_WRITE_FLAG>(n << 28);
 }
 
 // Sort order for arrays and objects
