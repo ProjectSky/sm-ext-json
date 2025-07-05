@@ -2,6 +2,7 @@
 #define SM_EXT_YYJSON_YYJSONWRAPPER_H_
 
 #include "extension.h"
+#include "am-float.h"
 
 class YYJsonWrapper {
 public:
@@ -77,6 +78,38 @@ inline std::shared_ptr<yyjson_mut_doc> CreateDocument() {
 
 inline std::shared_ptr<yyjson_doc> WrapImmutableDocument(yyjson_doc* doc) {
 	return std::shared_ptr<yyjson_doc>(doc, [](yyjson_doc*){});
+}
+
+/**
+ * Compare two floating-point numbers with an epsilon values.
+ * This function uses both relative and absolute epsilon to handle edge cases.
+ * @param a First floating-point number to compare.
+ * @param b Second floating-point number to compare.
+ * @param rel_epsilon Relative epsilon for comparison (default: 1e-6).
+ * @param abs_epsilon Absolute epsilon for comparison (default: 1e-15).
+ * @return true if the numbers are considered equal, false otherwise.
+ */
+template <typename T,
+		  typename = std::enable_if_t<std::is_same_v<T, float> || std::is_same_v<T, double>>>
+bool EqualsFp(T a, T b, T rel_epsilon = 1e-6, T abs_epsilon = 1e-15) {
+	// handle NaN cases first since NaN != NaN
+	if (ke::IsNaN(a) || ke::IsNaN(b)) return false;
+
+	// fast path for exact equality
+	// this also handles the case where both a and b are +0 or -0
+	// IEEE 754 guarantees that +0 == -0 is true
+	if (a == b) return true;
+
+	// handle infinity cases
+	if (ke::IsInfinite(a) || ke::IsInfinite(b)) {
+		return ke::IsInfinite(a) && ke::IsInfinite(b) && (a > 0) == (b > 0);
+	}
+
+	double diff = fabs(a - b);
+	if (diff <= abs_epsilon) return true;
+
+	double larger = fmax(fabs(a), fabs(b));
+	return diff <= larger * rel_epsilon;
 }
 
 #endif // SM_EXT_YYJSON_YYJSONWRAPPER_H_

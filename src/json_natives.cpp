@@ -812,7 +812,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 
 	if (!handle) return 0;
 
-	double searchValue = static_cast<double>(sp_ctof(params[2]));
+	float searchValue = sp_ctof(params[2]);
 
 	if (handle->IsMutable()) {
 		if (!yyjson_mut_is_arr(handle->m_pVal_mut)) {
@@ -824,8 +824,8 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 		yyjson_mut_val *val;
 		yyjson_mut_arr_foreach(handle->m_pVal_mut, idx, max, val) {
 			if (yyjson_mut_is_real(val)) {
-				double val_num = yyjson_mut_get_real(val);
-				if (yyjson_equals_fp(val_num, searchValue)) {
+				float val_num = static_cast<float>(yyjson_mut_get_real(val));
+				if (EqualsFp(val_num, searchValue)) {
 					return static_cast<cell_t>(idx);
 				}
 			}
@@ -841,8 +841,8 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 		yyjson_val *val;
 		yyjson_arr_foreach(handle->m_pVal, idx, max, val) {
 			if (yyjson_is_real(val)) {
-				double val_num = yyjson_get_real(val);
-				if (yyjson_equals_fp(val_num, searchValue)) {
+				float val_num = static_cast<float>(yyjson_get_real(val));
+				if (EqualsFp(val_num, searchValue)) {
 					return static_cast<cell_t>(idx);
 				}
 			}
