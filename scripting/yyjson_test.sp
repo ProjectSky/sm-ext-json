@@ -280,7 +280,7 @@ void TestSearchOperations()
 {
 	PrintToServer("[YYJSON] Testing search operations...");
 
-	YYJSONArray arr = YYJSON.Parse("[42, true, \"hello\", 3.14, \"world\", false, 42]");
+	YYJSONArray arr = YYJSON.Parse("[42, true, \"hello\", 3.14, \"world\", false, 42, NaN, Inf]", .flag=YYJSON_READ_ALLOW_INF_AND_NAN);
 	PrintToServer("Test array:");
 	PrintJson(arr);
 
@@ -297,6 +297,8 @@ void TestSearchOperations()
 
 	PrintToServer("IndexOfFloat(3.14): %d", arr.IndexOfFloat(3.14));
 	PrintToServer("IndexOfFloat(2.718): %d", arr.IndexOfFloat(2.718));
+	PrintToServer("IndexOfFloat(NaN): %d", arr.IndexOfFloat(0.0 / 0.0));
+	PrintToServer("IndexOfFloat(Inf): %d", arr.IndexOfFloat(1.0 / 0.0));
 
 	delete arr;
 }
@@ -559,8 +561,8 @@ void TestFromStringsOperations()
 // Helper function to print json contents
 void PrintJson(YYJSON data)
 {
-	int len = data.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES);
+	int len = data.GetSerializedSize(YYJSON_WRITE_PRETTY_TWO_SPACES|YYJSON_WRITE_ALLOW_INF_AND_NAN);
 	char[] buffer = new char[len];
-	data.ToString(buffer, len, YYJSON_WRITE_PRETTY_TWO_SPACES);
+	data.ToString(buffer, len, YYJSON_WRITE_PRETTY_TWO_SPACES|YYJSON_WRITE_ALLOW_INF_AND_NAN);
 	PrintToServer("%s", buffer);
 }
