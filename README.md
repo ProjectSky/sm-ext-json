@@ -12,6 +12,7 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 * Array and object sorting support
 * Iteration methods for arrays and objects
 * Support for both mutable and immutable JSON documents
+* Support SourceMod Extension API
 
 ## Performance
 Performance test results using [twitter.json](https://github.com/ibireme/yyjson_benchmark/blob/master/data/json/twitter.json) (0.60 MB):
@@ -59,6 +60,30 @@ ambuild
 ## Documentation
 * [API Reference](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/yyjson.inc)
 * [Latest Release](https://github.com/ProjectSky/sm-ext-yyjson/releases)
+
+### SourceMod Extension API
+```cpp
+#include <IYYJSONManager.h>
+
+IYYJSONManager* g_pYYJSONManager = nullptr;
+
+void Ext::SDK_OnAllLoaded()
+{
+  SM_GET_LATE_IFACE(YYJSONMANAGER, g_pYYJSONManager);
+
+  char error[256];
+  YYJSONValue* val = g_pYYJSONManager->ParseJSON("{\"name\":\"John\", \"age\":30}", false, false, 0, error, sizeof(error));
+
+  size_t size = g_pYYJSONManager->GetSerializedSize(val);
+  char buffer[size];
+  g_pYYJSONManager->WriteToString(val, buffer, size);
+
+  // must release the value after using
+  g_pYYJSONManager->Release(val);
+
+  printf("JSON: %s\n", buffer);
+}
+```
 
 ### Basic Examples
 
@@ -273,7 +298,7 @@ delete obj;
 ```cpp
 // Create object from key-value string arrays
 char pairs[][] = {"name", "test", "type", "demo", "version", "1.0.0"};
-	
+  
 YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
 
 /* Output:

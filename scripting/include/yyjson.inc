@@ -31,16 +31,29 @@ enum YYJSON_SUBTYPE
 // JSON reader flags for parsing behavior
 enum YYJSON_READ_FLAG
 {
-  YYJSON_READ_NOFLAG                 = 0 << 0, // Default behavior
-  YYJSON_READ_INSITU                 = 1 << 0, // Read JSON data in-situ (modify input string)
-  YYJSON_READ_STOP_WHEN_DONE         = 1 << 1, // Stop when done instead of issuing an error if there's additional content
-  YYJSON_READ_ALLOW_TRAILING_COMMAS  = 1 << 2, // Allow trailing commas at the end of arrays/objects
-  YYJSON_READ_ALLOW_COMMENTS         = 1 << 3, // Allow C-style comments (/* */) and line comments (//)
-  YYJSON_READ_ALLOW_INF_AND_NAN      = 1 << 4, // Allow nan/inf number (non-standard JSON)
-  YYJSON_READ_NUMBER_AS_RAW          = 1 << 5, // Read numbers as raw strings
-  YYJSON_READ_ALLOW_INVALID_UNICODE  = 1 << 6, // Allow invalid unicode when parsing string
-  YYJSON_READ_BIGNUM_AS_RAW          = 1 << 7, // Read big numbers as raw strings
-  YYJSON_READ_ALLOW_BOM              = 1 << 8  // Allow BOM (Byte Order Mark) at the beginning of the JSON string
+  YYJSON_READ_NOFLAG                  = 0 << 0,  // Default behavior
+  YYJSON_READ_INSITU                  = 1 << 0,  // Read JSON data in-situ (modify input string)
+  YYJSON_READ_STOP_WHEN_DONE          = 1 << 1,  // Stop when done instead of issuing an error if there's additional content
+  YYJSON_READ_ALLOW_TRAILING_COMMAS   = 1 << 2,  // Allow trailing commas at the end of arrays/objects
+  YYJSON_READ_ALLOW_COMMENTS          = 1 << 3,  // Allow C-style comments (/* */) and line comments (//)
+  YYJSON_READ_ALLOW_INF_AND_NAN       = 1 << 4,  // Allow nan/inf number (non-standard JSON)
+  YYJSON_READ_NUMBER_AS_RAW           = 1 << 5,  // Read numbers as raw strings
+  YYJSON_READ_ALLOW_INVALID_UNICODE   = 1 << 6,  // Allow invalid unicode when parsing string
+  YYJSON_READ_BIGNUM_AS_RAW           = 1 << 7,  // Read big numbers as raw strings
+  YYJSON_READ_ALLOW_BOM               = 1 << 8,  // Allow BOM (Byte Order Mark) at the beginning of the JSON string
+  YYJSON_READ_ALLOW_EXT_NUMBER        = 1 << 9,  // Allow extended number (non-standard JSON)
+  YYJSON_READ_ALLOW_EXT_ESCAPE        = 1 << 10, // Allow extended escape sequences in strings (non-standard)
+  YYJSON_READ_ALLOW_EXT_WHITESPACE    = 1 << 11, // Allow extended whitespace characters (non-standard)
+  YYJSON_READ_ALLOW_SINGLE_QUOTED_STR = 1 << 12, // Allow strings enclosed in single quotes (non-standard)
+  YYJSON_READ_ALLOW_UNQUOTED_KEY      = 1 << 13, // Allow object keys without quotes (non-standard)
+  YYJSON_READ_JSON5                   = YYJSON_READ_ALLOW_TRAILING_COMMAS |
+                                        YYJSON_READ_ALLOW_COMMENTS |
+                                        YYJSON_READ_ALLOW_INF_AND_NAN |
+                                        YYJSON_READ_ALLOW_EXT_NUMBER |
+                                        YYJSON_READ_ALLOW_EXT_ESCAPE |
+                                        YYJSON_READ_ALLOW_EXT_WHITESPACE |
+                                        YYJSON_READ_ALLOW_SINGLE_QUOTED_STR |
+                                        YYJSON_READ_ALLOW_UNQUOTED_KEY // Allow JSON5 format, see: [https://json5.org]
 }
 
 // JSON writer flags for serialization behavior

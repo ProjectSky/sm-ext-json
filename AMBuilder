@@ -9,12 +9,14 @@ for cxx in builder.targets:
 
   binary.sources += [
     'src/extension.cpp',
+    'src/YYJSONManager.cpp',
     'src/json_natives.cpp',
     os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp'),
   ]
 
   binary.compiler.includes += [
     os.path.join(builder.sourcePath, 'src'),
+    os.path.join(builder.sourcePath, 'public'),
     os.path.join(builder.sourcePath, 'third_party', 'yyjson'),
   ]
 

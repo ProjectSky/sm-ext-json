@@ -1,10 +1,12 @@
 #include "extension.h"
+#include "YYJSONManager.h"
 
 JsonExtension g_JsonExtension;
 SMEXT_LINK(&g_JsonExtension);
 
 HandleType_t g_htJSON;
 JSONHandler g_JSONHandler;
+IYYJSONManager* g_pYYJSONManager;
 
 bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 {
@@ -13,6 +15,7 @@ bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 
 	HandleAccess haJSON;
 	handlesys->InitAccessDefaults(nullptr, &haJSON);
+	haJSON.access[HandleAccess_Read] = 0;
 	haJSON.access[HandleAccess_Delete] = 0;
 
 	HandleError err;
@@ -22,31 +25,53 @@ bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 		snprintf(error, maxlen, "Failed to create YYJSON handle type (err: %d)", err);
 		return false;
 	}
-	
-	return true;
+
+	// Delete the existing instance if it exists
+	if (g_pYYJSONManager) {
+		delete g_pYYJSONManager;
+		g_pYYJSONManager = nullptr;
+	}
+
+	g_pYYJSONManager = new YYJSONManager();
+	if (!g_pYYJSONManager) {
+		snprintf(error, maxlen, "Failed to create YYJSONManager instance");
+		return false;
+	}
+
+	return sharesys->AddInterface(myself, g_pYYJSONManager);;
 }
 
 void JsonExtension::SDK_OnUnload()
 {
 	handlesys->RemoveType(g_htJSON, myself->GetIdentity());
+
+	if (g_pYYJSONManager) {
+		delete g_pYYJSONManager;
+		g_pYYJSONManager = nullptr;
+	}
 }
 
 void JSONHandler::OnHandleDestroy(HandleType_t type, void* object)
 {
-	delete (YYJsonWrapper*)object;
+	delete (YYJSONValue*)object;
 }
 
-YYJsonWrapper* JsonExtension::GetJSONPointer(IPluginContext* pContext, Handle_t handle)
+YYJSONValue* JsonExtension::GetJSONPointer(IPluginContext* pContext, Handle_t handle)
 {
 	HandleError err;
 	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
 
-	YYJsonWrapper* pYYJsonWrapper;
-	if ((err = handlesys->ReadHandle(handle, g_htJSON, &sec, (void**)&pYYJsonWrapper)) != HandleError_None)
+	YYJSONValue* pYYJSONValue;
+	if ((err = handlesys->ReadHandle(handle, g_htJSON, &sec, (void**)&pYYJSONValue)) != HandleError_None)
 	{
 		pContext->ReportError("Invalid YYJSON handle %x (error %d)", handle, err);
 		return nullptr;
 	}
 
-	return pYYJsonWrapper;
+	return pYYJSONValue;
+}
+
+IYYJSONManager* JsonExtension::GetYYJSONManager()
+{
+	return g_pYYJSONManager;
 }
