@@ -1,13 +1,16 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
 import os
 
-yyjson = builder.Build('third_party/yyjson/AMBuilder')
-
 for cxx in builder.targets:
   binary = Extension.Library(builder, cxx, 'yyjson.ext')
   arch = binary.compiler.target.arch
 
+  binary.compiler.defines += [
+    'YYJSON_DISABLE_INCR_READER', # disable incremental reader because it's not used in this extension
+  ]
+
   binary.sources += [
+    'third_party/yyjson/yyjson.c',
     'src/extension.cpp',
     'src/YYJSONManager.cpp',
     'src/json_natives.cpp',
@@ -18,13 +21,6 @@ for cxx in builder.targets:
     os.path.join(builder.sourcePath, 'src'),
     os.path.join(builder.sourcePath, 'public'),
     os.path.join(builder.sourcePath, 'third_party', 'yyjson'),
-  ]
-
-  if binary.compiler.target.platform == 'linux':
-    binary.compiler.includes += []
-	
-  binary.compiler.postlink += [
-    yyjson[arch].binary,
   ]
 
   Extension.extensions += [builder.Add(binary)]

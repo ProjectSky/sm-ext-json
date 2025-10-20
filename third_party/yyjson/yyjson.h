@@ -1468,10 +1468,10 @@ yyjson_api bool yyjson_mut_write_fp(FILE *fp,
 
 /**
  Write a document into a buffer.
- 
+
  This function does not allocate memory, but the buffer must be larger than the
  final JSON size to allow temporary space. See `API.md` for details.
- 
+
  @param buf The output buffer.
     If the buffer is NULL, the function will fail and return 0.
  @param buf_len The buffer length.

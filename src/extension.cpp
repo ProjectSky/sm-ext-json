@@ -38,7 +38,7 @@ bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 		return false;
 	}
 
-	return sharesys->AddInterface(myself, g_pYYJSONManager);;
+	return sharesys->AddInterface(myself, g_pYYJSONManager);
 }
 
 void JsonExtension::SDK_OnUnload()
@@ -54,24 +54,4 @@ void JsonExtension::SDK_OnUnload()
 void JSONHandler::OnHandleDestroy(HandleType_t type, void* object)
 {
 	delete (YYJSONValue*)object;
-}
-
-YYJSONValue* JsonExtension::GetJSONPointer(IPluginContext* pContext, Handle_t handle)
-{
-	HandleError err;
-	HandleSecurity sec(pContext->GetIdentity(), myself->GetIdentity());
-
-	YYJSONValue* pYYJSONValue;
-	if ((err = handlesys->ReadHandle(handle, g_htJSON, &sec, (void**)&pYYJSONValue)) != HandleError_None)
-	{
-		pContext->ReportError("Invalid YYJSON handle %x (error %d)", handle, err);
-		return nullptr;
-	}
-
-	return pYYJSONValue;
-}
-
-IYYJSONManager* JsonExtension::GetYYJSONManager()
-{
-	return g_pYYJSONManager;
 }

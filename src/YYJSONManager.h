@@ -9,7 +9,7 @@
 
 /**
  * @brief JSON value wrapper
- * 
+ *
  * Wraps yyjson mutable/immutable documents and values.
  * Used as the primary data type for JSON operations.
  */
@@ -61,7 +61,7 @@ public:
 	yyjson_obj_iter m_iterObjImm;
 	yyjson_arr_iter m_iterArrImm;
 
-	SourceMod::Handle_t m_handle{ BAD_HANDLE };
+	Handle_t m_handle{ BAD_HANDLE };
 	size_t m_arrayIndex{ 0 };
 	size_t m_readSize{ 0 };
 	bool m_iterInitialized{ false };
@@ -237,22 +237,22 @@ public:
 	virtual void Release(YYJSONValue* value) override;
 
 	// ========== Handle Type Operations ==========
-	virtual SourceMod::HandleType_t GetHandleType() override;
+	virtual HandleType_t GetHandleType() override;
 
 	// ========== Handle Operations ==========
-	virtual YYJSONValue* GetFromHandle(SourcePawn::IPluginContext* pContext, SourceMod::Handle_t handle) override;
+	virtual YYJSONValue* GetFromHandle(IPluginContext* pContext, Handle_t handle) override;
 
 private:
 	std::random_device m_randomDevice;
 	std::mt19937 m_randomGenerator;
-	
+
 	// Helper methods
 	static std::unique_ptr<YYJSONValue> CreateWrapper();
 	static std::shared_ptr<yyjson_mut_doc> WrapDocument(yyjson_mut_doc* doc);
 	static std::shared_ptr<yyjson_mut_doc> CopyDocument(yyjson_doc* doc);
 	static std::shared_ptr<yyjson_mut_doc> CreateDocument();
 	static std::shared_ptr<yyjson_doc> WrapImmutableDocument(yyjson_doc* doc);
-	
+
 	// Pack helper methods
 	static const char* SkipSeparators(const char* ptr);
 	static void SetPackError(char* error, size_t error_size, const char* fmt, ...);
@@ -262,5 +262,3 @@ private:
 };
 
 #endif // _INCLUDE_SM_YYJSON_YYJSONMANAGER_H_
-
-

@@ -198,7 +198,7 @@ methodmap YYJSON < Handle
   * @param maxlength         Maximum length of the string buffer
   * @param flag              The JSON write options
   *
-  * @return                  Number of characters written to the buffer, including the null terminator. 0 on failure
+  * @return                  Number of characters written to the buffer (including null terminator) or 0 on failure
   */
   public native int ToString(char[] buffer, int maxlength, YYJSON_WRITE_FLAG flag = YYJSON_WRITE_NOFLAG);
 
@@ -278,7 +278,7 @@ methodmap YYJSON < Handle
   public static native YYJSON CreateFloat(float value);
 
   /**
-  * Creates and returns a int value
+  * Creates and returns an int value
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   *
@@ -289,11 +289,11 @@ methodmap YYJSON < Handle
   public static native YYJSON CreateInt(int value);
 
   /**
-  * Creates and returns a intger64 value
+  * Creates and returns an integer64 value
   *
   * @note                    Needs to be freed using delete or CloseHandle()
   *
-  * @param value             The intger64 value to be set
+  * @param value             The integer64 value to be set
   *
   * @return                  JSON handle, NULL on error
   */
@@ -347,7 +347,7 @@ methodmap YYJSON < Handle
   public static native int GetInt(const YYJSON value);
 
   /**
-  * Get intger64 value by a JSON Handle
+  * Get integer64 value by a JSON Handle
   *
   * @param value             JSON handle
   * @param buffer            Buffer to copy to
@@ -369,12 +369,17 @@ methodmap YYJSON < Handle
   public static native bool GetString(const YYJSON value, char[] buffer, int maxlength);
 
   /**
-  * Get JSON Handle serialized size in bytes (including null-terminator)
-  *
-  * @param flag              The JSON write options
-  *
-  * @return                  serialized size
-  */
+   * Get JSON Handle serialized size in bytes (including null-terminator)
+   *
+   * @param flag              The JSON write options
+   *
+   * @return                  Size in bytes (including null terminator)
+   * 
+   * @note                    The returned size depends on the flag parameter.
+   *                          You MUST use the same flags when calling both GetSerializedSize() 
+   *                          and ToString(). Using different flags will return different sizes 
+   *                          and may cause buffer overflow.
+   */
   public native int GetSerializedSize(YYJSON_WRITE_FLAG flag = YYJSON_WRITE_NOFLAG);
 
   /**
@@ -435,7 +440,7 @@ methodmap YYJSON < Handle
   *
   * @return                  True on success, false on failure
   */
-  public native bool PtrGetString(const char[] path, char[] buffer, int maxlength)
+  public native bool PtrGetString(const char[] path, char[] buffer, int maxlength);
 
   /**
   * Get value is null by a JSON Pointer
@@ -444,18 +449,20 @@ methodmap YYJSON < Handle
   *
   * @return                  True if the value is null, false otherwise
   */
-  public native bool PtrGetIsNull(const char[] path)
+  public native bool PtrGetIsNull(const char[] path);
 
   /**
   * Get JSON content length (string length, array size, object size)
-  * Returns 0 if val is NULL or type is not string/array/object
-  * if str including null-terminator
+  *
+  * @note                    For strings: returns string length including null-terminator
+  * @note                    For arrays/objects: returns number of elements
+  * @note                    Returns 0 if value is NULL or type is not string/array/object
   *
   * @param path              The JSON pointer string
   *
   * @return                  JSON content length
   */
-  public native int PtrGetLength(const char[] path)
+  public native int PtrGetLength(const char[] path);
 
   /**
   * Set value by a JSON Pointer
@@ -463,7 +470,7 @@ methodmap YYJSON < Handle
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The value to be set, pass NULL to remove
+  * @param value             The value to be set
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -475,7 +482,7 @@ methodmap YYJSON < Handle
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The boolean value to be set, pass NULL to remove
+  * @param value             The boolean value to be set
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -487,7 +494,7 @@ methodmap YYJSON < Handle
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The float value to be set, pass NULL to remove
+  * @param value             The float value to be set
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -499,19 +506,19 @@ methodmap YYJSON < Handle
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The integer value to be set, pass NULL to remove
+  * @param value             The integer value to be set
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
   public native bool PtrSetInt(const char[] path, int value);
 
   /**
-  * Set intger64 value by a JSON Pointer
+  * Set integer64 value by a JSON Pointer
   *
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The intger64 value to be set, pass NULL to remove
+  * @param value             The integer64 value to be set
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -523,7 +530,7 @@ methodmap YYJSON < Handle
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The string value to be set, pass NULL to remove
+  * @param value             The string value to be set
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -535,7 +542,6 @@ methodmap YYJSON < Handle
   * @note                    The parent nodes will be created if they do not exist. If the target value already exists, it will be replaced by the new value
   *
   * @param path              The JSON pointer string
-  * @param value             The null value to be set, pass NULL to remove
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -585,7 +591,7 @@ methodmap YYJSON < Handle
   * Add (insert) integer64 value by a JSON pointer
   *
   * @param path              The JSON pointer string
-  * @param value             The intger64 value to be added
+  * @param value             The integer64 value to be added
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
   */
@@ -617,7 +623,7 @@ methodmap YYJSON < Handle
   *
   * @return                  true if removed value, false otherwise
   */
-  public native bool PtrRemove(const char[] path)
+  public native bool PtrRemove(const char[] path);
 
   /**
   * Try to get value by a JSON Pointer
@@ -801,14 +807,16 @@ methodmap YYJSON < Handle
   }
 
   /**
-  * Retrieves read size of the JSON data
+  * Retrieves the size of the JSON data as it was originally read from parsing
   *
-  * @note This value reflects the size of the JSON data as read from the document
-  *       - It does not auto update if the document is modified
-  *       - For modified document, use GetSerializedSize to obtain the current size
+  * @return                  Size in bytes (including null terminator) or 0 if not from parsing
   *
+  * @note                    This value only applies to documents created from parsing (Parse, FromString, FromFile)
+  * @note                    Manually created documents (new YYJSONObject(), YYJSON.CreateBool(), etc.) will return 0
+  * @note                    This value does not auto-update if the document is modified
+  * @note                    For modified documents, use GetSerializedSize() to obtain the current size
   */
-  property bool ReadSize {
+  property int ReadSize {
     public native get();
   }
 };
@@ -1219,7 +1227,7 @@ methodmap YYJSONArray < YYJSON
   public native bool SetFloat(int index, float value);
 
   /**
-  * Replaces a integer value at index
+  * Replaces an integer value at index
   *
   * @param index             The index to which to replace the value
   * @param value             The new int value to replace
@@ -1229,10 +1237,10 @@ methodmap YYJSONArray < YYJSON
   public native bool SetInt(int index, int value);
 
   /**
-  * Replaces a intger64 value at index
+  * Replaces an integer64 value at index
   *
   * @param index             The index to which to replace the value
-  * @param value             The new intger64 value to replace
+  * @param value             The new integer64 value to replace
   *
   * @return                  True if succeed, false otherwise
   */
@@ -1285,7 +1293,7 @@ methodmap YYJSONArray < YYJSON
   public native bool PushFloat(float value);
 
   /**
-  * Inserts a integer value at the end of the array
+  * Inserts an integer value at the end of the array
   *
   * @param value             integer to set
   *
@@ -1294,9 +1302,9 @@ methodmap YYJSONArray < YYJSON
   public native bool PushInt(int value);
 
   /**
-  * Inserts a intger64 value at the end of the array
+  * Inserts an integer64 value at the end of the array
   *
-  * @param value             intger64 value
+  * @param value             integer64 value
   *
   * @return                  The value to be inserted. Returns false if it is NULL
   */
@@ -1472,3 +1480,155 @@ public Extension __ext_yyjson = {
   required = 0,
 #endif
 };
+
+#if !defined REQUIRE_EXTENSIONS
+public void __pl_yyjson_SetNTVOptional()
+{
+  // JSONObject
+  MarkNativeAsOptional("YYJSONObject.YYJSONObject");
+  MarkNativeAsOptional("YYJSONObject.FromStrings");
+  MarkNativeAsOptional("YYJSONObject.Size.get");
+  MarkNativeAsOptional("YYJSONObject.Get");
+  MarkNativeAsOptional("YYJSONObject.GetBool");
+  MarkNativeAsOptional("YYJSONObject.GetFloat");
+  MarkNativeAsOptional("YYJSONObject.GetInt");
+  MarkNativeAsOptional("YYJSONObject.GetInt64");
+  MarkNativeAsOptional("YYJSONObject.GetString");
+  MarkNativeAsOptional("YYJSONObject.IsNull");
+  MarkNativeAsOptional("YYJSONObject.GetKey");
+  MarkNativeAsOptional("YYJSONObject.GetValueAt");
+  MarkNativeAsOptional("YYJSONObject.HasKey");
+  MarkNativeAsOptional("YYJSONObject.RenameKey");
+  MarkNativeAsOptional("YYJSONObject.Set");
+  MarkNativeAsOptional("YYJSONObject.SetBool");
+  MarkNativeAsOptional("YYJSONObject.SetFloat");
+  MarkNativeAsOptional("YYJSONObject.SetInt");
+  MarkNativeAsOptional("YYJSONObject.SetInt64");
+  MarkNativeAsOptional("YYJSONObject.SetNull");
+  MarkNativeAsOptional("YYJSONObject.SetString");
+  MarkNativeAsOptional("YYJSONObject.Remove");
+  MarkNativeAsOptional("YYJSONObject.Clear");
+  MarkNativeAsOptional("YYJSONObject.FromString");
+  MarkNativeAsOptional("YYJSONObject.FromFile");
+  MarkNativeAsOptional("YYJSONObject.Sort");
+
+  // JSONArray
+  MarkNativeAsOptional("YYJSONArray.YYJSONArray");
+  MarkNativeAsOptional("YYJSONArray.FromStrings");
+  MarkNativeAsOptional("YYJSONArray.Length.get");
+  MarkNativeAsOptional("YYJSONArray.Get");
+  MarkNativeAsOptional("YYJSONArray.First.get");
+  MarkNativeAsOptional("YYJSONArray.Last.get");
+  MarkNativeAsOptional("YYJSONArray.GetBool");
+  MarkNativeAsOptional("YYJSONArray.GetFloat");
+  MarkNativeAsOptional("YYJSONArray.GetInt");
+  MarkNativeAsOptional("YYJSONArray.GetInt64");
+  MarkNativeAsOptional("YYJSONArray.GetString");
+  MarkNativeAsOptional("YYJSONArray.IsNull");
+  MarkNativeAsOptional("YYJSONArray.Set");
+  MarkNativeAsOptional("YYJSONArray.SetBool");
+  MarkNativeAsOptional("YYJSONArray.SetFloat");
+  MarkNativeAsOptional("YYJSONArray.SetInt");
+  MarkNativeAsOptional("YYJSONArray.SetInt64");
+  MarkNativeAsOptional("YYJSONArray.SetNull");
+  MarkNativeAsOptional("YYJSONArray.SetString");
+  MarkNativeAsOptional("YYJSONArray.Push");
+  MarkNativeAsOptional("YYJSONArray.PushBool");
+  MarkNativeAsOptional("YYJSONArray.PushFloat");
+  MarkNativeAsOptional("YYJSONArray.PushInt");
+  MarkNativeAsOptional("YYJSONArray.PushInt64");
+  MarkNativeAsOptional("YYJSONArray.PushNull");
+  MarkNativeAsOptional("YYJSONArray.PushString");
+  MarkNativeAsOptional("YYJSONArray.Remove");
+  MarkNativeAsOptional("YYJSONArray.RemoveFirst");
+  MarkNativeAsOptional("YYJSONArray.RemoveLast");
+  MarkNativeAsOptional("YYJSONArray.RemoveRange");
+  MarkNativeAsOptional("YYJSONArray.Clear");
+  MarkNativeAsOptional("YYJSONArray.FromString");
+  MarkNativeAsOptional("YYJSONArray.FromFile");
+  MarkNativeAsOptional("YYJSONArray.IndexOfBool");
+  MarkNativeAsOptional("YYJSONArray.IndexOfString");
+  MarkNativeAsOptional("YYJSONArray.IndexOfInt");
+  MarkNativeAsOptional("YYJSONArray.IndexOfInt64");
+  MarkNativeAsOptional("YYJSONArray.IndexOfFloat");
+  MarkNativeAsOptional("YYJSONArray.Sort");
+
+  // JSON
+  MarkNativeAsOptional("YYJSON.ToString");
+  MarkNativeAsOptional("YYJSON.ToFile");
+  MarkNativeAsOptional("YYJSON.Parse");
+  MarkNativeAsOptional("YYJSON.Equals");
+  MarkNativeAsOptional("YYJSON.DeepCopy");
+  MarkNativeAsOptional("YYJSON.GetTypeDesc");
+  MarkNativeAsOptional("YYJSON.GetSerializedSize");
+  MarkNativeAsOptional("YYJSON.ReadSize.get");
+  MarkNativeAsOptional("YYJSON.Type.get");
+  MarkNativeAsOptional("YYJSON.SubType.get");
+  MarkNativeAsOptional("YYJSON.IsArray.get");
+  MarkNativeAsOptional("YYJSON.IsObject.get");
+  MarkNativeAsOptional("YYJSON.IsInt.get");
+  MarkNativeAsOptional("YYJSON.IsUint.get");
+  MarkNativeAsOptional("YYJSON.IsSint.get");
+  MarkNativeAsOptional("YYJSON.IsNum.get");
+  MarkNativeAsOptional("YYJSON.IsBool.get");
+  MarkNativeAsOptional("YYJSON.IsTrue.get");
+  MarkNativeAsOptional("YYJSON.IsFalse.get");
+  MarkNativeAsOptional("YYJSON.IsFloat.get");
+  MarkNativeAsOptional("YYJSON.IsStr.get");
+  MarkNativeAsOptional("YYJSON.IsNull.get");
+  MarkNativeAsOptional("YYJSON.IsCtn.get");
+  MarkNativeAsOptional("YYJSON.IsMutable.get");
+  MarkNativeAsOptional("YYJSON.IsImmutable.get");
+  MarkNativeAsOptional("YYJSON.ForeachObject");
+  MarkNativeAsOptional("YYJSON.ForeachArray");
+  MarkNativeAsOptional("YYJSON.ForeachKey");
+  MarkNativeAsOptional("YYJSON.ForeachIndex");
+  MarkNativeAsOptional("YYJSON.ToMutable");
+  MarkNativeAsOptional("YYJSON.ToImmutable");
+
+  // JSON CREATE & GET
+  MarkNativeAsOptional("YYJSON.Pack");
+  MarkNativeAsOptional("YYJSON.CreateBool");
+  MarkNativeAsOptional("YYJSON.CreateFloat");
+  MarkNativeAsOptional("YYJSON.CreateInt");
+  MarkNativeAsOptional("YYJSON.CreateInt64");
+  MarkNativeAsOptional("YYJSON.CreateNull");
+  MarkNativeAsOptional("YYJSON.CreateString");
+  MarkNativeAsOptional("YYJSON.GetBool");
+  MarkNativeAsOptional("YYJSON.GetFloat");
+  MarkNativeAsOptional("YYJSON.GetInt");
+  MarkNativeAsOptional("YYJSON.GetInt64");
+  MarkNativeAsOptional("YYJSON.GetString");
+
+  // JSON POINTER
+  MarkNativeAsOptional("YYJSON.PtrGet");
+  MarkNativeAsOptional("YYJSON.PtrGetBool");
+  MarkNativeAsOptional("YYJSON.PtrGetFloat");
+  MarkNativeAsOptional("YYJSON.PtrGetInt");
+  MarkNativeAsOptional("YYJSON.PtrGetInt64");
+  MarkNativeAsOptional("YYJSON.PtrGetString");
+  MarkNativeAsOptional("YYJSON.PtrGetIsNull");
+  MarkNativeAsOptional("YYJSON.PtrGetLength");
+  MarkNativeAsOptional("YYJSON.PtrSet");
+  MarkNativeAsOptional("YYJSON.PtrSetBool");
+  MarkNativeAsOptional("YYJSON.PtrSetFloat");
+  MarkNativeAsOptional("YYJSON.PtrSetInt");
+  MarkNativeAsOptional("YYJSON.PtrSetInt64");
+  MarkNativeAsOptional("YYJSON.PtrSetString");
+  MarkNativeAsOptional("YYJSON.PtrSetNull");
+  MarkNativeAsOptional("YYJSON.PtrAdd");
+  MarkNativeAsOptional("YYJSON.PtrAddBool");
+  MarkNativeAsOptional("YYJSON.PtrAddFloat");
+  MarkNativeAsOptional("YYJSON.PtrAddInt");
+  MarkNativeAsOptional("YYJSON.PtrAddInt64");
+  MarkNativeAsOptional("YYJSON.PtrAddString");
+  MarkNativeAsOptional("YYJSON.PtrAddNull");
+  MarkNativeAsOptional("YYJSON.PtrRemove");
+  MarkNativeAsOptional("YYJSON.PtrTryGetVal");
+  MarkNativeAsOptional("YYJSON.PtrTryGetBool");
+  MarkNativeAsOptional("YYJSON.PtrTryGetFloat");
+  MarkNativeAsOptional("YYJSON.PtrTryGetInt");
+  MarkNativeAsOptional("YYJSON.PtrTryGetInt64");
+  MarkNativeAsOptional("YYJSON.PtrTryGetString");
+}
+#endif

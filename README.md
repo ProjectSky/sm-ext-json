@@ -74,6 +74,11 @@ void Ext::SDK_OnAllLoaded()
   char error[256];
   YYJSONValue* val = g_pYYJSONManager->ParseJSON("{\"name\":\"John\", \"age\":30}", false, false, 0, error, sizeof(error));
 
+  if (!val) {
+    PrintToServer("Failed to parse JSON: %s", error);
+    return;
+  }
+
   size_t size = g_pYYJSONManager->GetSerializedSize(val);
   char buffer[size];
   g_pYYJSONManager->WriteToString(val, buffer, size);
@@ -122,6 +127,7 @@ arr.PushFloat(2.0);
 arr.PushBool(true);
 arr.PushString("Hello World");
 arr.PushNull();
+delete arr;
 
 /* Output:
 [
@@ -133,8 +139,6 @@ arr.PushNull();
   null
 ]
 */
-
-delete arr;
 ```
 
 ### Advanced Features
@@ -144,6 +148,7 @@ delete arr;
 // Create nested structures
 YYJSONObject obj = new YYJSONObject();
 obj.PtrSetInt("/a/b/c", 1);
+delete obj;
 
 /* Output:
 {
@@ -154,8 +159,6 @@ obj.PtrSetInt("/a/b/c", 1);
   }
 }
 */
-
-delete obj;
 
 /* example.json:
 {
@@ -298,13 +301,13 @@ delete obj;
 ```cpp
 // Create object from key-value string arrays
 char pairs[][] = {"name", "test", "type", "demo", "version", "1.0.0"};
-  
+
 YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
 
 /* Output:
 {
   "name": "test",
-  "type": "demo", 
+  "type": "demo",
   "version": "1.0.0"
 }
 */
@@ -312,17 +315,16 @@ YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
 // Create array from string array
 char items[][] = {"apple", "banana", "orange"};
 YYJSONArray arr = YYJSONArray.FromStrings(items, sizeof(items));
+delete obj;
+delete arr;
 
 /* Output:
 [
   "apple",
-  "banana", 
+  "banana",
   "orange"
 ]
 */
-
-delete obj;
-delete arr;
 ```
 
 #### Using JSON Pack
@@ -335,6 +337,7 @@ YYJSON packed = YYJSON.Pack("{s:s,s:i,s:f,s:b,s:n}",
   "active", true,
   "extra"
 );
+delete packed;
 
 /* Output:
 {
@@ -347,11 +350,12 @@ YYJSON packed = YYJSON.Pack("{s:s,s:i,s:f,s:b,s:n}",
 */
 
 // Create nested structures
-YYJSON nested = YYJSON.Pack("{s:{s:s,s:[i,i,i]}}",
+YYJSON nested = YYJSON.Pack("{s:{s:s,s:[iii]}}",
   "user",
     "name", "John",
     "scores", 85, 90, 95
 );
+delete nested;
 
 /* Output:
 {
@@ -363,9 +367,10 @@ YYJSON nested = YYJSON.Pack("{s:{s:s,s:[i,i,i]}}",
 */
 
 // Create array with mixed types
-YYJSON array = YYJSON.Pack("[s,i,f,b,n]",
+YYJSON array = YYJSON.Pack("[sifbn]",
     "test", 42, 3.14, true
 );
+delete array;
 
 /* Output:
 [
@@ -376,10 +381,6 @@ YYJSON array = YYJSON.Pack("[s,i,f,b,n]",
   null
 ]
 */
-
-delete packed;
-delete nested;
-delete array;
 ```
 
 ## Working with Immutable Documents

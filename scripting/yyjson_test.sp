@@ -499,7 +499,7 @@ void TestImmutabilityOperations()
 void TestPackOperations()
 {
 	PrintToServer("[YYJSON] Testing pack operations...");
-	
+
 	// Test basic pack operation with different types
 	YYJSON packed = YYJSON.Pack("{s:s,s:i,s:f,s:b,s:n}", 
 		"name", "test",
@@ -508,28 +508,28 @@ void TestPackOperations()
 		"active", true,
 		"extra"
 	);
-	
+
 	PrintToServer("Packed JSON:");
 	PrintJson(packed);
-	
+
 	// Test nested object packing
 	YYJSON nested = YYJSON.Pack("{s:{s:s,s:[i,i,i]}}", 
 		"user",
 			"name", "test",
 			"scores", 85, 90, 95
 	);
-	
+
 	PrintToServer("Nested packed JSON:");
 	PrintJson(nested);
-	
+
 	// Test array packing with mixed types
 	YYJSON array = YYJSON.Pack("[s,i,f,b,n]",
 		"test", 42, 3.14, true
 	);
-	
+
 	PrintToServer("Array packed JSON:");
 	PrintJson(array);
-	
+
 	delete packed;
 	delete nested;
 	delete array;
@@ -538,20 +538,20 @@ void TestPackOperations()
 void TestFromStringsOperations()
 {
 	PrintToServer("[YYJSON] Testing FromStrings operations...");
-	
+
 	// Test object creation from key-value string arrays
 	char pairs[][] = {"name", "test", "type", "demo", "version", "1.0.0"};
-	
+
 	YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
 	PrintToServer("Object from strings:");
 	PrintJson(obj);
-	
+
 	// Test array creation from string array
 	char items[][] = {"apple", "banana", "orange", "grape"};
 	YYJSONArray arr = YYJSONArray.FromStrings(items, sizeof(items));
 	PrintToServer("Array from strings:");
 	PrintJson(arr);
-	
+
 	delete obj;
 	delete arr;
 }
