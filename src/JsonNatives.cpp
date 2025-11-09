@@ -3005,7 +3005,7 @@ static cell_t json_set_float(IPluginContext* pContext, const cell_t* params)
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
 	if (!handle) return 0;
 
-	double value = sp_ctof(params[2]);
+	float value = sp_ctof(params[2]);
 	if (!g_pJsonManager->SetFloat(handle, value)) {
 		return pContext->ThrowNativeError("Failed to set value to float (value is object or array)");
 	}

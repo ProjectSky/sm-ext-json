@@ -591,7 +591,7 @@ public:
 
 	/**
 	 * Create a JSON array from float values
-	 * @param values Array of double values
+	 * @param values Array of float values
 	 * @param count Number of values
 	 * @return New JSON array or nullptr on failure
 	 */

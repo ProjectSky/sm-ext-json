@@ -1,6 +1,13 @@
 # vim: set sts=2 ts=8 sw=2 tw=99 et ft=python:
 import os
 
+def SetArchFlags(compiler):
+  if compiler.like('msvc'):
+    if compiler.target.arch == 'x86_64':
+      compiler.defines += ['WIN64']
+    else:
+      compiler.defines += ['WIN32']
+
 class ExtensionConfig(object):
 	def __init__(self):
 		self.extensions = []
@@ -31,7 +38,7 @@ class ExtensionConfig(object):
 		if builder.options.sm_path:
 			self.sm_root = builder.options.sm_path
 		else:
-			raise Exception('SourceMod path not specified. Use --sm-path or set SOURCEMOD environment variable.')
+			raise Exception('SourceMod path not specified')
 
 		if not self.sm_root or not os.path.isdir(self.sm_root):
 			raise Exception('Could not find a source copy of SourceMod')
@@ -182,6 +189,7 @@ class ExtensionConfig(object):
 
 	def Library(self, context, compiler, name):
 		compiler = compiler.clone()
+		SetArchFlags(compiler)
 		self.ConfigureForExtension(context, compiler)
 		return compiler.Library(name)
 

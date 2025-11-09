@@ -17,10 +17,10 @@ class JsonValue {
 public:
 	JsonValue() = default;
 	~JsonValue() {
-		if (m_pDocument_mut.unique()) {
+		if (m_pDocument_mut.use_count() == 1) {
 			yyjson_mut_doc_free(m_pDocument_mut.get());
 		}
-		if (m_pDocument.unique()) {
+		if (m_pDocument.use_count() == 1) {
 			yyjson_doc_free(m_pDocument.get());
 		}
 	}

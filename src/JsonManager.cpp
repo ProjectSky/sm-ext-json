@@ -4572,9 +4572,9 @@ bool JsonManager::SetFloat(JsonValue* handle, double value)
 	}
 
 	if (handle->IsMutable()) {
-		return yyjson_mut_set_float(handle->m_pVal_mut, value);
+		return yyjson_mut_set_real(handle->m_pVal_mut, value);
 	} else {
-		return yyjson_set_float(handle->m_pVal, value);
+		return yyjson_set_real(handle->m_pVal, value);
 	}
 }
 
