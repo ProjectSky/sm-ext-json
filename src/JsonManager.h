@@ -385,7 +385,6 @@ private:
 
 	// Pack helper methods
 	static const char* SkipSeparators(const char* ptr);
-	static void SetPackError(char* error, size_t error_size, const char* fmt, ...);
 	static yyjson_mut_val* PackImpl(yyjson_mut_doc* doc, const char* format,
 	                                 IPackParamProvider* provider, char* error,
 	                                 size_t error_size, const char** out_end_ptr);

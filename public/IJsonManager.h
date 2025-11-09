@@ -64,6 +64,8 @@ public:
 class IJsonManager : public SMInterface
 {
 public:
+	virtual ~IJsonManager() = default;
+
 	virtual const char *GetInterfaceName() override {
 		return SMINTERFACE_JSONMANAGER_NAME;
 	}
