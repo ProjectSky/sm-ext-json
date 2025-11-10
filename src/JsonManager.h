@@ -139,6 +139,7 @@ public:
 		yyjson_read_flag read_flg, char* error, size_t error_size) override;
 	virtual bool WriteToString(JsonValue* handle, char* buffer, size_t buffer_size,
 		yyjson_write_flag write_flg, size_t* out_size) override;
+	virtual char* WriteToStringPtr(JsonValue* handle, yyjson_write_flag write_flg, size_t* out_size);
 	virtual bool WriteToFile(JsonValue* handle, const char* path, yyjson_write_flag write_flg,
 		char* error, size_t error_size) override;
 	virtual bool Equals(JsonValue* handle1, JsonValue* handle2) override;

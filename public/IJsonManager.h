@@ -99,9 +99,22 @@ public:
 	 *
 	 * @note The out_size parameter returns the size including null terminator
 	 * @note Use GetSerializedSize() with the same write_flg to determine buffer size
+	 * @warning This method performs multiple memory allocations and copies, resulting in poor performance.
+	 *          For better performance, use WriteToStringPtr() instead, which avoids intermediate buffers
 	 */
 	virtual bool WriteToString(JsonValue* handle, char* buffer, size_t buffer_size,
 		uint32_t write_flg = 0, size_t* out_size = nullptr) = 0;
+
+	/**
+	 * Write JSON to string and return allocated string (performance-optimized version)
+	 * @param handle JSON value
+	 * @param write_flg Write flags (YYJSON_WRITE_FLAG values, default: 0)
+	 * @param out_size Pointer to receive actual size written (including null terminator) optional
+	 * @return Allocated string pointer on success, nullptr on error. Caller must free() the returned pointer
+	 *
+	 * @note This is the recommended method for serialization as it avoids intermediate buffer allocations
+	 */
+	virtual char* WriteToStringPtr(JsonValue* handle, uint32_t write_flg = 0, size_t* out_size = nullptr) = 0;
 
 	/**
 	 * Write JSON to file

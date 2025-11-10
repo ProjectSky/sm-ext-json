@@ -1549,20 +1549,22 @@ static cell_t json_doc_write_to_str(IPluginContext* pContext, const cell_t* para
 	size_t buffer_size = static_cast<size_t>(params[3]);
 	yyjson_write_flag write_flg = static_cast<yyjson_write_flag>(params[4]);
 
-	char* temp_buffer = (char*)malloc(buffer_size);
-	if (!temp_buffer) {
-		return pContext->ThrowNativeError("Failed to allocate buffer");
+	size_t json_size = 0;
+	char* json_str = g_pJsonManager->WriteToStringPtr(handle, write_flg, &json_size);
+
+	if (!json_str) {
+		return pContext->ThrowNativeError("Failed to serialize JSON");
 	}
 
-	size_t output_len = 0;
-	if (!g_pJsonManager->WriteToString(handle, temp_buffer, buffer_size, write_flg, &output_len)) {
-		free(temp_buffer);
-		return pContext->ThrowNativeError("Buffer too small or write failed");
+	if (json_size > buffer_size) {
+		free(json_str);
+		return pContext->ThrowNativeError("Buffer too small (need %d, have %d)", json_size, buffer_size);
 	}
 
-	pContext->StringToLocalUTF8(params[2], buffer_size, temp_buffer, nullptr);
-	free(temp_buffer);
-	return static_cast<cell_t>(output_len);
+	pContext->StringToLocalUTF8(params[2], buffer_size, json_str, nullptr);
+	free(json_str);
+
+	return static_cast<cell_t>(json_size);
 }
 
 static cell_t json_doc_write_to_file(IPluginContext* pContext, const cell_t* params)

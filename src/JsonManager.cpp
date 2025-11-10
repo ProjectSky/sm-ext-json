@@ -144,6 +144,28 @@ bool JsonManager::WriteToString(JsonValue* handle, char* buffer, size_t buffer_s
 	return true;
 }
 
+char* JsonManager::WriteToStringPtr(JsonValue* handle, yyjson_write_flag write_flg, size_t* out_size)
+{
+	if (!handle) {
+		return nullptr;
+	}
+
+	size_t json_size = 0;
+	char* json_str = nullptr;
+
+	if (handle->IsMutable()) {
+		json_str = yyjson_mut_val_write(handle->m_pVal_mut, write_flg, &json_size);
+	} else {
+		json_str = yyjson_val_write(handle->m_pVal, write_flg, &json_size);
+	}
+
+	if (json_str && out_size) {
+		*out_size = json_size + 1;
+	}
+
+	return json_str;
+}
+
 bool JsonManager::WriteToFile(JsonValue* handle, const char* path, yyjson_write_flag write_flg,
 	char* error, size_t error_size)
 {
