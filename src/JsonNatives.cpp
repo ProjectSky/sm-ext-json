@@ -747,6 +747,15 @@ static cell_t json_get_read_size(IPluginContext* pContext, const cell_t* params)
 	return static_cast<cell_t>(size);
 }
 
+static cell_t json_get_ref_count(IPluginContext* pContext, const cell_t* params)
+{
+	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	return g_pJsonManager->GetRefCount(handle);
+}
+
 static cell_t json_create_null(IPluginContext* pContext, const cell_t* params)
 {
 	JsonValue* pJSONValue = g_pJsonManager->CreateNull();
@@ -3142,6 +3151,7 @@ const sp_nativeinfo_t g_JsonNatives[] =
 	{"JSON.GetTypeDesc", json_get_type_desc},
 	{"JSON.GetSerializedSize", json_get_serialized_size},
 	{"JSON.ReadSize.get", json_get_read_size},
+	{"JSON.RefCount.get", json_get_ref_count},
 	{"JSON.Type.get", json_get_type},
 	{"JSON.SubType.get", json_get_subtype},
 	{"JSON.IsArray.get", json_is_array},

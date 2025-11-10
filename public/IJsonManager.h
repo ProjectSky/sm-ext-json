@@ -330,6 +330,14 @@ public:
 	virtual size_t GetReadSize(JsonValue* handle) = 0;
 
 	/**
+	 * Get the reference count of the document
+	 * @param handle JSON value
+	 * @return Reference count of the document (number of JsonValue objects sharing this document)
+	 * @note Returns 0 if handle is null or has no document
+	 */
+	virtual int GetRefCount(JsonValue* handle) = 0;
+
+	/**
 	 * Create an empty mutable JSON object
 	 * @return New mutable JSON object or nullptr on failure
 	 */

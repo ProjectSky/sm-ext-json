@@ -381,14 +381,13 @@ methodmap JSON < Handle
   /**
   * Returns the JSON value's type description
   *
-  * @param value             JSON handle
   * @param buffer            String buffer to write to
   * @param maxlength         Maximum length of the string buffer
   *
   * @return                  The return value should be one of these strings: "raw", "null", "string",
   *                          "array", "object", "true", "false", "uint", "sint", "real", "unknown"
   */
-  public static native void GetTypeDesc(const JSON value, char[] buffer, int maxlength);
+  public native void GetTypeDesc(char[] buffer, int maxlength);
 
   /**
   * Returns whether two JSON values are equal (deep compare)
@@ -396,8 +395,8 @@ methodmap JSON < Handle
   * @note                    This function is recursive and may cause a stack overflow if the object level is too deep
   * @note                    the result may be inaccurate if object has duplicate keys
   *
-  * @param value1            JSON handle
-  * @param value2            JSON handle
+  * @param value1            First JSON value to compare
+  * @param value2            Second JSON value to compare
   *
   * @return                  True if they are the same, false otherwise
   */
@@ -537,6 +536,7 @@ methodmap JSON < Handle
   * Get value by a JSON Pointer
   *
   * @note                    Needs to be freed using delete or CloseHandle()
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   *
@@ -547,6 +547,8 @@ methodmap JSON < Handle
   /**
   * Get boolean value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   *
   * @return                  boolean value referenced by the JSON pointer
@@ -555,6 +557,8 @@ methodmap JSON < Handle
 
   /**
   * Get float value by a JSON Pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   *
@@ -565,6 +569,8 @@ methodmap JSON < Handle
   /**
   * Get integer value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   *
   * @return                  integer value referenced by the JSON pointer
@@ -574,16 +580,20 @@ methodmap JSON < Handle
   /**
    * Get integer64 value by a JSON Pointer (auto-detects signed/unsigned)
    *
+   * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+   *
    * @param path              The JSON pointer string
    * @param buffer            Buffer to copy to
    * @param maxlength         Maximum size of the buffer
    *
-   * @return                  integer64 value referenced by the JSON pointer
+   * @return                  True on success, false on failure
    */
   public native bool PtrGetInt64(const char[] path, char[] buffer, int maxlength);
 
   /**
   * Get string value by a JSON Pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param buffer            Buffer to copy to
@@ -596,6 +606,8 @@ methodmap JSON < Handle
   /**
   * Get value is null by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   *
   * @return                  True if the value is null, false otherwise
@@ -605,6 +617,7 @@ methodmap JSON < Handle
   /**
   * Get JSON content length (string length, array size, object size)
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    For strings: returns string length including null-terminator
   * @note                    For arrays/objects: returns number of elements
   * @note                    Returns 0 if value is null or type is not string/array/object
@@ -618,6 +631,7 @@ methodmap JSON < Handle
   /**
   * Set value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   *
@@ -631,6 +645,7 @@ methodmap JSON < Handle
   /**
   * Set boolean value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   *
@@ -644,6 +659,7 @@ methodmap JSON < Handle
   /**
   * Set float value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   *
@@ -657,6 +673,7 @@ methodmap JSON < Handle
   /**
   * Set integer value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   *
@@ -670,6 +687,7 @@ methodmap JSON < Handle
   /**
   * Set integer64 value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   * @note                    This function auto-detects whether the value is signed or unsigned
@@ -684,6 +702,7 @@ methodmap JSON < Handle
   /**
   * Set string value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   *
@@ -697,6 +716,7 @@ methodmap JSON < Handle
   /**
   * Set null value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   * @note                    The parent nodes will be created if they do not exist.
   *                          If the target value already exists, it will be replaced by the new value
   *
@@ -709,6 +729,8 @@ methodmap JSON < Handle
   /**
   * Add (insert) value by a JSON pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   * @param value             The value to be added
   *
@@ -718,6 +740,8 @@ methodmap JSON < Handle
 
   /**
   * Add (insert) boolean value by a JSON pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param value             The boolean value to be added
@@ -729,6 +753,8 @@ methodmap JSON < Handle
   /**
   * Add (insert) float value by a JSON pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   * @param value             The float value to be added
   *
@@ -738,6 +764,8 @@ methodmap JSON < Handle
 
   /**
   * Add (insert) integer value by a JSON pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param value             The int value to be added
@@ -749,6 +777,8 @@ methodmap JSON < Handle
   /**
   * Add (insert) integer64 value by a JSON pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   * @param value             The integer64 value to be added
   *
@@ -758,6 +788,8 @@ methodmap JSON < Handle
 
   /**
   * Add (insert) string value by a JSON pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param value             The str value to be added
@@ -769,6 +801,8 @@ methodmap JSON < Handle
   /**
   * Add (insert) null value by a JSON pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   *
   * @return                  true if JSON pointer is valid and new value is set, false otherwise
@@ -778,6 +812,8 @@ methodmap JSON < Handle
   /**
   * Remove value by a JSON pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   *
   * @return                  true if removed value, false otherwise
@@ -786,6 +822,8 @@ methodmap JSON < Handle
 
   /**
   * Try to get value by a JSON Pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param value             Handle to store value
@@ -797,6 +835,8 @@ methodmap JSON < Handle
   /**
   * Try to get boolean value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   * @param value             Store the boolean value
   *
@@ -806,6 +846,8 @@ methodmap JSON < Handle
 
   /**
   * Try to get float value by a JSON Pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param value             Store the float value
@@ -817,6 +859,8 @@ methodmap JSON < Handle
   /**
   * Try to get integer value by a JSON Pointer
   *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
+  *
   * @param path              The JSON pointer string
   * @param value             Store the integer value
   *
@@ -826,6 +870,8 @@ methodmap JSON < Handle
 
   /**
    * Try to get integer64 value by a JSON Pointer (automatically detects signed/unsigned)
+   *
+   * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
    *
    * @param path              The JSON pointer string
    * @param buffer            Buffer to store the integer64 value
@@ -837,6 +883,8 @@ methodmap JSON < Handle
 
   /**
   * Try to get string value by a JSON Pointer
+  *
+  * @note                    JSON Pointer paths are always resolved from the document root, not from the current value
   *
   * @param path              The JSON pointer string
   * @param buffer            Buffer to store the string value
@@ -976,6 +1024,17 @@ methodmap JSON < Handle
   * @note                    For modified documents, use GetSerializedSize() to obtain the current size
   */
   property int ReadSize {
+    public native get();
+  }
+
+  /**
+  * Get the reference count of the document (debugging purpose)
+  *
+  * @return                  Reference count (number of JSON objects sharing this document)
+  *
+  * @note                    Returns 0 if the handle is invalid
+  */
+  property int RefCount {
     public native get();
   }
 };
@@ -2055,6 +2114,7 @@ public void __pl_json_SetNTVOptional()
   MarkNativeAsOptional("JSON.GetTypeDesc");
   MarkNativeAsOptional("JSON.GetSerializedSize");
   MarkNativeAsOptional("JSON.ReadSize.get");
+  MarkNativeAsOptional("JSON.RefCount.get");
   MarkNativeAsOptional("JSON.Type.get");
   MarkNativeAsOptional("JSON.SubType.get");
   MarkNativeAsOptional("JSON.IsArray.get");

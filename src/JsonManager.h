@@ -8,6 +8,168 @@
 #include <charconv>
 
 /**
+ * @brief Base class for intrusive reference counting
+ *
+ * Objects inheriting from this class can be managed by RefPtr.
+ * Reference count starts at 0 and is incremented when RefPtr takes ownership.
+ */
+class RefCounted {
+private:
+	mutable int ref_count_ = 0;
+
+protected:
+	virtual ~RefCounted() = default;
+
+	RefCounted() = default;
+	RefCounted(const RefCounted &) : ref_count_(0) {}
+	RefCounted &operator=(const RefCounted &) { return *this; }
+	RefCounted(RefCounted &&) noexcept : ref_count_(0) {}
+	RefCounted &operator=(RefCounted &&) noexcept { return *this; }
+
+public:
+	void add_ref() const noexcept { ++ref_count_; }
+
+	void release() const noexcept {
+		if (--ref_count_ == 0) {
+			delete this;
+		}
+	}
+
+	int use_count() const noexcept { return ref_count_; }
+};
+
+/**
+ * @brief Smart pointer for intrusive reference counting
+ *
+ * Similar to std::shared_ptr but uses intrusive reference counting.
+ * Automatically manages object lifetime through add_ref() and release().
+ */
+template <typename T> class RefPtr {
+private:
+	T *ptr_;
+
+public:
+	RefPtr() noexcept : ptr_(nullptr) {}
+
+	explicit RefPtr(T *p) noexcept : ptr_(p) {
+		if (ptr_)
+			ptr_->add_ref();
+	}
+
+	RefPtr(const RefPtr &other) noexcept : ptr_(other.ptr_) {
+		if (ptr_)
+			ptr_->add_ref();
+	}
+
+	RefPtr(RefPtr &&other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
+
+	~RefPtr() {
+		if (ptr_)
+			ptr_->release();
+	}
+
+	RefPtr &operator=(const RefPtr &other) noexcept {
+		if (ptr_ != other.ptr_) {
+			if (other.ptr_)
+				other.ptr_->add_ref();
+			if (ptr_)
+				ptr_->release();
+			ptr_ = other.ptr_;
+		}
+		return *this;
+	}
+
+	RefPtr &operator=(RefPtr &&other) noexcept {
+		if (this != &other) {
+			if (ptr_)
+				ptr_->release();
+			ptr_ = other.ptr_;
+			other.ptr_ = nullptr;
+		}
+		return *this;
+	}
+
+	RefPtr &operator=(T *p) noexcept {
+		reset(p);
+		return *this;
+	}
+
+	T *operator->() const noexcept { return ptr_; }
+	T &operator*() const noexcept { return *ptr_; }
+	T *get() const noexcept { return ptr_; }
+
+	explicit operator bool() const noexcept { return ptr_ != nullptr; }
+
+	int use_count() const noexcept { return ptr_ ? ptr_->use_count() : 0; }
+
+	void reset(T *p = nullptr) noexcept {
+		if (ptr_ != p) {
+			if (p)
+				p->add_ref();
+			if (ptr_)
+				ptr_->release();
+			ptr_ = p;
+		}
+	}
+
+	bool operator==(const RefPtr &other) const noexcept { return ptr_ == other.ptr_; }
+	bool operator!=(const RefPtr &other) const noexcept { return ptr_ != other.ptr_; }
+	bool operator==(std::nullptr_t) const noexcept { return ptr_ == nullptr; }
+	bool operator!=(std::nullptr_t) const noexcept { return ptr_ != nullptr; }
+};
+
+/**
+ * @brief Factory function to create RefPtr from new object
+ */
+template <typename T, typename... Args> RefPtr<T> make_ref(Args &&...args) {
+	return RefPtr<T>(new T(std::forward<Args>(args)...));
+}
+
+/**
+ * @brief Wrapper for yyjson_mut_doc with intrusive reference counting
+ */
+class RefCountedMutDoc : public RefCounted {
+private:
+	yyjson_mut_doc *doc_;
+
+public:
+	explicit RefCountedMutDoc(yyjson_mut_doc *doc) noexcept : doc_(doc) {}
+
+	RefCountedMutDoc(const RefCountedMutDoc &) = delete;
+	RefCountedMutDoc &operator=(const RefCountedMutDoc &) = delete;
+
+	~RefCountedMutDoc() noexcept override {
+		if (doc_) {
+			yyjson_mut_doc_free(doc_);
+		}
+	}
+
+	yyjson_mut_doc *get() const noexcept { return doc_; }
+};
+
+/**
+ * @brief Wrapper for yyjson_doc with intrusive reference counting
+ */
+class RefCountedImmutableDoc : public RefCounted {
+private:
+	yyjson_doc *doc_;
+
+public:
+	explicit RefCountedImmutableDoc(yyjson_doc *doc) noexcept : doc_(doc) {}
+
+	RefCountedImmutableDoc(const RefCountedImmutableDoc &) = delete;
+	RefCountedImmutableDoc &operator=(const RefCountedImmutableDoc &) = delete;
+
+	~RefCountedImmutableDoc() noexcept override {
+		if (doc_) {
+			yyjson_doc_free(doc_);
+		}
+	}
+
+	yyjson_doc *get() const noexcept { return doc_; }
+};
+
+/**
  * @brief JSON value wrapper
  *
  * Wraps json mutable/immutable documents and values.
@@ -16,14 +178,7 @@
 class JsonValue {
 public:
 	JsonValue() = default;
-	~JsonValue() {
-		if (m_pDocument_mut.use_count() == 1) {
-			yyjson_mut_doc_free(m_pDocument_mut.get());
-		}
-		if (m_pDocument.use_count() == 1) {
-			yyjson_doc_free(m_pDocument.get());
-		}
-	}
+	~JsonValue() = default;
 
 	JsonValue(const JsonValue&) = delete;
 	JsonValue& operator=(const JsonValue&) = delete;
@@ -45,12 +200,21 @@ public:
 		return m_pDocument != nullptr;
 	}
 
+	int GetDocumentRefCount() const {
+		if (m_pDocument_mut) {
+			return m_pDocument_mut.use_count();
+		} else if (m_pDocument) {
+			return m_pDocument.use_count();
+		}
+		return 0;
+	}
+
 	// Mutable document
-	std::shared_ptr<yyjson_mut_doc> m_pDocument_mut;
+	RefPtr<RefCountedMutDoc> m_pDocument_mut;
 	yyjson_mut_val* m_pVal_mut{ nullptr };
 
 	// Immutable document
-	std::shared_ptr<yyjson_doc> m_pDocument;
+	RefPtr<RefCountedImmutableDoc> m_pDocument;
 	yyjson_val* m_pVal{ nullptr };
 
 	// Mutable document iterators
@@ -84,8 +248,8 @@ public:
 		return m_isMutable;
 	}
 
-	std::shared_ptr<yyjson_mut_doc> m_pDocument_mut;
-	std::shared_ptr<yyjson_doc> m_pDocument;
+	RefPtr<RefCountedMutDoc> m_pDocument_mut;
+	RefPtr<RefCountedImmutableDoc> m_pDocument;
 
 	yyjson_mut_arr_iter m_iterMut;
 
@@ -113,8 +277,8 @@ public:
 		return m_isMutable;
 	}
 
-	std::shared_ptr<yyjson_mut_doc> m_pDocument_mut;
-	std::shared_ptr<yyjson_doc> m_pDocument;
+	RefPtr<RefCountedMutDoc> m_pDocument_mut;
+	RefPtr<RefCountedImmutableDoc> m_pDocument;
 
 	yyjson_mut_obj_iter m_iterMut;
 
@@ -167,6 +331,7 @@ public:
 	virtual bool IsMutable(JsonValue* handle) override;
 	virtual bool IsImmutable(JsonValue* handle) override;
 	virtual size_t GetReadSize(JsonValue* handle) override;
+	virtual int GetRefCount(JsonValue* handle) override;
 
 	// ========== Object Operations ==========
 	virtual JsonValue* ObjectInit() override;
@@ -379,10 +544,10 @@ private:
 
 	// Helper methods
 	static std::unique_ptr<JsonValue> CreateWrapper();
-	static std::shared_ptr<yyjson_mut_doc> WrapDocument(yyjson_mut_doc* doc);
-	static std::shared_ptr<yyjson_mut_doc> CopyDocument(yyjson_doc* doc);
-	static std::shared_ptr<yyjson_mut_doc> CreateDocument();
-	static std::shared_ptr<yyjson_doc> WrapImmutableDocument(yyjson_doc* doc);
+	static RefPtr<RefCountedMutDoc> WrapDocument(yyjson_mut_doc* doc);
+	static RefPtr<RefCountedMutDoc> CopyDocument(yyjson_doc* doc);
+	static RefPtr<RefCountedMutDoc> CreateDocument();
+	static RefPtr<RefCountedImmutableDoc> WrapImmutableDocument(yyjson_doc* doc);
 
 	// Pack helper methods
 	static const char* SkipSeparators(const char* ptr);
