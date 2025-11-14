@@ -192,6 +192,48 @@ methodmap JSON < Handle
   public native any ToImmutable();
 
   /**
+   * Apply a JSON Patch (RFC 6902) to this value and return a new JSON handle
+   *
+   * @param patch             JSON Patch document
+   * @param resultMutable     True to return a mutable result, false for immutable
+   *
+   * @return                  New JSON handle on success
+   * @error                   Throws if the patch cannot be applied
+   */
+  public native any ApplyJsonPatch(const JSON patch, bool resultMutable = false);
+
+  /**
+   * Apply a JSON Patch (RFC 6902) to this value in place
+   *
+   * @param patch             JSON Patch document
+   *
+   * @return                  True on success, false otherwise
+   * @error                   Throws if this value is immutable or patch failed
+   */
+  public native bool JsonPatchInPlace(const JSON patch);
+
+  /**
+   * Apply a JSON Merge Patch (RFC 7396) to this value and return a new JSON handle
+   *
+   * @param patch             JSON Merge Patch document
+   * @param resultMutable     True to return a mutable result, false for immutable
+   *
+   * @return                  New JSON handle on success
+   * @error                   Throws if the merge patch cannot be applied
+   */
+  public native any ApplyMergePatch(const JSON patch, bool resultMutable = false);
+
+  /**
+   * Apply a JSON Merge Patch (RFC 7396) to this value in place
+   *
+   * @param patch             JSON Merge Patch document
+   *
+   * @return                  True on success, false otherwise
+   * @error                   Throws if this value is immutable or merge patch failed
+   */
+  public native bool MergePatchInPlace(const JSON patch);
+
+  /**
   * Write a document to JSON file with options
   *
   * @note                    On 32-bit operating system, files larger than 2GB may fail to write
@@ -1427,9 +1469,9 @@ methodmap JSONArray < JSON
    * @param buffer            Buffer to copy to
    * @param maxlength         Maximum size of the buffer
    *
-   * @return                  64-bit integer
+   * @return                  True on success, false on failure
    */
-  public native void GetInt64(int index, char[] buffer, int maxlength);
+  public native bool GetInt64(int index, char[] buffer, int maxlength);
 
   /**
   * Gets string data from the array
@@ -1529,7 +1571,7 @@ methodmap JSONArray < JSON
   *
   * @param value             JSON handle to set
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool Push(const JSON value);
 
@@ -1538,7 +1580,7 @@ methodmap JSONArray < JSON
   *
   * @param value             Boolean value to set
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool PushBool(bool value);
 
@@ -1547,7 +1589,7 @@ methodmap JSONArray < JSON
   *
   * @param value             float to set
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool PushFloat(float value);
 
@@ -1556,7 +1598,7 @@ methodmap JSONArray < JSON
   *
   * @param value             integer to set
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool PushInt(int value);
 
@@ -1565,7 +1607,7 @@ methodmap JSONArray < JSON
   *
   * @param value             integer64 value
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool PushInt64(const char[] value);
 
@@ -1574,19 +1616,21 @@ methodmap JSONArray < JSON
   *
   * @param value             String to copy
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool PushString(const char[] value);
 
   /**
   * Inserts a null value at the end of the array
   *
-  * @return                  The value to be inserted. Returns false if it is null
+  * @return                  True if succeed, false otherwise
   */
   public native bool PushNull();
 
   /**
   * Inserts a JSON value at specific index
+  *
+  * @note                    This function takes a linear search time
   *
   * @param index             Position to insert (0 to size, size means append)
   * @param value             JSON handle to insert
@@ -1598,6 +1642,8 @@ methodmap JSONArray < JSON
   /**
   * Inserts a boolean value at specific index
   *
+  * @note                    This function takes a linear search time
+  *
   * @param index             Position to insert
   * @param value             Boolean value
   *
@@ -1607,6 +1653,8 @@ methodmap JSONArray < JSON
 
   /**
   * Inserts an integer value at specific index
+  *
+  * @note                    This function takes a linear search time
   *
   * @param index             Position to insert
   * @param value             Integer value
@@ -1618,6 +1666,8 @@ methodmap JSONArray < JSON
   /**
   * Inserts an integer64 value at specific index
   *
+  * @note                    This function takes a linear search time
+  *
   * @param index             Position to insert
   * @param value             Integer64 value (as string)
   *
@@ -1627,6 +1677,8 @@ methodmap JSONArray < JSON
 
   /**
   * Inserts a float value at specific index
+  *
+  * @note                    This function takes a linear search time
   *
   * @param index             Position to insert
   * @param value             Float value
@@ -1638,6 +1690,8 @@ methodmap JSONArray < JSON
   /**
   * Inserts a string value at specific index
   *
+  * @note                    This function takes a linear search time
+  *
   * @param index             Position to insert
   * @param value             String value
   *
@@ -1647,6 +1701,8 @@ methodmap JSONArray < JSON
 
   /**
   * Inserts a null value at specific index
+  *
+  * @note                    This function takes a linear search time
   *
   * @param index             Position to insert
   *
@@ -1734,7 +1790,7 @@ methodmap JSONArray < JSON
   public native bool RemoveFirst();
 
   /**
-  * Removes and returns the last value in this array
+  * Removes the last value in this array
   *
   * @return                  True if succeed, false otherwise
   */
@@ -1746,12 +1802,11 @@ methodmap JSONArray < JSON
   * @note                    This function takes a linear search time
   *
   * @param start_index       The start index of the range (0 is the first)
-  * @param end_index         The number of items in the range (can be 0, but do nothing)
-  *
+  * @param count             Number of items to remove (can be 0, in which case nothing happens)
   *
   * @return                  True if succeed, false otherwise
   */
-  public native bool RemoveRange(int start_index, int end_index);
+  public native bool RemoveRange(int start_index, int count);
 
   /**
   * Searches for a boolean value in the array and returns its index
@@ -1861,6 +1916,8 @@ methodmap JSONArrIter < Handle
    * Creates an array iterator from a JSON array value
    *
    * @note                    Needs to be freed using delete or CloseHandle()
+   * @note                    Iterators are single-pass. Once Next returns null, call Reset() or create
+   *                          a new iterator to traverse the array again
    *
    * @param array             JSON array value to iterate
    *
@@ -1868,6 +1925,16 @@ methodmap JSONArrIter < Handle
    * @error                   Invalid handle or handle is not an array
    */
   public native JSONArrIter(JSON array);
+
+  /**
+   * Resets the iterator to the beginning of the array
+   *
+   * @note                    Only resets the iterator, does not free the iterator handle
+   *
+   * @return                  True on success, false on failure
+   * @error                   Invalid iterator handle
+   */
+  public native bool Reset();
 
   /**
    * Moves the iterator to the next element
@@ -1917,6 +1984,8 @@ methodmap JSONObjIter < Handle
    * Creates an object iterator from a JSON object value
    *
    * @note                    Needs to be freed using delete or CloseHandle()
+   * @note                    Iterators are single-pass. Once Next returns null, call Reset() or create
+   *                          a new iterator to traverse the object again
    *
    * @param obj               JSON object value to iterate
    *
@@ -1924,6 +1993,16 @@ methodmap JSONObjIter < Handle
    * @error                   Invalid handle or handle is not an object
    */
   public native JSONObjIter(JSON obj);
+
+  /**
+   * Resets the iterator to the beginning of the object
+   *
+   * @note                    Only resets the iterator, does not free the iterator handle
+   *
+   * @return                  True on success, false on failure
+   * @error                   Invalid iterator handle
+   */
+  public native bool Reset();
 
   /**
    * Moves the iterator to the next key
@@ -2138,6 +2217,10 @@ public void __pl_json_SetNTVOptional()
   MarkNativeAsOptional("JSON.ForeachIndex");
   MarkNativeAsOptional("JSON.ToMutable");
   MarkNativeAsOptional("JSON.ToImmutable");
+  MarkNativeAsOptional("JSON.ApplyJsonPatch");
+  MarkNativeAsOptional("JSON.JsonPatchInPlace");
+  MarkNativeAsOptional("JSON.ApplyMergePatch");
+  MarkNativeAsOptional("JSON.MergePatchInPlace");
 
   // JSON CREATE & GET
   MarkNativeAsOptional("JSON.Pack");
@@ -2200,14 +2283,16 @@ public void __pl_json_SetNTVOptional()
   MarkNativeAsOptional("JSONArrIter.HasNext.get");
   MarkNativeAsOptional("JSONArrIter.Index.get");
   MarkNativeAsOptional("JSONArrIter.Remove");
+  MarkNativeAsOptional("JSONArrIter.Reset");
 
   // JSONObjIter
   MarkNativeAsOptional("JSONObjIter.JSONObjIter");
   MarkNativeAsOptional("JSONObjIter.Next");
-  MarkNativeAsOptional("JSONObjIter.HasNext");
+  MarkNativeAsOptional("JSONObjIter.HasNext.get");
   MarkNativeAsOptional("JSONObjIter.Value.get");
   MarkNativeAsOptional("JSONObjIter.Get");
   MarkNativeAsOptional("JSONObjIter.Index.get");
   MarkNativeAsOptional("JSONObjIter.Remove");
+  MarkNativeAsOptional("JSONObjIter.Reset");
 }
 #endif

@@ -1,5 +1,5 @@
-#ifndef _INCLUDE_SM_JSON_JSONMANAGER_H_
-#define _INCLUDE_SM_JSON_JSONMANAGER_H_
+#ifndef _INCLUDE_JSONMANAGER_H_
+#define _INCLUDE_JSONMANAGER_H_
 
 #include <IJsonManager.h>
 #include <yyjson.h>
@@ -15,14 +15,15 @@
  */
 class RefCounted {
 private:
-	mutable int ref_count_ = 0;
+	mutable size_t ref_count_ = 0;
 
 protected:
 	virtual ~RefCounted() = default;
-
 	RefCounted() = default;
-	RefCounted(const RefCounted &) : ref_count_(0) {}
-	RefCounted &operator=(const RefCounted &) { return *this; }
+
+	RefCounted(const RefCounted &) = delete;
+	RefCounted &operator=(const RefCounted &) = delete;
+
 	RefCounted(RefCounted &&) noexcept : ref_count_(0) {}
 	RefCounted &operator=(RefCounted &&) noexcept { return *this; }
 
@@ -30,12 +31,13 @@ public:
 	void add_ref() const noexcept { ++ref_count_; }
 
 	void release() const noexcept {
+		assert(ref_count_ > 0 && "Reference count underflow");
 		if (--ref_count_ == 0) {
 			delete this;
 		}
 	}
 
-	int use_count() const noexcept { return ref_count_; }
+	size_t use_count() const noexcept { return ref_count_; }
 };
 
 /**
@@ -43,6 +45,8 @@ public:
  *
  * Similar to std::shared_ptr but uses intrusive reference counting.
  * Automatically manages object lifetime through add_ref() and release().
+ * @warning This implementation is not thread-safe. It must only be used
+ *          in single-threaded contexts or with external synchronization.
  */
 template <typename T> class RefPtr {
 private:
@@ -100,7 +104,7 @@ public:
 
 	explicit operator bool() const noexcept { return ptr_ != nullptr; }
 
-	int use_count() const noexcept { return ptr_ ? ptr_->use_count() : 0; }
+	size_t use_count() const noexcept { return ptr_ ? ptr_->use_count() : 0; }
 
 	void reset(T *p = nullptr) noexcept {
 		if (ptr_ != p) {
@@ -200,7 +204,7 @@ public:
 		return m_pDocument != nullptr;
 	}
 
-	int GetDocumentRefCount() const {
+	size_t GetDocumentRefCount() const {
 		if (m_pDocument_mut) {
 			return m_pDocument_mut.use_count();
 		} else if (m_pDocument) {
@@ -252,8 +256,9 @@ public:
 	RefPtr<RefCountedImmutableDoc> m_pDocument;
 
 	yyjson_mut_arr_iter m_iterMut;
-
 	yyjson_arr_iter m_iterImm;
+	yyjson_mut_val* m_rootMut{ nullptr };
+	yyjson_val* m_rootImm{ nullptr };
 
 	Handle_t m_handle{ BAD_HANDLE };
 	bool m_isMutable{ false };
@@ -281,8 +286,9 @@ public:
 	RefPtr<RefCountedImmutableDoc> m_pDocument;
 
 	yyjson_mut_obj_iter m_iterMut;
-
 	yyjson_obj_iter m_iterImm;
+	yyjson_mut_val* m_rootMut{ nullptr };
+	yyjson_val* m_rootImm{ nullptr };
 
 	void* m_currentKey{ nullptr };
 
@@ -303,7 +309,15 @@ public:
 		yyjson_read_flag read_flg, char* error, size_t error_size) override;
 	virtual bool WriteToString(JsonValue* handle, char* buffer, size_t buffer_size,
 		yyjson_write_flag write_flg, size_t* out_size) override;
-	virtual char* WriteToStringPtr(JsonValue* handle, yyjson_write_flag write_flg, size_t* out_size);
+	virtual char* WriteToStringPtr(JsonValue* handle, yyjson_write_flag write_flg, size_t* out_size) override;
+	virtual JsonValue* ApplyJsonPatch(JsonValue* target, JsonValue* patch, bool result_mutable,
+		char* error, size_t error_size) override;
+	virtual bool JsonPatchInPlace(JsonValue* target, JsonValue* patch,
+		char* error, size_t error_size) override;
+	virtual JsonValue* ApplyMergePatch(JsonValue* target, JsonValue* patch, bool result_mutable,
+		char* error, size_t error_size) override;
+	virtual bool MergePatchInPlace(JsonValue* target, JsonValue* patch,
+		char* error, size_t error_size) override;
 	virtual bool WriteToFile(JsonValue* handle, const char* path, yyjson_write_flag write_flg,
 		char* error, size_t error_size) override;
 	virtual bool Equals(JsonValue* handle1, JsonValue* handle2) override;
@@ -331,7 +345,7 @@ public:
 	virtual bool IsMutable(JsonValue* handle) override;
 	virtual bool IsImmutable(JsonValue* handle) override;
 	virtual size_t GetReadSize(JsonValue* handle) override;
-	virtual int GetRefCount(JsonValue* handle) override;
+	virtual size_t GetRefCount(JsonValue* handle) override;
 
 	// ========== Object Operations ==========
 	virtual JsonValue* ObjectInit() override;
@@ -416,13 +430,12 @@ public:
 	virtual bool ArrayRemove(JsonValue* handle, size_t index) override;
 	virtual bool ArrayRemoveFirst(JsonValue* handle) override;
 	virtual bool ArrayRemoveLast(JsonValue* handle) override;
-	virtual bool ArrayRemoveRange(JsonValue* handle, size_t start_index, size_t end_index) override;
+	virtual bool ArrayRemoveRange(JsonValue* handle, size_t start_index, size_t count) override;
 	virtual bool ArrayClear(JsonValue* handle) override;
 	virtual int ArrayIndexOfBool(JsonValue* handle, bool search_value) override;
 	virtual int ArrayIndexOfString(JsonValue* handle, const char* search_value) override;
 	virtual int ArrayIndexOfInt(JsonValue* handle, int search_value) override;
-	virtual int ArrayIndexOfInt64(JsonValue* handle, int64_t search_value) override;
-	virtual int ArrayIndexOfUint64(JsonValue* handle, uint64_t search_value) override;
+	virtual int ArrayIndexOfInt64(JsonValue* handle, std::variant<int64_t, uint64_t> search_value) override;
 	virtual int ArrayIndexOfFloat(JsonValue* handle, double search_value) override;
 	virtual bool ArraySort(JsonValue* handle, JSON_SORT_ORDER sort_mode) override;
 
@@ -483,6 +496,7 @@ public:
 	// ========== Array Iterator Operations ==========
 	virtual JsonArrIter* ArrIterInit(JsonValue* handle) override;
 	virtual JsonArrIter* ArrIterWith(JsonValue* handle) override;
+	virtual bool ArrIterReset(JsonArrIter* iter) override;
 	virtual JsonValue* ArrIterNext(JsonArrIter* iter) override;
 	virtual bool ArrIterHasNext(JsonArrIter* iter) override;
 	virtual size_t ArrIterGetIndex(JsonArrIter* iter) override;
@@ -491,6 +505,7 @@ public:
 	// ========== Object Iterator Operations ==========
 	virtual JsonObjIter* ObjIterInit(JsonValue* handle) override;
 	virtual JsonObjIter* ObjIterWith(JsonValue* handle) override;
+	virtual bool ObjIterReset(JsonObjIter* iter) override;
 	virtual void* ObjIterNext(JsonObjIter* iter) override;
 	virtual bool ObjIterHasNext(JsonObjIter* iter) override;
 	virtual JsonValue* ObjIterGetVal(JsonObjIter* iter, void* key) override;
@@ -548,6 +563,7 @@ private:
 	static RefPtr<RefCountedMutDoc> CopyDocument(yyjson_doc* doc);
 	static RefPtr<RefCountedMutDoc> CreateDocument();
 	static RefPtr<RefCountedImmutableDoc> WrapImmutableDocument(yyjson_doc* doc);
+	static RefPtr<RefCountedMutDoc> CloneValueToMutable(JsonValue* value);
 
 	// Pack helper methods
 	static const char* SkipSeparators(const char* ptr);
@@ -564,4 +580,4 @@ private:
 	static PtrGetValueResult PtrGetValueInternal(JsonValue* handle, const char* path);
 };
 
-#endif // _INCLUDE_SM_JSON_JSONMANAGER_H_
+#endif // _INCLUDE_JSONMANAGER_H_
