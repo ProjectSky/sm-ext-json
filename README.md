@@ -6,6 +6,8 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 ## Key Features
 * High-performance JSON parsing and serialization using YYJSON
 * Support for [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) operations
+* Support for [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations
+* Support for [JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7386) operations
 * x64 support
 * Easy-to-use API for both objects and arrays
 * Pretty printing and writing support
@@ -208,7 +210,7 @@ JSON value;
 
 // Method 1: Using Array Iterator (Recommended)
 JSONArrIter iter = new JSONArrIter(arr);
-while ((value = iter.Next()) != null) {
+while ((value = iter.Next) != null) {
   PrintToServer("Index: %d", iter.Index);
   delete value;
 }

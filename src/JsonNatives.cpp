@@ -170,7 +170,7 @@ static cell_t json_doc_parse(IPluginContext* pContext, const cell_t* params)
 
 	bool is_file = params[2];
 	bool is_mutable_doc = params[3];
-	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[4]);
+	uint32_t read_flg = static_cast<uint32_t>(params[4]);
 
 	char error[JSON_ERROR_BUFFER_SIZE];
 	JsonValue* pJSONValue = g_pJsonManager->ParseJSON(str, is_file, is_mutable_doc, read_flg, error, sizeof(error));
@@ -224,7 +224,7 @@ static cell_t json_obj_parse_str(IPluginContext* pContext, const cell_t* params)
 {
 	char* str;
 	pContext->LocalToString(params[1], &str);
-	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[2]);
+	uint32_t read_flg = static_cast<uint32_t>(params[2]);
 
 	char error[JSON_PACK_ERROR_SIZE];
 	JsonValue* pJSONValue = g_pJsonManager->ObjectParseString(str, read_flg, error, sizeof(error));
@@ -240,7 +240,7 @@ static cell_t json_obj_parse_file(IPluginContext* pContext, const cell_t* params
 {
 	char* path;
 	pContext->LocalToString(params[1], &path);
-	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[2]);
+	uint32_t read_flg = static_cast<uint32_t>(params[2]);
 
 	char error[JSON_PACK_ERROR_SIZE];
 	JsonValue* pJSONValue = g_pJsonManager->ObjectParseFile(path, read_flg, error, sizeof(error));
@@ -256,7 +256,7 @@ static cell_t json_arr_parse_str(IPluginContext* pContext, const cell_t* params)
 {
 	char* str;
 	pContext->LocalToString(params[1], &str);
-	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[2]);
+	uint32_t read_flg = static_cast<uint32_t>(params[2]);
 
 	char error[JSON_PACK_ERROR_SIZE];
 	JsonValue* pJSONValue = g_pJsonManager->ArrayParseString(str, read_flg, error, sizeof(error));
@@ -272,7 +272,7 @@ static cell_t json_arr_parse_file(IPluginContext* pContext, const cell_t* params
 {
 	char* path;
 	pContext->LocalToString(params[1], &path);
-	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[2]);
+	uint32_t read_flg = static_cast<uint32_t>(params[2]);
 
 	char error[JSON_PACK_ERROR_SIZE];
 	JsonValue* pJSONValue = g_pJsonManager->ArrayParseFile(path, read_flg, error, sizeof(error));
@@ -325,35 +325,14 @@ static cell_t json_arr_index_of_integer64(IPluginContext* pContext, const cell_t
 	char* searchStr;
 	pContext->LocalToString(params[2], &searchStr);
 
-	char* endptr;
-	errno = 0;
-	long long searchValue = strtoll(searchStr, &endptr, 10);
+	std::variant<int64_t, uint64_t> variant_value;
+	char error[JSON_ERROR_BUFFER_SIZE];
 
-	if (errno == ERANGE || *endptr != '\0') {
-		return pContext->ThrowNativeError("Invalid integer64 value: %s", searchStr);
+	if (!g_pJsonManager->ParseInt64Variant(searchStr, &variant_value, error, sizeof(error))) {
+		return pContext->ThrowNativeError("%s", error);
 	}
 
-	return g_pJsonManager->ArrayIndexOfInt64(handle, searchValue);
-}
-
-static cell_t json_arr_index_of_uint64(IPluginContext* pContext, const cell_t* params)
-{
-	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
-
-	if (!handle) return 0;
-
-	char* searchStr;
-	pContext->LocalToString(params[2], &searchStr);
-
-	char* endptr;
-	errno = 0;
-	unsigned long long searchValue = strtoull(searchStr, &endptr, 10);
-
-	if (errno == ERANGE || *endptr != '\0') {
-		return pContext->ThrowNativeError("Invalid unsigned integer64 value: %s", searchStr);
-	}
-
-	return g_pJsonManager->ArrayIndexOfUint64(handle, searchValue);
+	return g_pJsonManager->ArrayIndexOfInt64(handle, variant_value);
 }
 
 static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* params)
@@ -597,6 +576,7 @@ static cell_t json_create_integer64(IPluginContext* pContext, const cell_t* para
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -694,8 +674,8 @@ static cell_t json_get_str(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	const char* str = nullptr;
-	size_t len = 0;
+	const char* str;
+	size_t len;
 
 	if (!g_pJsonManager->GetString(handle, &str, &len)) {
 		return pContext->ThrowNativeError("Type mismatch: expected string value");
@@ -729,7 +709,7 @@ static cell_t json_get_serialized_size(IPluginContext* pContext, const cell_t* p
 
 	if (!handle) return 0;
 
-	yyjson_write_flag write_flg = static_cast<yyjson_write_flag>(params[2]);
+	uint32_t write_flg = static_cast<uint32_t>(params[2]);
 	size_t size = g_pJsonManager->GetSerializedSize(handle, write_flg);
 
 	return static_cast<cell_t>(size);
@@ -745,6 +725,15 @@ static cell_t json_get_read_size(IPluginContext* pContext, const cell_t* params)
 	if (size == 0) return 0;
 
 	return static_cast<cell_t>(size);
+}
+
+static cell_t json_get_ref_count(IPluginContext* pContext, const cell_t* params)
+{
+	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
+
+	if (!handle) return 0;
+
+	return g_pJsonManager->GetRefCount(handle);
 }
 
 static cell_t json_create_null(IPluginContext* pContext, const cell_t* params)
@@ -890,7 +879,11 @@ static cell_t json_arr_get_val(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
 	JsonValue* pJSONValue = g_pJsonManager->ArrayGet(handle, index);
 
@@ -937,7 +930,11 @@ static cell_t json_arr_get_bool(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
 	bool value;
 	if (!g_pJsonManager->ArrayGetBool(handle, index, &value)) {
@@ -953,7 +950,11 @@ static cell_t json_arr_get_float(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
 	double value;
 	if (!g_pJsonManager->ArrayGetFloat(handle, index, &value)) {
@@ -969,7 +970,11 @@ static cell_t json_arr_get_integer(IPluginContext* pContext, const cell_t* param
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
 	int value;
 	if (!g_pJsonManager->ArrayGetInt(handle, index, &value)) {
@@ -985,9 +990,13 @@ static cell_t json_arr_get_integer64(IPluginContext* pContext, const cell_t* par
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
-	std::variant<int64_t, uint64_t> value;
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
+	std::variant<int64_t, uint64_t> value;
 	if (!g_pJsonManager->ArrayGetInt64(handle, index, &value)) {
 		return pContext->ThrowNativeError("Failed to get integer64 at index %d", index);
 	}
@@ -1009,10 +1018,14 @@ static cell_t json_arr_get_str(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
-	const char* str = nullptr;
-	size_t len = 0;
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
+	const char* str;
+	size_t len;
 	if (!g_pJsonManager->ArrayGetString(handle, index, &str, &len)) {
 		return pContext->ThrowNativeError("Failed to get string at index %d", index);
 	}
@@ -1033,7 +1046,11 @@ static cell_t json_arr_is_null(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
 	return g_pJsonManager->ArrayIsNull(handle, index);
 }
@@ -1049,7 +1066,12 @@ static cell_t json_arr_replace_val(IPluginContext* pContext, const cell_t* param
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplace(handle1, index, handle2);
 }
 
@@ -1063,7 +1085,12 @@ static cell_t json_arr_replace_bool(IPluginContext* pContext, const cell_t* para
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplaceBool(handle, index, params[3]);
 }
 
@@ -1077,7 +1104,12 @@ static cell_t json_arr_replace_float(IPluginContext* pContext, const cell_t* par
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplaceFloat(handle, index, sp_ctof(params[3]));
 }
 
@@ -1091,7 +1123,12 @@ static cell_t json_arr_replace_integer(IPluginContext* pContext, const cell_t* p
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplaceInt(handle, index, params[3]);
 }
 
@@ -1110,11 +1147,17 @@ static cell_t json_arr_replace_integer64(IPluginContext* pContext, const cell_t*
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplaceInt64(handle, index, variant_value);
 }
 
@@ -1128,7 +1171,12 @@ static cell_t json_arr_replace_null(IPluginContext* pContext, const cell_t* para
 		return pContext->ThrowNativeError("Cannot replace value in an immutable JSON array");
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplaceNull(handle, index);
 }
 
@@ -1145,7 +1193,12 @@ static cell_t json_arr_replace_str(IPluginContext* pContext, const cell_t* param
 	char* val;
 	pContext->LocalToString(params[3], &val);
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayReplaceString(handle, index, val);
 }
 
@@ -1217,6 +1270,7 @@ static cell_t json_arr_append_integer64(IPluginContext* pContext, const cell_t* 
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -1262,7 +1316,17 @@ static cell_t json_arr_insert(IPluginContext* pContext, const cell_t* params)
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 	JsonValue* value = g_pJsonManager->GetFromHandle(pContext, params[3]);
 	if (!value) return 0;
 
@@ -1278,7 +1342,17 @@ static cell_t json_arr_insert_bool(IPluginContext* pContext, const cell_t* param
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 	bool value = params[3] != 0;
 
 	return g_pJsonManager->ArrayInsertBool(handle, index, value);
@@ -1293,7 +1367,17 @@ static cell_t json_arr_insert_int(IPluginContext* pContext, const cell_t* params
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 	int value = params[3];
 
 	return g_pJsonManager->ArrayInsertInt(handle, index, value);
@@ -1308,12 +1392,23 @@ static cell_t json_arr_insert_int64(IPluginContext* pContext, const cell_t* para
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 	char* value;
 	pContext->LocalToString(params[3], &value);
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -1330,7 +1425,17 @@ static cell_t json_arr_insert_float(IPluginContext* pContext, const cell_t* para
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 	double value = sp_ctof(params[3]);
 
 	return g_pJsonManager->ArrayInsertFloat(handle, index, value);
@@ -1345,7 +1450,17 @@ static cell_t json_arr_insert_str(IPluginContext* pContext, const cell_t* params
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 	char* str;
 	pContext->LocalToString(params[3], &str);
 
@@ -1361,7 +1476,17 @@ static cell_t json_arr_insert_null(IPluginContext* pContext, const cell_t* param
 		return pContext->ThrowNativeError("Cannot insert value into an immutable JSON array");
 	}
 
-	size_t index = params[2];
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
+	size_t arr_size = g_pJsonManager->ArrayGetSize(handle);
+	if (index > arr_size) {
+		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
+	}
+
 
 	return g_pJsonManager->ArrayInsertNull(handle, index);
 }
@@ -1423,6 +1548,7 @@ static cell_t json_arr_prepend_int64(IPluginContext* pContext, const cell_t* par
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -1481,7 +1607,12 @@ static cell_t json_arr_remove(IPluginContext* pContext, const cell_t* params)
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON array");
 	}
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+
 	return g_pJsonManager->ArrayRemove(handle, index);
 }
 
@@ -1521,10 +1652,18 @@ static cell_t json_arr_remove_range(IPluginContext* pContext, const cell_t* para
 		return pContext->ThrowNativeError("Cannot remove value from an immutable JSON array");
 	}
 
-	size_t start_index = static_cast<size_t>(params[2]);
-	size_t end_index = static_cast<size_t>(params[3]);
+	cell_t start_index_param = params[2];
+	cell_t count_param = params[3];
+	if (start_index_param < 0) {
+		return pContext->ThrowNativeError("Start index must be >= 0 (got %d)", start_index_param);
+	}
+	if (count_param < 0) {
+		return pContext->ThrowNativeError("Count must be >= 0 (got %d)", count_param);
+	}
 
-	return g_pJsonManager->ArrayRemoveRange(handle, start_index, end_index);
+	size_t start_index = static_cast<size_t>(start_index_param);
+	size_t count = static_cast<size_t>(count_param);
+	return g_pJsonManager->ArrayRemoveRange(handle, start_index, count);
 }
 
 static cell_t json_arr_clear(IPluginContext* pContext, const cell_t* params)
@@ -1547,9 +1686,9 @@ static cell_t json_doc_write_to_str(IPluginContext* pContext, const cell_t* para
 	if (!handle) return 0;
 
 	size_t buffer_size = static_cast<size_t>(params[3]);
-	yyjson_write_flag write_flg = static_cast<yyjson_write_flag>(params[4]);
+	uint32_t write_flg = static_cast<uint32_t>(params[4]);
 
-	size_t json_size = 0;
+	size_t json_size;
 	char* json_str = g_pJsonManager->WriteToStringPtr(handle, write_flg, &json_size);
 
 	if (!json_str) {
@@ -1575,7 +1714,7 @@ static cell_t json_doc_write_to_file(IPluginContext* pContext, const cell_t* par
 
 	char* path;
 	pContext->LocalToString(params[2], &path);
-	yyjson_write_flag write_flg = static_cast<yyjson_write_flag>(params[3]);
+	uint32_t write_flg = static_cast<uint32_t>(params[3]);
 
 	char error[JSON_PACK_ERROR_SIZE];
 	if (!g_pJsonManager->WriteToFile(handle, path, write_flg, error, sizeof(error))) {
@@ -1601,8 +1740,12 @@ static cell_t json_obj_get_key(IPluginContext* pContext, const cell_t* params)
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
-	const char* key = nullptr;
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
+	const char* key;
 
 	if (!g_pJsonManager->ObjectGetKey(handle, index, &key)) {
 		return pContext->ThrowNativeError("Index %d is out of bounds", index);
@@ -1618,7 +1761,11 @@ static cell_t json_obj_get_val_at(IPluginContext* pContext, const cell_t* params
 
 	if (!handle) return 0;
 
-	size_t index = static_cast<size_t>(params[2]);
+	cell_t index_param = params[2];
+	if (index_param < 0) {
+		return pContext->ThrowNativeError("Index must be >= 0 (got %d)", index_param);
+	}
+	size_t index = static_cast<size_t>(index_param);
 
 	JsonValue* pJSONValue = g_pJsonManager->ObjectGetValueAt(handle, index);
 
@@ -1732,8 +1879,8 @@ static cell_t json_obj_get_str(IPluginContext* pContext, const cell_t* params)
 	char* key;
 	pContext->LocalToString(params[2], &key);
 
-	const char* str = nullptr;
-	size_t len = 0;
+	const char* str;
+	size_t len;
 	if (!g_pJsonManager->ObjectGetString(handle, key, &str, &len)) {
 		return pContext->ThrowNativeError("Failed to get string for key '%s'", key);
 	}
@@ -1770,7 +1917,7 @@ static cell_t json_obj_is_null(IPluginContext* pContext, const cell_t* params)
 	char* key;
 	pContext->LocalToString(params[2], &key);
 
-	bool is_null = false;
+	bool is_null;
 	if (!g_pJsonManager->ObjectIsNull(handle, key, &is_null)) {
 		return pContext->ThrowNativeError("Key not found: %s", key);
 	}
@@ -1898,6 +2045,7 @@ static cell_t json_obj_set_integer64(IPluginContext* pContext, const cell_t* par
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -2062,8 +2210,8 @@ static cell_t json_ptr_get_str(IPluginContext* pContext, const cell_t* params)
 	char* path;
 	pContext->LocalToString(params[2], &path);
 
-	const char* str = nullptr;
-	size_t len = 0;
+	const char* str;
+	size_t len;
 	char error[JSON_PACK_ERROR_SIZE];
 	if (!g_pJsonManager->PtrGetString(handle, path, &str, &len, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
@@ -2216,6 +2364,7 @@ static cell_t json_ptr_set_integer64(IPluginContext* pContext, const cell_t* par
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_PACK_ERROR_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -2371,6 +2520,7 @@ static cell_t json_ptr_add_integer64(IPluginContext* pContext, const cell_t* par
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_PACK_ERROR_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(value, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -2556,8 +2706,8 @@ static cell_t json_ptr_try_get_str(IPluginContext* pContext, const cell_t* param
 	char* path;
 	pContext->LocalToString(params[2], &path);
 
-	const char* str = nullptr;
-	size_t len = 0;
+	const char* str;
+	size_t len;
 
 	if (!g_pJsonManager->PtrTryGetString(handle, path, &str, &len)) {
 		return 0;
@@ -2578,8 +2728,8 @@ static cell_t json_obj_foreach(IPluginContext* pContext, const cell_t* params)
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
 	if (!handle) return 0;
 
-	const char* key = nullptr;
-	JsonValue* pJSONValue = nullptr;
+	const char* key;
+	JsonValue* pJSONValue;
 
 	if (!g_pJsonManager->ObjectForeachNext(handle, &key, nullptr, &pJSONValue)) {
 		return false;
@@ -2595,8 +2745,8 @@ static cell_t json_arr_foreach(IPluginContext* pContext, const cell_t* params)
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
 	if (!handle) return 0;
 
-	size_t index = 0;
-	JsonValue* pJSONValue = nullptr;
+	size_t index;
+	JsonValue* pJSONValue;
 
 	if (!g_pJsonManager->ArrayForeachNext(handle, &index, &pJSONValue)) {
 		return false;
@@ -2614,7 +2764,7 @@ static cell_t json_obj_foreach_key(IPluginContext* pContext, const cell_t* param
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
 	if (!handle) return 0;
 
-	const char* key = nullptr;
+	const char* key;
 
 	if (!g_pJsonManager->ObjectForeachKeyNext(handle, &key, nullptr)) {
 		return false;
@@ -2630,7 +2780,7 @@ static cell_t json_arr_foreach_index(IPluginContext* pContext, const cell_t* par
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
 	if (!handle) return 0;
 
-	size_t index = 0;
+	size_t index;
 
 	if (!g_pJsonManager->ArrayForeachIndexNext(handle, &index)) {
 		return false;
@@ -2717,6 +2867,84 @@ static cell_t json_doc_to_immutable(IPluginContext* pContext, const cell_t* para
 	return CreateAndReturnHandle(pContext, pJSONValue, "immutable JSON document");
 }
 
+static cell_t json_apply_json_patch(IPluginContext* pContext, const cell_t* params)
+{
+	JsonValue* target = g_pJsonManager->GetFromHandle(pContext, params[1]);
+	JsonValue* patch = g_pJsonManager->GetFromHandle(pContext, params[2]);
+
+	if (!target || !patch) return 0;
+
+	bool resultMutable = params[3] != 0;
+	char error[JSON_ERROR_BUFFER_SIZE] = {0};
+
+	JsonValue* result = g_pJsonManager->ApplyJsonPatch(target, patch, resultMutable, error, sizeof(error));
+	if (!result) {
+		if (error[0] != '\0') {
+			return pContext->ThrowNativeError("%s", error);
+		}
+		return pContext->ThrowNativeError("Failed to apply JSON Patch");
+	}
+
+	return CreateAndReturnHandle(pContext, result, "JSON patch result");
+}
+
+static cell_t json_json_patch_in_place(IPluginContext* pContext, const cell_t* params)
+{
+	JsonValue* target = g_pJsonManager->GetFromHandle(pContext, params[1]);
+	JsonValue* patch = g_pJsonManager->GetFromHandle(pContext, params[2]);
+
+	if (!target || !patch) return 0;
+
+	char error[JSON_ERROR_BUFFER_SIZE] = {0};
+	if (!g_pJsonManager->JsonPatchInPlace(target, patch, error, sizeof(error))) {
+		if (error[0] != '\0') {
+			return pContext->ThrowNativeError("%s", error);
+		}
+		return pContext->ThrowNativeError("Failed to apply JSON Patch in place");
+	}
+
+	return 1;
+}
+
+static cell_t json_apply_merge_patch(IPluginContext* pContext, const cell_t* params)
+{
+	JsonValue* target = g_pJsonManager->GetFromHandle(pContext, params[1]);
+	JsonValue* patch = g_pJsonManager->GetFromHandle(pContext, params[2]);
+
+	if (!target || !patch) return 0;
+
+	bool resultMutable = params[3] != 0;
+	char error[JSON_ERROR_BUFFER_SIZE] = {0};
+
+	JsonValue* result = g_pJsonManager->ApplyMergePatch(target, patch, resultMutable, error, sizeof(error));
+	if (!result) {
+		if (error[0] != '\0') {
+			return pContext->ThrowNativeError("%s", error);
+		}
+		return pContext->ThrowNativeError("Failed to apply JSON Merge Patch");
+	}
+
+	return CreateAndReturnHandle(pContext, result, "JSON merge patch result");
+}
+
+static cell_t json_merge_patch_in_place(IPluginContext* pContext, const cell_t* params)
+{
+	JsonValue* target = g_pJsonManager->GetFromHandle(pContext, params[1]);
+	JsonValue* patch = g_pJsonManager->GetFromHandle(pContext, params[2]);
+
+	if (!target || !patch) return 0;
+
+	char error[JSON_ERROR_BUFFER_SIZE] = {0};
+	if (!g_pJsonManager->MergePatchInPlace(target, patch, error, sizeof(error))) {
+		if (error[0] != '\0') {
+			return pContext->ThrowNativeError("%s", error);
+		}
+		return pContext->ThrowNativeError("Failed to apply JSON Merge Patch in place");
+	}
+
+	return 1;
+}
+
 static cell_t json_arr_iter_init(IPluginContext* pContext, const cell_t* params)
 {
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
@@ -2771,6 +2999,14 @@ static cell_t json_arr_iter_remove(IPluginContext* pContext, const cell_t* param
 	return removed != nullptr;
 }
 
+static cell_t json_arr_iter_reset(IPluginContext* pContext, const cell_t* params)
+{
+	JsonArrIter* iter = g_pJsonManager->GetArrIterFromHandle(pContext, params[1]);
+	if (!iter) return 0;
+
+	return g_pJsonManager->ArrIterReset(iter);
+}
+
 static cell_t json_obj_iter_init(IPluginContext* pContext, const cell_t* params)
 {
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
@@ -2789,12 +3025,8 @@ static cell_t json_obj_iter_next(IPluginContext* pContext, const cell_t* params)
 	if (!key) return 0;
 
 	const char* key_str;
-	if (iter->IsMutable()) {
-		key_str = yyjson_mut_get_str(reinterpret_cast<yyjson_mut_val*>(key));
-	} else {
-		key_str = yyjson_get_str(reinterpret_cast<yyjson_val*>(key));
-	}
-
+	size_t key_len;
+	g_pJsonManager->GetString(reinterpret_cast<JsonValue*>(key), &key_str, &key_len);
 	pContext->StringToLocalUTF8(params[2], params[3], key_str, nullptr);
 	return 1;
 }
@@ -2812,13 +3044,7 @@ static cell_t json_obj_iter_get_val(IPluginContext* pContext, const cell_t* para
 	JsonObjIter* iter = g_pJsonManager->GetObjIterFromHandle(pContext, params[1]);
 	if (!iter) return 0;
 
-	void* key = nullptr;
-	if (iter->IsMutable()) {
-		key = iter->m_currentKey;
-	} else {
-		key = iter->m_currentKey;
-	}
-
+	void* key = iter->m_currentKey;
 	if (!key) {
 		return pContext->ThrowNativeError("Iterator not positioned at a valid key (call Next() first)");
 	}
@@ -2873,14 +3099,22 @@ static cell_t json_obj_iter_remove(IPluginContext* pContext, const cell_t* param
 	return removed != nullptr;
 }
 
+static cell_t json_obj_iter_reset(IPluginContext* pContext, const cell_t* params)
+{
+	JsonObjIter* iter = g_pJsonManager->GetObjIterFromHandle(pContext, params[1]);
+	if (!iter) return 0;
+
+	return g_pJsonManager->ObjIterReset(iter);
+}
+
 static cell_t json_read_number(IPluginContext* pContext, const cell_t* params)
 {
 	char* dat;
 	pContext->LocalToString(params[1], &dat);
-	yyjson_read_flag read_flg = static_cast<yyjson_read_flag>(params[2]);
+	uint32_t read_flg = static_cast<uint32_t>(params[2]);
 
 	char error[JSON_ERROR_BUFFER_SIZE];
-	size_t consumed = 0;
+	size_t consumed;
 	JsonValue* pJSONValue = g_pJsonManager->ReadNumber(dat, read_flg, error, sizeof(error), &consumed);
 
 	if (!pJSONValue) {
@@ -2903,7 +3137,12 @@ static cell_t json_write_number(IPluginContext* pContext, const cell_t* params)
 	JsonValue* handle = g_pJsonManager->GetFromHandle(pContext, params[1]);
 	if (!handle) return 0;
 
-	size_t buffer_size = static_cast<size_t>(params[3]);
+	cell_t buffer_size_param = params[3];
+	if (buffer_size_param <= 0) {
+		return pContext->ThrowNativeError("Buffer size must be > 0 (got %d)", buffer_size_param);
+	}
+
+	size_t buffer_size = static_cast<size_t>(buffer_size_param);
 	char* temp_buffer = (char*)malloc(buffer_size);
 	if (!temp_buffer) {
 		return pContext->ThrowNativeError("Failed to allocate buffer");
@@ -2991,6 +3230,7 @@ static cell_t json_set_int64(IPluginContext* pContext, const cell_t* params)
 
 	std::variant<int64_t, uint64_t> variant_value;
 	char error[JSON_ERROR_BUFFER_SIZE];
+
 	if (!g_pJsonManager->ParseInt64Variant(str, &variant_value, error, sizeof(error))) {
 		return pContext->ThrowNativeError("%s", error);
 	}
@@ -3128,7 +3368,6 @@ const sp_nativeinfo_t g_JsonNatives[] =
 	{"JSONArray.IndexOfString", json_arr_index_of_str},
 	{"JSONArray.IndexOfInt", json_arr_index_of_int},
 	{"JSONArray.IndexOfInt64", json_arr_index_of_integer64},
-	{"JSONArray.IndexOfUint64", json_arr_index_of_uint64},
 	{"JSONArray.IndexOfFloat", json_arr_index_of_float},
 	{"JSONArray.Sort", json_arr_sort},
 
@@ -3142,6 +3381,7 @@ const sp_nativeinfo_t g_JsonNatives[] =
 	{"JSON.GetTypeDesc", json_get_type_desc},
 	{"JSON.GetSerializedSize", json_get_serialized_size},
 	{"JSON.ReadSize.get", json_get_read_size},
+	{"JSON.RefCount.get", json_get_ref_count},
 	{"JSON.Type.get", json_get_type},
 	{"JSON.SubType.get", json_get_subtype},
 	{"JSON.IsArray.get", json_is_array},
@@ -3165,6 +3405,10 @@ const sp_nativeinfo_t g_JsonNatives[] =
 	{"JSON.ForeachIndex", json_arr_foreach_index},
 	{"JSON.ToMutable", json_doc_to_mutable},
 	{"JSON.ToImmutable", json_doc_to_immutable},
+	{"JSON.ApplyJsonPatch", json_apply_json_patch},
+	{"JSON.JsonPatchInPlace", json_json_patch_in_place},
+	{"JSON.ApplyMergePatch", json_apply_merge_patch},
+	{"JSON.MergePatchInPlace", json_merge_patch_in_place},
 	{"JSON.ReadNumber", json_read_number},
 	{"JSON.WriteNumber", json_write_number},
 	{"JSON.SetFpToFloat", json_set_fp_to_float},
@@ -3227,6 +3471,7 @@ const sp_nativeinfo_t g_JsonNatives[] =
 	{"JSONArrIter.HasNext.get", json_arr_iter_has_next},
 	{"JSONArrIter.Index.get", json_arr_iter_get_index},
 	{"JSONArrIter.Remove", json_arr_iter_remove},
+	{"JSONArrIter.Reset", json_arr_iter_reset},
 
 	// JSONObjIter
 	{"JSONObjIter.JSONObjIter", json_obj_iter_init},
@@ -3236,6 +3481,7 @@ const sp_nativeinfo_t g_JsonNatives[] =
 	{"JSONObjIter.Get", json_obj_iter_get},
 	{"JSONObjIter.Index.get", json_obj_iter_get_index},
 	{"JSONObjIter.Remove", json_obj_iter_remove},
+	{"JSONObjIter.Reset", json_obj_iter_reset},
 
 	{nullptr, nullptr}
 };
