@@ -71,12 +71,17 @@ enum JSON_WRITE_FLAG
   JSON_WRITE_FP_TO_FLOAT            = 1 << 27 // Write floating-point numbers using single-precision (float)
 }
 
-/** Write floating-point number using fixed-point notation
- - This is similar to ECMAScript Number.prototype.toFixed(prec) but with trailing zeros removed. The prec ranges from 1 to 15
- - This will produce shorter output but may lose some precision
-*/
+/**
+ * Write floating-point number using fixed-point notation
+ * This is similar to ECMAScript Number.prototype.toFixed(prec) but with trailing zeros removed
+ *
+ * @param n    Precision digits (1-7)
+ * @return     JSON write flag with precision setting
+ * @note       This will produce shorter output but may lose some precision
+ */
 stock JSON_WRITE_FLAG JSON_WRITE_FP_TO_FIXED(int n)
 {
+  n = (n < 1) ? 1 : (n > 7 ? 7 : n);
   return view_as<JSON_WRITE_FLAG>(n << 28);
 }
 
@@ -102,6 +107,10 @@ methodmap JSON < Handle
   * - }: end object
   * - [: start array
   * - ]: end array
+  *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  * @note                    There is a limit of 32 parameters (defined in SourcePawn)
+  *                          including the format string, so the number of arguments must be less than or equal to 31
   *
   * @param format            Format string
   * @param ...               Arguments based on format string
@@ -178,6 +187,8 @@ methodmap JSON < Handle
   /**
   * Converts an immutable JSON document to a mutable one
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @return                  Handle to the new mutable JSON document, INVALID_HANDLE on failure
   * @error                   If the document is already mutable
   */
@@ -186,6 +197,8 @@ methodmap JSON < Handle
   /**
   * Converts a mutable JSON document to an immutable one
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @return                  Handle to the new immutable JSON document, INVALID_HANDLE on failure
   * @error                   If the document is already immutable
   */
@@ -193,6 +206,8 @@ methodmap JSON < Handle
 
   /**
    * Apply a JSON Patch (RFC 6902) to this value and return a new JSON handle
+   *
+   * @note                    Needs to be freed using delete or CloseHandle()
    *
    * @param patch             JSON Patch document
    * @param resultMutable     True to return a mutable result, false for immutable
@@ -214,6 +229,8 @@ methodmap JSON < Handle
 
   /**
    * Apply a JSON Merge Patch (RFC 7396) to this value and return a new JSON handle
+   *
+   * @note                    Needs to be freed using delete or CloseHandle()
    *
    * @param patch             JSON Merge Patch document
    * @param resultMutable     True to return a mutable result, false for immutable
@@ -275,7 +292,7 @@ methodmap JSON < Handle
   * Set floating-point number's output format to single-precision
   *
   * @note                    Only works on floating-point numbers (not integers)
-  * @note                    This affects how the number is serialized when using ToString()
+  * @note                    This affects how the number is serialized in all write operations
   *
   * @param flt               True to use single-precision (float), false to use double-precision (double)
   *
@@ -290,12 +307,12 @@ methodmap JSON < Handle
   * @note                    Only works on floating-point numbers (not integers)
   * @note                    This is similar to ECMAScript Number.prototype.toFixed(prec) but with trailing zeros removed
   * @note                    This will produce shorter output but may lose some precision
-  * @note                    This affects how the number is serialized when using ToString()
+  * @note                    This affects how the number is serialized in all write operations
   *
-  * @param prec              Precision (1-15)
+  * @param prec              Precision (1-7)
   *
   * @return                  True on success, false if handle is not a floating-point number or prec is out of range
-  * @error                   Invalid handle, handle is not a floating-point number, or precision out of range (1-15)
+  * @error                   Invalid handle, handle is not a floating-point number, or precision out of range (1-7)
   */
   public native bool SetFpToFixed(int prec);
 
@@ -1096,6 +1113,8 @@ methodmap JSONObject < JSON
   * The array must contain an even number of strings, where even indices are keys
   * and odd indices are values. Keys cannot be empty strings
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param pairs             Array of strings containing alternating keys and values
   * @param size              Total size of the array (must be even)
   *
@@ -1108,6 +1127,8 @@ methodmap JSONObject < JSON
   /**
   * Loads a JSON object from a file
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param file              File to read from
   * @param flag              The JSON read options
   *
@@ -1117,6 +1138,8 @@ methodmap JSONObject < JSON
 
   /**
   * Loads a JSON object from a string
+  *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param buffer            String buffer to load into the JSON object
   * @param flag              The JSON read options
@@ -1128,6 +1151,7 @@ methodmap JSONObject < JSON
   /**
   * Gets a value from the object
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   * @note                    This function takes a linear search time
   *
   * @param key               Key name
@@ -1363,6 +1387,8 @@ methodmap JSONArray < JSON
   /**
   * Creates a new JSON array from an array of strings
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param strings           Array of strings to create array from
   * @param size              Size of the array
   * @return                  New JSON array handle, or null if creation failed
@@ -1372,6 +1398,8 @@ methodmap JSONArray < JSON
   /**
   * Creates a new JSON array from an array of integer values
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param values            Array of int values to create array from
   * @param size              Size of the array
   * @return                  New JSON array handle, or null if creation failed
@@ -1380,6 +1408,8 @@ methodmap JSONArray < JSON
 
   /**
   * Creates a new JSON array from an array of 64-bit integer strings (auto-detects signed/unsigned)
+  *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param values            Array of int64 string values (can be signed or unsigned)
   * @param size              Size of the array
@@ -1391,6 +1421,8 @@ methodmap JSONArray < JSON
   /**
   * Creates a new JSON array from an array of boolean values
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param values            Array of bool values to create array from
   * @param size              Size of the array
   * @return                  New JSON array handle, or null if creation failed
@@ -1399,6 +1431,8 @@ methodmap JSONArray < JSON
 
   /**
   * Creates a new JSON array from an array of float values
+  *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param values            Array of float values to create array from
   * @param size              Size of the array
@@ -1409,6 +1443,8 @@ methodmap JSONArray < JSON
   /**
   * Loads a JSON array from a file
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
+  *
   * @param file              File to read from
   * @param flag              Read flag
   * @return                  Array handle, or null on failure
@@ -1417,6 +1453,8 @@ methodmap JSONArray < JSON
 
   /**
   * Loads a JSON array from a string
+  *
+  * @note                    Needs to be freed using delete or CloseHandle()
   *
   * @param buffer            String buffer to load into the JSON array
   * @param flag              Read flag
@@ -1427,6 +1465,7 @@ methodmap JSONArray < JSON
   /**
   * Gets a value from the array
   *
+  * @note                    Needs to be freed using delete or CloseHandle()
   * @note                    This function takes a linear search time
   *
   * @param index             Position in the array (starting from 0)
@@ -1938,6 +1977,8 @@ methodmap JSONArrIter < Handle
 
   /**
    * Moves the iterator to the next element
+   *
+   * @note                    Needs to be freed using delete or CloseHandle()
    *
    * @return                  JSON value handle for the next element, or null if iteration is complete
    * @error                   Invalid iterator handle

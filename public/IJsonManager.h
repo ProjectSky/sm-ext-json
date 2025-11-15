@@ -1788,16 +1788,18 @@ public:
 	 * @param flt true to use single-precision (float), false to use double-precision (double)
 	 * @return true on success, false if handle is not a floating-point number
 	 * @note Only works on floating-point numbers (not integers)
+	 * @note This affects how the number is serialized in all write operations
 	 */
 	virtual bool SetFpToFloat(JsonValue* handle, bool flt) = 0;
 
 	/**
 	 * Set floating-point number's output format to fixed-point notation
 	 * @param handle JSON floating-point number value
-	 * @param prec Precision (1-15), similar to ECMAScript Number.prototype.toFixed(prec) but with trailing zeros removed
+	 * @param prec Precision (1-15), similar to ECMAScript `Number.prototype.toFixed(prec)` but with trailing zeros removed
 	 * @return true on success, false if handle is not a floating-point number or prec is out of range
 	 * @note Only works on floating-point numbers (not integers)
 	 * @note This will produce shorter output but may lose some precision
+	 * @note This affects how the number is serialized in all write operations
 	 */
 	virtual bool SetFpToFixed(JsonValue* handle, int prec) = 0;
 

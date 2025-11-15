@@ -147,7 +147,14 @@ static cell_t CreateAndReturnObjIterHandle(IPluginContext* pContext, JsonObjIter
 	return handle;
 }
 
-static cell_t json_pack(IPluginContext* pContext, const cell_t* params) {
+static cell_t json_pack(IPluginContext* pContext, const cell_t* params)
+{
+	// SourcePawn has a limit of 32 parameters (defined SP_MAX_EXEC_PARAMS)
+	// including the format string, so we need to check if the number of parameters is less than the limit
+	if (params[0] > SP_MAX_EXEC_PARAMS - 1) {
+		return pContext->ThrowNativeError("Too many parameters (max %d)", SP_MAX_EXEC_PARAMS - 1);
+	}
+
 	char* fmt;
 	pContext->LocalToString(params[1], &fmt);
 
@@ -341,7 +348,7 @@ static cell_t json_arr_index_of_float(IPluginContext* pContext, const cell_t* pa
 
 	if (!handle) return 0;
 
-	double searchValue = static_cast<double>(sp_ctof(params[2]));
+	float searchValue = sp_ctof(params[2]);
 	return g_pJsonManager->ArrayIndexOfFloat(handle, searchValue);
 }
 
@@ -1436,7 +1443,7 @@ static cell_t json_arr_insert_float(IPluginContext* pContext, const cell_t* para
 		return pContext->ThrowNativeError("Index is out of bounds (got %d, max %zu)", index, arr_size);
 	}
 
-	double value = sp_ctof(params[3]);
+	float value = sp_ctof(params[3]);
 
 	return g_pJsonManager->ArrayInsertFloat(handle, index, value);
 }
@@ -1565,7 +1572,7 @@ static cell_t json_arr_prepend_float(IPluginContext* pContext, const cell_t* par
 		return pContext->ThrowNativeError("Cannot prepend value to an immutable JSON array");
 	}
 
-	double value = sp_ctof(params[2]);
+	float value = sp_ctof(params[2]);
 
 	return g_pJsonManager->ArrayPrependFloat(handle, value);
 }
@@ -3187,8 +3194,12 @@ static cell_t json_set_fp_to_fixed(IPluginContext* pContext, const cell_t* param
 	if (!handle) return 0;
 
 	int prec = params[2];
+	if (prec < 1 || prec > 7) {
+		return pContext->ThrowNativeError("Precision out of range (1-7)");
+	}
+
 	if (!g_pJsonManager->SetFpToFixed(handle, prec)) {
-		return pContext->ThrowNativeError("Failed to set floating-point format to fixed (value is not a floating-point number or precision out of range 1-15)");
+		return pContext->ThrowNativeError("Failed to set floating-point format to fixed (value is not a floating-point number or precision out of range 1-7)");
 	}
 
 	return 1;
