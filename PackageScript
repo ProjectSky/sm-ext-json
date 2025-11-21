@@ -40,5 +40,5 @@ for cxx_task in Extension.extensions:
 
 # Copy include files
 CopyFiles('scripting/include', 'addons/sourcemod/scripting/include',
-  [ 'yyjson.inc' ]
+  [ 'json.inc' ]
 )

@@ -2,7 +2,7 @@
 import os
 
 for cxx in builder.targets:
-  binary = Extension.Library(builder, cxx, 'yyjson.ext')
+  binary = Extension.Library(builder, cxx, 'json.ext')
   arch = binary.compiler.target.arch
 
   binary.compiler.defines += [
@@ -12,8 +12,8 @@ for cxx in builder.targets:
   binary.sources += [
     'third_party/yyjson/yyjson.c',
     'src/extension.cpp',
-    'src/YYJSONManager.cpp',
-    'src/json_natives.cpp',
+    'src/JsonManager.cpp',
+    'src/JsonNatives.cpp',
     os.path.join(Extension.sm_root, 'public', 'smsdk_ext.cpp'),
   ]
 

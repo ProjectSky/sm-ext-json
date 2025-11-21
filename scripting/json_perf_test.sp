@@ -1,6 +1,6 @@
 #include <sourcemod>
 #include <profiler>
-#include <yyjson>
+#include <json>
 
 #pragma dynamic 531072
 #define TEST_ITERATIONS 100
@@ -8,23 +8,23 @@
 Profiler g_hProfiler;
 
 public Plugin myinfo = {
-	name = "YYJSON Benchmark",
+	name = "JSON Benchmark",
 	author = "ProjectSky",
-	description = "Performance benchmark for YYJSON",
+	description = "Performance benchmark for JSON",
 	version = "1.0.0",
 	url = "https://github.com/ProjectSky/sm-ext-yyjson"
 };
 
 public void OnPluginStart()
 {
-	RegServerCmd("sm_yyjson_benchmark", Command_Benchmark, "Run YYJSON performance benchmark");
+	RegServerCmd("sm_json_benchmark", Command_Benchmark, "Run JSON performance benchmark");
 
 	g_hProfiler = new Profiler();
 }
 
 Action Command_Benchmark(int args)
 {
-	YYJSON json = YYJSON.Parse("twitter.json", true);
+	JSON json = JSON.Parse("twitter.json", true);
 
 	int dataLength = json.ReadSize;
 
@@ -36,7 +36,7 @@ Action Command_Benchmark(int args)
 	g_hProfiler.Start();
 	for (int i = 0; i < TEST_ITERATIONS; i++)
 	{
-		YYJSON testJson = YYJSON.Parse(jsonStr);
+		JSON testJson = JSON.Parse(jsonStr);
 		delete testJson;
 	}
 	g_hProfiler.Stop();
@@ -53,7 +53,7 @@ Action Command_Benchmark(int args)
 	float parseTimePerOp = parseTime * 1000.0 / TEST_ITERATIONS;
 	float stringifyTimePerOp = stringifyTime * 1000.0 / TEST_ITERATIONS;
 
-	PrintToServer("=== YYJSON Performance Benchmark ===");
+	PrintToServer("=== JSON Performance Benchmark ===");
 	PrintToServer("Test iterations: %d", TEST_ITERATIONS);
 	PrintToServer("Data size: %.2f MB", float(dataLength) / (1024.0 * 1024.0));
 	PrintToServer("Parse time: %.3f seconds", parseTime);
@@ -66,7 +66,7 @@ Action Command_Benchmark(int args)
 	PrintToServer("Parse speed: %.2f MB/s (%.2f GB/s)", parseSpeed, parseSpeed / 1024.0);
 	PrintToServer("Stringify speed: %.2f MB/s (%.2f GB/s)", stringifySpeed, stringifySpeed / 1024.0);
 	PrintToServer("Stringify operations per second: %.2f ops/sec", 1000.0 / stringifyTimePerOp);
-	PrintToServer("=== YYJSON Performance Benchmark End ===");
+	PrintToServer("=== JSON Performance Benchmark End ===");
 
 	delete json;
 	return Plugin_Handled;

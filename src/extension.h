@@ -2,9 +2,7 @@
 #define _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_
 
 #include "smsdk_ext.h"
-#include <yyjson.h>
-#include <random>
-#include "IYYJSONManager.h"
+#include "IJsonManager.h"
 
 class JsonExtension : public SDKExtension
 {
@@ -13,16 +11,32 @@ public:
 	virtual void SDK_OnUnload();
 };
 
-class JSONHandler : public IHandleTypeDispatch
+class JsonHandler : public IHandleTypeDispatch
 {
 public:
 	void OnHandleDestroy(HandleType_t type, void *object);
 };
 
-extern JsonExtension g_JsonExtension;
-extern HandleType_t g_htJSON;
-extern JSONHandler g_JSONHandler;
-extern const sp_nativeinfo_t json_natives[];
-extern IYYJSONManager* g_pYYJSONManager;
+class ArrIterHandler : public IHandleTypeDispatch
+{
+public:
+	void OnHandleDestroy(HandleType_t type, void *object);
+};
+
+class ObjIterHandler : public IHandleTypeDispatch
+{
+public:
+	void OnHandleDestroy(HandleType_t type, void *object);
+};
+
+extern JsonExtension g_JsonExt;
+extern HandleType_t g_JsonType;
+extern HandleType_t g_ArrIterType;
+extern HandleType_t g_ObjIterType;
+extern JsonHandler g_JsonHandler;
+extern ArrIterHandler g_ArrIterHandler;
+extern ObjIterHandler g_ObjIterHandler;
+extern const sp_nativeinfo_t g_JsonNatives[];
+extern IJsonManager* g_pJsonManager;
 
 #endif // _INCLUDE_SOURCEMOD_EXTENSION_PROPER_H_

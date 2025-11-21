@@ -6,6 +6,8 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 ## Key Features
 * High-performance JSON parsing and serialization using YYJSON
 * Support for [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) operations
+* Support for [JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902) operations
+* Support for [JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7386) operations
 * x64 support
 * Easy-to-use API for both objects and arrays
 * Pretty printing and writing support
@@ -18,7 +20,7 @@ A [SourceMod](http://www.sourcemod.net/) extension that provides comprehensive J
 Performance test results using [twitter.json](https://github.com/ibireme/yyjson_benchmark/blob/master/data/json/twitter.json) (0.60 MB):
 
 ```
-=== YYJSON Performance Benchmark ===
+=== JSON Performance Benchmark ===
 Test iterations: 100
 Data size: 0.60 MB
 Parse time: 0.025 seconds
@@ -27,7 +29,7 @@ Parse operations per second: 3937.93 ops/sec
 Parse speed: 2371.66 MB/s (2.31 GB/s)
 Stringify speed: 4505.23 MB/s (4.39 GB/s)
 Stringify operations per second: 7480.55 ops/sec
-=== YYJSON Performance Benchmark End ===
+=== JSON Performance Benchmark End ===
 ```
 
 Test environment:
@@ -37,7 +39,7 @@ Test environment:
 - Test iterations: 100
 - SourceMod Version: 1.13.0.6966
 - YYJSON Version: Latest version
-- Test script: [yyjson_perf_test.sp](scripting/yyjson_perf_test.sp)
+- Test script: [json_perf_test.sp](scripting/json_perf_test.sp)
 
 Note: Performance may vary depending on server hardware and load conditions.
 
@@ -58,33 +60,33 @@ ambuild
 ```
 
 ## Documentation
-* [API Reference](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/yyjson.inc)
+* [API Reference](https://github.com/ProjectSky/sm-ext-yyjson/blob/main/scripting/include/json.inc)
 * [Latest Release](https://github.com/ProjectSky/sm-ext-yyjson/releases)
 
 ### SourceMod Extension API
 ```cpp
-#include <IYYJSONManager.h>
+#include <IJsonManager.h>
 
-IYYJSONManager* g_pYYJSONManager = nullptr;
+IJsonManager* g_pJsonManager = nullptr;
 
 void Ext::SDK_OnAllLoaded()
 {
-  SM_GET_LATE_IFACE(YYJSONMANAGER, g_pYYJSONManager);
+  SM_GET_LATE_IFACE(JSONMANAGER, g_pJsonManager);
 
   char error[256];
-  YYJSONValue* val = g_pYYJSONManager->ParseJSON("{\"name\":\"John\", \"age\":30}", false, false, 0, error, sizeof(error));
+  JsonValue* val = g_pJsonManager->ParseJSON("{\"name\":\"John\", \"age\":30}", false, false, 0, error, sizeof(error));
 
   if (!val) {
     PrintToServer("Failed to parse JSON: %s", error);
     return;
   }
 
-  size_t size = g_pYYJSONManager->GetSerializedSize(val);
+  size_t size = g_pJsonManager->GetSerializedSize(val);
   char buffer[size];
-  g_pYYJSONManager->WriteToString(val, buffer, size);
+  g_pJsonManager->WriteToString(val, buffer, size);
 
   // must release the value after using
-  g_pYYJSONManager->Release(val);
+  g_pJsonManager->Release(val);
 
   printf("JSON: %s\n", buffer);
 }
@@ -95,7 +97,7 @@ void Ext::SDK_OnAllLoaded()
 #### Working with Objects
 ```cpp
 // Create a JSON object
-YYJSONObject obj = new YYJSONObject();
+JSONObject obj = new JSONObject();
 obj.SetInt("int", 1);
 obj.SetInt64("int64", "9223372036854775800");
 obj.SetFloat("float", 2.0);
@@ -120,7 +122,7 @@ delete obj;
 #### Working with Arrays
 ```cpp
 // Create a JSON array
-YYJSONArray arr = new YYJSONArray();
+JSONArray arr = new JSONArray();
 arr.PushInt(1);
 arr.PushInt64("9223372036854775800");
 arr.PushFloat(2.0);
@@ -146,7 +148,7 @@ delete arr;
 #### Using JSON Pointer
 ```cpp
 // Create nested structures
-YYJSONObject obj = new YYJSONObject();
+JSONObject obj = new JSONObject();
 obj.PtrSetInt("/a/b/c", 1);
 delete obj;
 
@@ -172,7 +174,7 @@ delete obj;
 }
 */
 
-YYJSONObject data = YYJSON.Parse("example.json", true);
+JSONObject data = JSON.Parse("example.json", true);
 // Access values using JSON Pointer
 int value = data.PtrGetInt("/int"); // Returns: 1234
 float fValue = data.PtrGetFloat("/arr/1"); // Returns: 1.2344
@@ -183,46 +185,38 @@ delete data;
 #### Array and Object Iteration
 ```cpp
 // Object iteration
-YYJSONObject obj = YYJSON.Parse("{\"a\": 1, \"b\": 2, \"c\": 3}");
+JSONObject obj = JSON.Parse("{\"a\": 1, \"b\": 2, \"c\": 3}");
 char key[64];
-YYJSON value;
 
-// Method 1: Using Foreach (Recommended)
-while (obj.ForeachObject(key, sizeof(key), value)) {
-  PrintToServer("Key: %s", key);
-  delete value;
-}
-
-// Method 2: Using ForeachKey (only used for keys)
-while (obj.ForeachKey(key, sizeof(key))) {
+// Method 1: Using Object Iterator (Recommended)
+JSONObjIter iter = new JSONObjIter(obj);
+while (iter.Next(key, sizeof(key))) {
   PrintToServer("Key: %s", key);
 }
+delete iter;
 
-// Method 3: Classic iteration
+// Method 2: Classic iteration
 for (int i = 0; i < obj.Size; i++) {
   obj.GetKey(i, key, sizeof(key));
-  value = obj.GetValueAt(i);
+  JSON value = obj.GetValueAt(i);
   delete value;
 }
 
 delete obj;
 
 // Array iteration
-YYJSONArray arr = YYJSON.Parse("[1, 2, 3, 4, 5]");
-int index;
+JSONArray arr = JSON.Parse("[1, 2, 3, 4, 5]");
+JSON value;
 
-// Method 1: Using Foreach (Recommended)
-while (arr.ForeachArray(index, value)) {
-  PrintToServer("Index: %d", index);
+// Method 1: Using Array Iterator (Recommended)
+JSONArrIter iter = new JSONArrIter(arr);
+while ((value = iter.Next) != null) {
+  PrintToServer("Index: %d", iter.Index);
   delete value;
 }
+delete iter;
 
-// Method 2: Using ForeachIndex (only used for index)
-while (arr.ForeachIndex(index)) {
-  PrintToServer("Index: %d", index);
-}
-
-// Method 3: Classic iteration
+// Method 2: Classic iteration
 for (int i = 0; i < arr.Length; i++) {
   value = arr.Get(i);
   delete value;
@@ -234,7 +228,7 @@ delete arr;
 #### Array Search Operations
 ```cpp
 // Create a test array
-YYJSONArray arr = YYJSON.Parse(
+JSONArray arr = JSON.Parse(
   "[42, true, \"hello\", 3.14, \"world\", false, 42]"
 );
 
@@ -258,7 +252,7 @@ delete arr;
 #### Sorting Arrays and Objects
 ```cpp
 // Array sorting
-YYJSONArray arr = YYJSON.Parse(
+JSONArray arr = JSON.Parse(
   "[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]", .is_mutable_doc = true
 );
 
@@ -272,14 +266,14 @@ arr.Sort(YYJSON_SORT_RANDOM); // Random
 // [5, 2, 9, 1, 6, 3, 4, 5, 1, 3, 5] (example output)
 
 // Mixed type array sorting
-YYJSONArray mixed = YYJSON.Parse(
+JSONArray mixed = JSON.Parse(
   "[true, 42, \"hello\", 1.23, false, \"world\"]", .is_mutable_doc = true
 );
 mixed.Sort();
 // [false, true, 1.23, 42, "hello", "world"]
 
 // Object sorting by keys
-YYJSONObject obj = YYJSON.Parse(
+JSONObject obj = JSON.Parse(
   "{\"zebra\": 1, \"alpha\": 2, \"beta\": 3, \"gamma\": 4}", .is_mutable_doc = true
 );
 
@@ -302,7 +296,7 @@ delete obj;
 // Create object from key-value string arrays
 char pairs[][] = {"name", "test", "type", "demo", "version", "1.0.0"};
 
-YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
+JSONObject obj = JSONObject.FromStrings(pairs, sizeof(pairs));
 
 /* Output:
 {
@@ -314,7 +308,7 @@ YYJSONObject obj = YYJSONObject.FromStrings(pairs, sizeof(pairs));
 
 // Create array from string array
 char items[][] = {"apple", "banana", "orange"};
-YYJSONArray arr = YYJSONArray.FromStrings(items, sizeof(items));
+JSONArray arr = JSONArray.FromStrings(items, sizeof(items));
 delete obj;
 delete arr;
 
@@ -330,7 +324,7 @@ delete arr;
 #### Using JSON Pack
 ```cpp
 // Create object with mixed types
-YYJSON packed = YYJSON.Pack("{s:s,s:i,s:f,s:b,s:n}",
+JSON packed = JSON.Pack("{s:s,s:i,s:f,s:b,s:n}",
   "name", "John",
   "age", 25,
   "height", 1.75,
@@ -350,7 +344,7 @@ delete packed;
 */
 
 // Create nested structures
-YYJSON nested = YYJSON.Pack("{s:{s:s,s:[iii]}}",
+JSON nested = JSON.Pack("{s:{s:s,s:[iii]}}",
   "user",
     "name", "John",
     "scores", 85, 90, 95
@@ -367,7 +361,7 @@ delete nested;
 */
 
 // Create array with mixed types
-YYJSON array = YYJSON.Pack("[sifbn]",
+JSON array = JSON.Pack("[sifbn]",
     "test", 42, 3.14, true
 );
 delete array;
@@ -388,10 +382,10 @@ When parsing JSON documents, you can choose whether to create a mutable or immut
 
 ```cpp
 // Create an immutable document (read-only)
-YYJSONObject obj = YYJSON.Parse("example.json", true);
+JSONObject obj = JSON.Parse("example.json", true);
 
 // Create a mutable document (read-write)
-YYJSONObject obj = YYJSON.Parse("example.json", true, true);
+JSONObject obj = JSON.Parse("example.json", true, true);
 ```
 
 Immutable documents:
@@ -410,7 +404,7 @@ Immutable documents support a variety of read operations:
 Example of operations with immutable documents:
 ```cpp
 // Create an immutable document
-YYJSONObject obj = YYJSON.Parse("example.json", true);
+JSONObject obj = JSON.Parse("example.json", true);
 
 // Reading is allowed
 int value = obj.GetInt("key"); // Works fine
@@ -429,10 +423,10 @@ You can convert between mutable and immutable documents using deep copy:
 
 ```cpp
 // Create an immutable document
-YYJSONObject immutable = YYJSON.Parse("example.json", true);
+JSONObject immutable = JSON.Parse("example.json", true);
 
 // Create a mutable copy
-YYJSONObject mutable = immutable.ToMutable();
+JSONObject mutable = immutable.ToMutable();
 
 // Now you can modify the mutable copy
 mutable.SetInt("key", 123);

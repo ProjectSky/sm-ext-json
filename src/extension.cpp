@@ -1,57 +1,88 @@
 #include "extension.h"
-#include "YYJSONManager.h"
+#include "JsonManager.h"
 
-JsonExtension g_JsonExtension;
-SMEXT_LINK(&g_JsonExtension);
+JsonExtension g_JsonExt;
+SMEXT_LINK(&g_JsonExt);
 
-HandleType_t g_htJSON;
-JSONHandler g_JSONHandler;
-IYYJSONManager* g_pYYJSONManager;
+HandleType_t g_JsonType;
+HandleType_t g_ArrIterType;
+HandleType_t g_ObjIterType;
+JsonHandler g_JsonHandler;
+ArrIterHandler g_ArrIterHandler;
+ObjIterHandler g_ObjIterHandler;
+IJsonManager* g_pJsonManager;
 
 bool JsonExtension::SDK_OnLoad(char* error, size_t maxlen, bool late)
 {
-	sharesys->AddNatives(myself, json_natives);
-	sharesys->RegisterLibrary(myself, "yyjson");
+	sharesys->AddNatives(myself, g_JsonNatives);
+	sharesys->RegisterLibrary(myself, "json");
 
-	HandleAccess haJSON;
-	handlesys->InitAccessDefaults(nullptr, &haJSON);
-	haJSON.access[HandleAccess_Read] = 0;
-	haJSON.access[HandleAccess_Delete] = 0;
+	HandleAccess haDefault;
+	handlesys->InitAccessDefaults(nullptr, &haDefault);
+	haDefault.access[HandleAccess_Read] = 0;
+	haDefault.access[HandleAccess_Delete] = 0;
+
+	TypeAccess taDefault;
+	handlesys->InitAccessDefaults(&taDefault, nullptr);
+	taDefault.access[HTypeAccess_Create] = true;
 
 	HandleError err;
-	g_htJSON = handlesys->CreateType("YYJSON", &g_JSONHandler, 0, nullptr, &haJSON, myself->GetIdentity(), &err);
+	g_JsonType = handlesys->CreateType("JSON", &g_JsonHandler, 0, &taDefault, &haDefault, myself->GetIdentity(), &err);
 
-	if (!g_htJSON) {
-		snprintf(error, maxlen, "Failed to create YYJSON handle type (err: %d)", err);
+	if (!g_JsonType) {
+		snprintf(error, maxlen, "Failed to create JSON handle type (err: %d)", err);
 		return false;
 	}
 
-	// Delete the existing instance if it exists
-	if (g_pYYJSONManager) {
-		delete g_pYYJSONManager;
-		g_pYYJSONManager = nullptr;
-	}
-
-	g_pYYJSONManager = new YYJSONManager();
-	if (!g_pYYJSONManager) {
-		snprintf(error, maxlen, "Failed to create YYJSONManager instance");
+	g_ArrIterType = handlesys->CreateType("JSONArrIter", &g_ArrIterHandler, 0, &taDefault, &haDefault, myself->GetIdentity(), &err);
+	if (!g_ArrIterType) {
+		snprintf(error, maxlen, "Failed to create JSONArrIter handle type (err: %d)", err);
 		return false;
 	}
 
-	return sharesys->AddInterface(myself, g_pYYJSONManager);
+	g_ObjIterType = handlesys->CreateType("JSONObjIter", &g_ObjIterHandler, 0, &taDefault, &haDefault, myself->GetIdentity(), &err);
+	if (!g_ObjIterType) {
+		snprintf(error, maxlen, "Failed to create JSONObjIter handle type (err: %d)", err);
+		return false;
+	}
+
+	if (g_pJsonManager) {
+		delete g_pJsonManager;
+		g_pJsonManager = nullptr;
+	}
+
+	g_pJsonManager = new(std::nothrow) JsonManager();
+	if (!g_pJsonManager) {
+		snprintf(error, maxlen, "Failed to create JSON manager instance");
+		return false;
+	}
+
+	return sharesys->AddInterface(myself, g_pJsonManager);
 }
 
 void JsonExtension::SDK_OnUnload()
 {
-	handlesys->RemoveType(g_htJSON, myself->GetIdentity());
+	handlesys->RemoveType(g_JsonType, myself->GetIdentity());
+	handlesys->RemoveType(g_ArrIterType, myself->GetIdentity());
+	handlesys->RemoveType(g_ObjIterType, myself->GetIdentity());
 
-	if (g_pYYJSONManager) {
-		delete g_pYYJSONManager;
-		g_pYYJSONManager = nullptr;
+	if (g_pJsonManager) {
+		delete g_pJsonManager;
+		g_pJsonManager = nullptr;
 	}
 }
 
-void JSONHandler::OnHandleDestroy(HandleType_t type, void* object)
+void JsonHandler::OnHandleDestroy(HandleType_t type, void* object)
 {
-	delete (YYJSONValue*)object;
+	delete (JsonValue*)object;
+}
+
+void ArrIterHandler::OnHandleDestroy(HandleType_t type, void* object)
+{
+	delete (JsonArrIter*)object;
+}
+
+void ObjIterHandler::OnHandleDestroy(HandleType_t type, void* object)
+{
+	delete (JsonObjIter*)object;
 }
